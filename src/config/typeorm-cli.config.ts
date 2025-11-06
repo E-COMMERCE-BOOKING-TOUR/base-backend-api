@@ -4,5 +4,5 @@ import { databaseConfig } from './database.config';
 
 export default registerAs('typeorm', () => ({ ...databaseConfig() }));
 export const connectionSource = new DataSource({
-  ...databaseConfig(),
+    ...databaseConfig(),
 } as DataSourceOptions);
