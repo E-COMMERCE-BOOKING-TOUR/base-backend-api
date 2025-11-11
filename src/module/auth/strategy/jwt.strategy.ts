@@ -19,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: jwtConfig().privateKey as string,
+            secretOrKey: process.env.JWT_SECRET_PRIVATEKEY as string,
         });
     }
 
@@ -31,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
             where: { user_uid: uuid },
         });
         if (!session) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('Session not found');
         }
 
         const user = await this.userRepository.findOne({
@@ -39,9 +39,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
             relations: ['role.permissions'],
         });
         if (!user) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('User not found');
         }
 
-        return await user.toJSON();
+        return user.toJSON();
     }
 }
