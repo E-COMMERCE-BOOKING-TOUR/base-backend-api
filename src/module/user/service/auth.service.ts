@@ -1,13 +1,13 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthResponseDTO, LoginDTO, MessageResponseDTO, RegisterDTO, TokenDTO } from './dtos';
+import { AuthResponseDTO, LoginDTO, MessageResponseDTO, RegisterDTO, TokenDTO } from '../dtos';
 import { DataSource, DeepPartial, Repository } from 'typeorm';
-import { UserEntity } from './entity/user.entity';
+import { UserEntity } from '../entity/user.entity';
 import { generateUUID } from '@/utils/uuid.util';
 import { comparePassword, hashPassword } from '@/utils/bcrypt.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserAuthSessionEntity } from './entity/userAuthSession.entity';
+import { UserAuthSessionEntity } from '../entity/userAuthSession.entity';
 import { JwtService } from '@nestjs/jwt';
-import { JWTRefresh, RefreshPayload, TokenPayload } from './types';
+import { JWTRefresh, RefreshPayload, TokenPayload } from '../types';
 import { jwtRefreshTokenConfig } from '@/config/jwt.config';
 import * as jwt from 'jsonwebtoken';
 
