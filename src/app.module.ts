@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { databaseConfig } from './config/database.config';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './module/auth/auth.module';
+import { UserModule } from './module/user/user.module';
 
 @Module({
     imports: [
@@ -18,7 +18,7 @@ import { AuthModule } from './module/auth/auth.module';
             useFactory: () => databaseConfig(),
         }),
         // Import modules
-        AuthModule,
+        UserModule,
     ],
     controllers: [AppController],
     providers: [],
