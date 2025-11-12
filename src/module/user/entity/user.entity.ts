@@ -13,6 +13,9 @@ import {
     PrimaryColumn,
     PrimaryGeneratedColumn,
 } from 'typeorm';
+import { PaymentInfomationEntity } from './paymentInfomation.entity';
+import { ArticleEntity } from '@/module/article/entity/article.entity';
+import { ArticleCommentEntity } from '@/module/article/entity/articleComment.entity';
 @Index(['uuid', 'username'])
 @Entity('users')
 export class UserEntity extends BaseEntityTimestamp {
@@ -40,6 +43,10 @@ export class UserEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Email người dùng' })
     public email: string;
 
+    @Column({ nullable: true })
+    @ApiProperty({ description: 'Số điện thoại người dùng' })
+    public phone: string;
+
     @Exclude()
     @Column({
         type: 'smallint',
@@ -65,6 +72,18 @@ export class UserEntity extends BaseEntityTimestamp {
     @ManyToOne(() => RoleEntity, (role) => role.users, { eager: true })
     @JoinColumn({ name: 'role_id', referencedColumnName: 'id' })
     role: RoleEntity;
+
+    @OneToMany(() => PaymentInfomationEntity, (payment_information) => payment_information.user)
+    @ApiProperty({ description: 'Thông tin thanh toán' })
+    payment_informations: PaymentInfomationEntity[];
+
+    @OneToMany(() => ArticleEntity, (article) => article.user)
+    @ApiProperty({ description: 'Bài viết' })
+    articles: ArticleEntity[];
+
+    @OneToMany(() => ArticleCommentEntity, (comment) => comment.user)
+    @ApiProperty({ description: 'Bình luận bài viết' })
+    comments: ArticleCommentEntity[];
 
     toJSON() {
         return {
