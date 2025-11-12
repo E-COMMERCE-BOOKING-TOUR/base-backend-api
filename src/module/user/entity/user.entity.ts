@@ -16,6 +16,7 @@ import {
 import { PaymentInfomationEntity } from './paymentInfomation.entity';
 import { ArticleEntity } from '@/module/article/entity/article.entity';
 import { ArticleCommentEntity } from '@/module/article/entity/articleComment.entity';
+import { ReviewEntity } from '@/module/review/entity/review.entity';
 @Index(['uuid', 'username'])
 @Entity('users')
 export class UserEntity extends BaseEntityTimestamp {
@@ -84,6 +85,10 @@ export class UserEntity extends BaseEntityTimestamp {
     @OneToMany(() => ArticleCommentEntity, (comment) => comment.user)
     @ApiProperty({ description: 'Bình luận bài viết' })
     comments: ArticleCommentEntity[];
+
+    @OneToMany(() => ReviewEntity, (review) => review.user)
+    @ApiProperty({ description: 'Đánh giá' })
+    reviews: ReviewEntity[];
 
     toJSON() {
         return {
