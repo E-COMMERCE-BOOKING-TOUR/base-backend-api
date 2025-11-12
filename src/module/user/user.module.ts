@@ -9,6 +9,9 @@ import { jwtConfig } from '@/config/jwt.config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { JwtRefreshStrategy } from './strategy/jwt-refresh.strategy';
+import { AdminUserController } from './controller/admin-user.controller';
+import { UserController } from './controller/user.controller';
+import { UserService } from './service/user.service';
 
 @Module({
     imports: [
@@ -16,7 +19,7 @@ import { JwtRefreshStrategy } from './strategy/jwt-refresh.strategy';
         PassportModule,
         JwtModule.register(jwtConfig()),
     ],
-    controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
+    controllers: [AuthController, AdminUserController, UserController],
+    providers: [AuthService, JwtStrategy, JwtRefreshStrategy, UserService],
 })
 export class UserModule { }
