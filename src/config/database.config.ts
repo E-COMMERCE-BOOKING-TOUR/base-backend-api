@@ -12,7 +12,7 @@ export const databaseConfig = (): DataSourceOptions => ({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     entities: [
-        // __dirname + '/../entities/*.entity{.ts,.js}',
+        __dirname + '/../common/entity/*.entity{.ts,.js}',
         __dirname + '/../module/**/entity/*.entity{.ts,.js}',
     ],
     synchronize: false,
