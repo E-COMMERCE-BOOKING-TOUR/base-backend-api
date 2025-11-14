@@ -60,6 +60,8 @@ export class AuthService {
             const token = await this.getToken({
                 uuid: userInstance.uuid,
                 full_name: userInstance.username,
+                phone: userInstance.phone,
+                email: userInstance.email,
             });
             return new AuthResponseDTO({
                 error: false,
@@ -95,6 +97,8 @@ export class AuthService {
         const token = await this.getToken({
             uuid: user.uuid,
             full_name: user.username,
+            phone: user.phone,
+            email: user.email,
         });
 
         return new AuthResponseDTO({

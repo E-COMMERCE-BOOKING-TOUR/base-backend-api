@@ -1,6 +1,8 @@
 export interface TokenPayload {
     uuid: string;
     full_name: string;
+    phone?: string;
+    email?: string;
 }
 
 export interface RefreshPayload {
