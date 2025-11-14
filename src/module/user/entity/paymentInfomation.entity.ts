@@ -3,6 +3,7 @@ import { UserEntity } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { BookingEntity } from '@/module/booking/entity/booking.entity';
 
 @Entity('payment_infomations')
 export class PaymentInfomationEntity extends BaseEntityTimestamp {
@@ -57,4 +58,8 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Người dùng' })
     user: UserEntity;
+
+    @OneToMany(() => BookingEntity, (booking) => booking.payment_information)
+    @ApiProperty({ description: 'Danh sách các đơn đặt tour có thông tin thanh toán này' })
+    bookings: BookingEntity[];
 }

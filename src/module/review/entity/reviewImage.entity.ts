@@ -18,7 +18,8 @@ export class ReviewImageEntity extends BaseEntityTimestamp {
 
     @Column({
         type: 'tinyint',
-        default: 0,
+        nullable: true,
+        default: null,
     })
     @ApiProperty({ description: 'Số thứ tự' })
     sort_no: number;

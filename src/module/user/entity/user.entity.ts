@@ -8,6 +8,7 @@ import {
     Entity,
     Index,
     JoinColumn,
+    ManyToMany,
     ManyToOne,
     OneToMany,
     PrimaryColumn,
@@ -17,6 +18,10 @@ import { PaymentInfomationEntity } from './paymentInfomation.entity';
 import { ArticleEntity } from '@/module/article/entity/article.entity';
 import { ArticleCommentEntity } from '@/module/article/entity/articleComment.entity';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
+import { CountryEntity } from '@/common/entity/country.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
+import { SupplierEntity } from './supplier.entity';
+import { BookingEntity } from '@/module/booking/entity/booking.entity';
 @Index(['uuid', 'username'])
 @Entity('users')
 export class UserEntity extends BaseEntityTimestamp {
@@ -90,6 +95,28 @@ export class UserEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Đánh giá' })
     reviews: ReviewEntity[];
 
+    @ManyToOne(() => CountryEntity, (country) => country.users)
+    @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
+    @ApiProperty({ description: 'Quốc gia' })
+    country: CountryEntity;
+
+    @ManyToMany(() => TourEntity, (tour) => tour.users_favorites)
+    @ApiProperty({ description: 'Danh sách các tour yêu thích' })
+    tours_favorites: TourEntity[];
+
+    @ManyToMany(() => ArticleEntity, (article) => article.users_like)
+    @ApiProperty({ description: 'Danh sách các bài viết thích' })
+    articles_like: ArticleEntity[];
+
+    @ManyToOne(() => SupplierEntity, (supplier) => supplier.users, { nullable: true })
+    @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
+    @ApiProperty({ description: 'Nhà cung cấp' })
+    supplier: SupplierEntity | null;
+
+    @OneToMany(() => BookingEntity, (booking) => booking.user)
+    @ApiProperty({ description: 'Danh sách các đơn đặt tour' })
+    bookings: BookingEntity[];
+    
     toJSON() {
         return {
             uuid: this.uuid,
