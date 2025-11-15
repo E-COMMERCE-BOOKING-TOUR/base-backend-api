@@ -23,8 +23,10 @@
     "migration:generate": "npm run typeorm -- -d ./src/config/typeorm-cli.config.ts migration:generate ./src/database/migration/$npm_config_name",
     "migration:create": "npm run typeorm -- migration:create ./src/database/migration/$npm_config_name",
     "migration:revert": "npm run typeorm -- -d ./src/config/typeorm-cli.config.ts migration:revert",
-    "db:create": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:create",
-    "db:drop": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop"
+    "db:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs db:create -d ./src/data-source.ts",
+    "db:drop": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs db:drop -d ./src/data-source.ts",
+    "seed": "ts-node -r tsconfig-paths/register ./src/database/seed.ts",
+    "db:fresh": "ts-node -r tsconfig-paths/register ./src/database/fresh.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
