@@ -8,7 +8,7 @@ import {
     IsOptional,
     IsString,
     MinLength,
-    Matches,
+    MaxLength,
     Min,
     ValidateNested,
     IsNumber,
@@ -69,18 +69,21 @@ export class BookingDTO {
 
     @IsString()
     @IsNotEmpty()
-    @Matches(/^(\+?\d{9,15})$/, {
-        message:
-            'Số điện thoại chỉ gồm số, có thể bắt đầu bằng dấu +, độ dài 9-15 ký tự.',
-    })
-    @ApiProperty({ description: 'SĐT người đặt tour', example: '+84901234567' })
+    @MinLength(6)
+    @MaxLength(32)
+    @ApiProperty({ description: 'SĐT người đặt tour', example: '0901234567' })
     contact_phone: string;
 
+    @IsOptional()
     @Type(() => Number)
     @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 2 })
     @Min(0)
-    @ApiProperty({ description: 'Tổng tiền đặt tour', example: 2500000 })
-    total_amount: number;
+    @ApiProperty({
+        description: 'Tổng tiền đặt tour',
+        example: 2500000,
+        required: false,
+    })
+    total_amount?: number;
 
     @IsOptional()
     @IsEnum(BookingStatus)
@@ -139,4 +142,83 @@ export class BookingDTO {
         ],
     })
     booking_items: BookingItemDTO[];
+}
+
+export class BookingSummaryDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty()
+    contact_name: string;
+
+    @ApiProperty()
+    contact_email: string;
+
+    @ApiProperty()
+    contact_phone: string;
+
+    @ApiProperty()
+    total_amount: number;
+
+    @ApiProperty({ enum: BookingStatus })
+    status: BookingStatus;
+
+    @ApiProperty({ enum: PaymentStatus })
+    payment_status: PaymentStatus;
+
+    @ApiProperty()
+    user_id: number;
+
+    @ApiProperty()
+    currency_id: number;
+
+    @ApiProperty()
+    booking_payment_id: number;
+
+    constructor(partial: Partial<BookingSummaryDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class BookingItemDetailDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty()
+    total_amount: number;
+
+    @ApiProperty()
+    unit_price: number;
+
+    @ApiProperty()
+    quantity: number;
+
+    @ApiProperty()
+    variant_id: number;
+
+    @ApiProperty()
+    pax_type_id: number;
+
+    @ApiProperty()
+    tour_session_id: number;
+
+    constructor(partial: Partial<BookingItemDetailDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class BookingDetailDTO extends BookingSummaryDTO {
+    @ApiProperty()
+    payment_information_id: number;
+
+    @ApiProperty()
+    tour_inventory_hold_id: number;
+
+    @ApiProperty({ type: [BookingItemDetailDTO] })
+    booking_items: BookingItemDetailDTO[];
+
+    constructor(partial: Partial<BookingDetailDTO>) {
+        super(partial);
+        Object.assign(this, partial);
+    }
 }
