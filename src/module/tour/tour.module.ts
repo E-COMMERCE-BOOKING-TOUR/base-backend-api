@@ -1,12 +1,45 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { TourEntity } from "./entity/tour.entity";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { TourEntity } from './entity/tour.entity';
+import { TourImageEntity } from './entity/tourImage.entity';
+import { TourVariantEntity } from './entity/tourVariant.entity';
+import { TourSessionEntity } from './entity/tourSession.entity';
+import { TourPolicyEntity } from './entity/tourPolicy.entity';
+import { TourPolicyRuleEntity } from './entity/tourPolicyRule.entity';
+import { TourPriceRuleEntity } from './entity/tourPriceRule.entity';
+import { TourRulePaxTypePriceEntity } from './entity/tourRulePaxTypePrice.entity';
+import { TourVariantPaxTypePriceEntity } from './entity/tourVariantPaxTypePrice.entity';
+import { TourPaxTypeEntity } from './entity/tourPaxType.entity';
+import { CurrencyEntity } from '@/common/entity/currency.entity';
+import { CountryEntity } from '@/common/entity/country.entity';
+import { DivisionEntity } from '@/common/entity/division.entity';
+import { SupplierEntity } from '@/module/user/entity/supplier.entity';
+import { TourCategoryEntity } from './entity/tourCategory.entity';
+import { TourService } from './service/tour.service';
+import { TourController } from './controller/tour.controller';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([TourEntity]),
+        TypeOrmModule.forFeature([
+            TourEntity,
+            TourImageEntity,
+            TourVariantEntity,
+            TourSessionEntity,
+            TourPolicyEntity,
+            TourPolicyRuleEntity,
+            TourPriceRuleEntity,
+            TourRulePaxTypePriceEntity,
+            TourVariantPaxTypePriceEntity,
+            TourPaxTypeEntity,
+            CurrencyEntity,
+            CountryEntity,
+            DivisionEntity,
+            SupplierEntity,
+            TourCategoryEntity,
+        ]),
     ],
-    controllers: [],
-    providers: [],
+    controllers: [TourController],
+    providers: [TourService],
+    exports: [TourService],
 })
-export class TourModule { }
+export class TourModule {}

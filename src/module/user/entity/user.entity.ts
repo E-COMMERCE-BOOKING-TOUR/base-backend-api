@@ -33,7 +33,7 @@ export class UserEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'UUID người dùng' })
     public uuid: string;
 
-    @PrimaryColumn()
+    @Column({ type: 'varchar', length: 255, unique: true })
     @ApiProperty({ description: 'Tên tài khoản' })
     public username: string;
 
