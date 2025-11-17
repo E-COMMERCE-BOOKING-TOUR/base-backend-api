@@ -6,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './module/user/user.module';
 import { BookingModule } from './module/booking/booking.module';
 import { ArticleModule } from './module/article/article.module';
+import { TourModule } from './module/tour/tour.module';
+import { ReviewModule } from './module/review/review.module';
 
 @Module({
     imports: [
@@ -23,8 +25,10 @@ import { ArticleModule } from './module/article/article.module';
         UserModule,
         BookingModule,
         ArticleModule,
+        TourModule,
+        ReviewModule,
     ],
     controllers: [AppController],
     providers: [],
 })
-export class AppModule { }
+export class AppModule {}

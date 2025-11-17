@@ -4,7 +4,7 @@ import { ArticleService } from '../service/article.service';
 import { ArticleDTO, ArticleImageDTO, ArticleDetailDTO, ArticleSummaryDTO, ArticleCommentDetailDTO, ArticleImageDetailDTO } from '../dto/article.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 
-@ApiTags('article')
+@ApiTags('Article')
 @Controller('article')
 export class ArticleController {
     constructor(private readonly articleService: ArticleService) {}
