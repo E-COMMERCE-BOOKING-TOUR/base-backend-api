@@ -6,6 +6,7 @@ import {
     NotificationDTO,
     NotificationSummaryDTO,
     NotificationDetailDTO,
+    NotificationType,
 } from '../dtos/notification.dto';
 
 export class NotificationService {
@@ -25,7 +26,7 @@ export class NotificationService {
                 new NotificationSummaryDTO({
                     id: n.id,
                     title: n.title,
-                    type: n.type,
+                    type: n.type as NotificationType,
                     is_error: !!n.is_error,
                     is_user: !!n.is_user,
                 }),
@@ -51,7 +52,7 @@ export class NotificationService {
                 new NotificationSummaryDTO({
                     id: n.id,
                     title: n.title,
-                    type: n.type,
+                    type: n.type as NotificationType,
                     is_error: !!n.is_error,
                     is_user: !!n.is_user,
                 }),
@@ -67,7 +68,7 @@ export class NotificationService {
         return new NotificationDetailDTO({
             id: n.id,
             title: n.title,
-            type: n.type,
+            type: n.type as NotificationType,
             is_error: !!n.is_error,
             is_user: !!n.is_user,
             description: n.description,

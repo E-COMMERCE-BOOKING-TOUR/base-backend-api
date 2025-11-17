@@ -10,6 +10,23 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export enum NotificationType {
+    welcome = 'welcome',
+    feature = 'feature',
+    promotion = 'promotion',
+    payment = 'payment',
+    booking = 'booking',
+    reminder = 'reminder',
+    review = 'review',
+    recommendation = 'recommendation',
+    profile = 'profile',
+    alert = 'alert',
+    update = 'update',
+    reward = 'reward',
+    maintenance = 'maintenance',
+    policy = 'policy',
+}
+
 @ApiSchema({ name: 'CreateNotificationRequest' })
 export class NotificationDTO {
     @IsString()
@@ -29,7 +46,7 @@ export class NotificationDTO {
     @IsNotEmpty()
     @MaxLength(20)
     @ApiProperty({ description: 'Loại thông báo' })
-    type: string;
+    type: NotificationType;
 
     @IsOptional()
     @IsBoolean()
@@ -68,7 +85,7 @@ export class NotificationSummaryDTO {
     title: string;
 
     @ApiProperty()
-    type: string;
+    type: NotificationType;
 
     @ApiProperty()
     is_error: boolean;
