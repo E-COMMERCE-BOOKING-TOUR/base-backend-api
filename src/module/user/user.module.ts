@@ -11,15 +11,33 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { JwtRefreshStrategy } from './strategy/jwt-refresh.strategy';
 import { AdminUserController } from './controller/admin-user.controller';
 import { UserController } from './controller/user.controller';
+import { NotificationController } from './controller/notification.controller';
 import { UserService } from './service/user.service';
+import { NotificationEntity } from './entity/notification.entity';
+import { NotificationService } from './service/notification.service';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserEntity, UserAuthSessionEntity]),
+        TypeOrmModule.forFeature([
+            UserEntity,
+            UserAuthSessionEntity,
+            NotificationEntity,
+        ]),
         PassportModule,
         JwtModule.register(jwtConfig()),
     ],
-    controllers: [AuthController, AdminUserController, UserController],
-    providers: [AuthService, JwtStrategy, JwtRefreshStrategy, UserService],
+    controllers: [
+        AuthController,
+        AdminUserController,
+        UserController,
+        NotificationController,
+    ],
+    providers: [
+        AuthService,
+        JwtStrategy,
+        JwtRefreshStrategy,
+        UserService,
+        NotificationService,
+    ],
 })
-export class UserModule { }
+export class UserModule {}
