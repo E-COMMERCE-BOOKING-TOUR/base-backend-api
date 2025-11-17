@@ -140,3 +140,36 @@ export class ArticleDetailDTO extends ArticleSummaryDTO {
         Object.assign(this, partial);
     }
 }
+
+export class UserArticlePopularDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'Introducing the charm of the paradise' })
+    title: string;
+
+    @ApiProperty({ example: 'Would you like to spend an extraordinary moment...' })
+    description: string;
+
+    @ApiProperty({ example: '/assets/images/travel.jpg' })
+    image: string;
+
+    @ApiProperty({ type: [String], example: ['#travel', '#beach'] })
+    tags: string[];
+
+    @ApiProperty({ example: '2 days ago', required: false })
+    timestamp?: string;
+
+    @ApiProperty({ example: 150 })
+    views: number;
+
+    @ApiProperty({ example: 25 })
+    likes: number;
+
+    @ApiProperty({ example: 10 })
+    comments: number;
+
+    constructor(partial: Partial<UserArticlePopularDTO>) {
+        Object.assign(this, partial);
+    }
+}

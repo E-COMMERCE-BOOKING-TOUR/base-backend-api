@@ -17,6 +17,8 @@ import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { TourCategoryEntity } from './entity/tourCategory.entity';
 import { TourService } from './service/tour.service';
 import { TourController } from './controller/tour.controller';
+import { UserTourService } from './service/userTour.service';
+import { UserTourController } from './controller/userTour.controller';
 
 @Module({
     imports: [
@@ -38,8 +40,8 @@ import { TourController } from './controller/tour.controller';
             TourCategoryEntity,
         ]),
     ],
-    controllers: [TourController],
-    providers: [TourService],
-    exports: [TourService],
+    controllers: [TourController, UserTourController],
+    providers: [TourService, UserTourService],
+    exports: [TourService, UserTourService],
 })
 export class TourModule {}

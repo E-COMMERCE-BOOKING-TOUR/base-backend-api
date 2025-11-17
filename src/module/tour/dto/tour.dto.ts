@@ -482,3 +482,42 @@ export class TourDetailDTO extends TourSummaryDTO {
         Object.assign(this, partial);
     }
 }
+
+export class UserTourPopularDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'The Song Apartment Vung Tau Sea view' })
+    title: string;
+
+    @ApiProperty({ example: 'Vung Tau, Vietnam' })
+    location: string;
+
+    @ApiProperty({ example: '/assets/images/travel.jpg' })
+    image: string;
+
+    @ApiProperty({ example: 8.4 })
+    rating: number;
+
+    @ApiProperty({ example: 44 })
+    reviews: number;
+
+    @ApiProperty({ example: 'Very good' })
+    ratingText: string;
+
+    @ApiProperty({ example: '2-3 people' })
+    capacity: string;
+
+    @ApiProperty({ example: 6248000, required: false })
+    originalPrice?: number;
+
+    @ApiProperty({ example: 3248000 })
+    currentPrice: number;
+
+    @ApiProperty({ type: [String], example: ['tour item'] })
+    tags: string[];
+
+    constructor(partial: Partial<UserTourPopularDTO>) {
+        Object.assign(this, partial);
+    }
+}

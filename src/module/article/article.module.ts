@@ -5,6 +5,8 @@ import { ArticleImageEntity } from './entity/articleImage.entity';
 import { ArticleCommentEntity } from './entity/articleComment.entity';
 import { ArticleService } from './service/article.service';
 import { ArticleController } from './controller/article.controller';
+import { UserArticleService } from './service/userArticle.service';
+import { UserArticleController } from './controller/userArticle.controller';
 import { UserEntity } from '../user/entity/user.entity';
 
 @Module({
@@ -16,8 +18,8 @@ import { UserEntity } from '../user/entity/user.entity';
             UserEntity,
         ]),
     ],
-    controllers: [ArticleController],
-    providers: [ArticleService],
-    exports: [ArticleService],
+    controllers: [ArticleController, UserArticleController],
+    providers: [ArticleService, UserArticleService],
+    exports: [ArticleService, UserArticleService],
 })
 export class ArticleModule { }
