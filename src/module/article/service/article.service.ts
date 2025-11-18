@@ -25,25 +25,23 @@ export class ArticleService {
         private readonly userRepository: Repository<UserEntity>,
     ) {}
 
-    async getAllArticles(): Promise<ArticleSummaryDTO[]> {
+    async getAllArticles(): Promise<ArticleDTO[]> {
         const articles = await this.articleRepository.find({
-            relations: ['user'],
+            relations: ['user', 'images'],
             order: { created_at: 'DESC' },
         });
         return articles.map(
             (a) =>
-                new ArticleSummaryDTO({
-                    id: a.id,
+                ({
                     title: a.title,
-                    count_views: a.count_views,
-                    count_likes: a.count_likes,
-                    count_comments: a.count_comments,
+                    content: a.content,
                     is_visible: a.is_visible,
-                    user: a.user,
+                    user_id: a.user.id,
+                    images: (a.images ?? []).map((img) => ({ image_url: img.image_url })),
                     created_at: a.created_at,
                     updated_at: a.updated_at,
                     deleted_at: a.deleted_at ?? undefined,
-                } as Partial<ArticleSummaryDTO>),
+                } as ArticleDTO),
         );
     }
 

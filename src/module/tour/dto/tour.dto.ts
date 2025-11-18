@@ -59,6 +59,10 @@ export class TourImageDTO {
     @IsBoolean()
     @ApiProperty({ description: 'Ảnh cover', required: false, example: false })
     is_cover?: boolean;
+
+    constructor(partial: Partial<TourImageDTO>) {
+        Object.assign(this, partial);
+    }
 }
 
 @ApiSchema({ name: 'CreateTourRequest' })
@@ -202,6 +206,10 @@ export class TourDTO {
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
+
+    constructor(partial: Partial<TourDTO>) {
+        Object.assign(this, partial);
+    }
 }
 
 export class TourVariantDTO {
