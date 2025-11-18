@@ -13,6 +13,8 @@ import {
     MaxLength,
     ValidateNested,
     IsDateString,
+    IsDate,
+    Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -42,7 +44,6 @@ export enum PriceType {
 export class TourImageDTO {
     @IsString()
     @IsNotEmpty()
-    @MinLength(5)
     @ApiProperty({
         description: 'URL ảnh tour',
         example: 'https://example.com/image.jpg',
@@ -70,13 +71,11 @@ export class TourDTO {
 
     @IsString()
     @IsNotEmpty()
-    @MinLength(10)
     @ApiProperty({ description: 'Mô tả tour' })
     description: string;
 
     @IsString()
     @IsNotEmpty()
-    @MinLength(5)
     @ApiProperty({ description: 'Tóm tắt tour' })
     summary: string;
 
@@ -111,7 +110,7 @@ export class TourDTO {
     @IsOptional()
     @IsDateString()
     @ApiProperty({ description: 'Ngày công bố tour', required: false })
-    published_at?: string;
+    published_at?: Date;
 
     @IsOptional()
     @IsEnum(TourStatus)
@@ -185,6 +184,24 @@ export class TourDTO {
         type: [TourImageDTO],
     })
     images?: TourImageDTO[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class TourVariantDTO {
@@ -235,6 +252,24 @@ export class TourVariantDTO {
     @Min(1)
     @ApiProperty({ description: 'ID tiền tệ' })
     currency_id: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class TourSessionDTO {
@@ -245,15 +280,17 @@ export class TourSessionDTO {
 
     @IsDateString()
     @ApiProperty({ description: 'Ngày chạy' })
-    session_date: string;
+    session_date: Date;
 
     @IsOptional()
     @IsString()
+    @Matches(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
     @ApiProperty({ description: 'Giờ bắt đầu (HH:mm:ss)', required: false })
     start_time?: string;
 
     @IsOptional()
     @IsString()
+    @Matches(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
     @ApiProperty({ description: 'Giờ kết thúc (HH:mm:ss)', required: false })
     end_time?: string;
 
@@ -270,6 +307,24 @@ export class TourSessionDTO {
         default: TourSessionStatus.open,
     })
     status: TourSessionStatus;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class TourPolicyRuleDTO {
@@ -347,11 +402,11 @@ export class TourPriceRuleDTO {
 
     @IsDateString()
     @ApiProperty({ description: 'Ngày bắt đầu hiệu lực rule' })
-    start_date: string;
+    start_date: Date;
 
     @IsDateString()
     @ApiProperty({ description: 'Ngày kết thúc hiệu lực rule' })
-    end_date: string;
+    end_date: Date;
 
     @IsInt()
     @Min(0)
@@ -440,6 +495,24 @@ export class TourSummaryDTO {
 
     @ApiProperty()
     supplier_id: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 
     constructor(partial: Partial<TourSummaryDTO>) {
         Object.assign(this, partial);

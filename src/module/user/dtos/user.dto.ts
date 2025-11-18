@@ -4,9 +4,9 @@ import {
     IsNotEmpty,
     IsOptional,
     IsString,
-    Matches,
     MinLength,
     IsEmail,
+    IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -24,9 +24,7 @@ export enum LoginType {
 @ApiSchema({ name: 'CreateUserRequest' })
 export class UserDTO {
     @IsString()
-    @MinLength(5)
     @IsNotEmpty()
-    @Matches(/^[a-zA-Z0-9]+$/)
     @ApiProperty({ description: 'Tên tài khoản' })
     username: string;
 
@@ -87,13 +85,30 @@ export class UserDTO {
     @IsInt()
     @ApiProperty({ description: 'ID vai trò', required: false })
     role_id?: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
+    uuid: string;
 }
 
 export class UpdateUserDTO {
     @IsOptional()
     @IsString()
-    @MinLength(5)
-    @Matches(/^[a-zA-Z0-9]+$/)
     @ApiProperty({ description: 'Tên tài khoản', required: false })
     username?: string;
 
@@ -154,6 +169,12 @@ export class UpdateUserDTO {
     @IsInt()
     @ApiProperty({ description: 'ID vai trò', required: false })
     role_id?: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
 }
 
 export class UserSummaryDTO {
@@ -189,6 +210,24 @@ export class UserSummaryDTO {
 
     @ApiProperty({ required: false })
     role_id?: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 
     constructor(partial: Partial<UserSummaryDTO>) {
         Object.assign(this, partial);

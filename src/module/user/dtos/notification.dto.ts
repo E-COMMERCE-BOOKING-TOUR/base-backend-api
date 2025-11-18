@@ -2,6 +2,7 @@ import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import {
     IsArray,
     IsBoolean,
+    IsDate,
     IsNotEmpty,
     IsOptional,
     IsString,
@@ -75,6 +76,24 @@ export class NotificationDTO {
         type: [Number],
     })
     user_ids?: number[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class NotificationSummaryDTO {
@@ -95,6 +114,24 @@ export class NotificationSummaryDTO {
 
     @ApiProperty({ type: [Number] })
     user_ids: number[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 
     constructor(partial: Partial<NotificationSummaryDTO>) {
         Object.assign(this, partial);

@@ -83,9 +83,12 @@ export class TourService {
                     tax: t.tax ?? 0,
                     min_pax: t.min_pax,
                     max_pax: t.max_pax ?? undefined,
-                    currency_id: t.currency?.id,
-                    supplier_id: t.supplier?.id,
-                }),
+                    currency: t.currency,
+                    supplier: t.supplier,
+                    created_at: t.created_at,
+                    updated_at: t.updated_at,
+                    deleted_at: t.deleted_at ?? undefined,
+                } as Partial<TourSummaryDTO>),
         );
     }
 
@@ -106,9 +109,12 @@ export class TourService {
                     tax: t.tax ?? 0,
                     min_pax: t.min_pax,
                     max_pax: t.max_pax ?? undefined,
-                    currency_id: t.currency?.id,
-                    supplier_id: t.supplier?.id,
-                }),
+                    currency: t.currency,
+                    supplier: t.supplier,
+                    created_at: t.created_at,
+                    updated_at: t.updated_at,
+                    deleted_at: t.deleted_at ?? undefined,
+                } as Partial<TourSummaryDTO>),
         );
     }
 
@@ -135,16 +141,19 @@ export class TourService {
             tax: t.tax ?? 0,
             min_pax: t.min_pax,
             max_pax: t.max_pax ?? undefined,
-            currency_id: t.currency?.id,
-            supplier_id: t.supplier?.id,
+            currency: t.currency,
+            supplier: t.supplier,
             description: t.description,
             summary: t.summary,
             map_url: t.map_url ?? undefined,
             slug: t.slug,
             address: t.address,
-            country_id: t.country?.id,
-            division_id: t.division?.id,
-            tour_category_ids: (t.tour_categories ?? []).map((c) => c.id),
+            country: t.country,
+            division: t.division,
+            tour_categories: t.tour_categories ?? [],
+            created_at: t.created_at,
+            updated_at: t.updated_at,
+            deleted_at: t.deleted_at ?? undefined,
             images: (t.images ?? []).map(
                 (img) =>
                     new TourImageDetailDTO({
@@ -160,9 +169,9 @@ export class TourService {
                         id: v.id,
                         name: v.name,
                         status: v.status as TourVariantStatus,
-                    }),
+                    } as Partial<TourVariantSummaryDTO>),
             ),
-        });
+        } as Partial<TourDetailDTO>);
     }
 
     async createTour(dto: TourDTO): Promise<TourDetailDTO> {
@@ -303,7 +312,14 @@ export class TourService {
         return (res.affected ?? 0) > 0;
     }
 
-    async addVariant(dto: TourVariantDTO): Promise<TourVariantSummaryDTO> {
+    async addVariant(
+        tourId: number,
+        dto: TourVariantDTO,
+    ): Promise<TourVariantSummaryDTO> {
+        const tour = await this.tourRepository.findOne({
+            where: { id: tourId },
+        });
+        if (!tour) throw new Error('Tour not found');
         const variant = await this.variantRepository.save(
             this.variantRepository.create({
                 name: dto.name,
@@ -313,7 +329,7 @@ export class TourService {
                 tax_included: !!dto.tax_included,
                 cutoff_hours: dto.cutoff_hours,
                 status: dto.status,
-                tour: { id: dto.tour_id },
+                tour: { id: tourId },
                 currency: { id: dto.currency_id },
             }),
         );

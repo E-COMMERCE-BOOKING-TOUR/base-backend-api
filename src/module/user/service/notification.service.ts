@@ -59,20 +59,22 @@ export class NotificationService {
 
     async getAllNotifications(): Promise<NotificationSummaryDTO[]> {
         const list = await this.notificationRepository.find({
+            relations: ['users'],
             order: { created_at: 'DESC' },
         });
-        const mapped = await Promise.all(
-            list.map(
-                async (n) =>
-                    new NotificationSummaryDTO({
-                        id: n.id,
-                        title: n.title,
-                        type: n.type as NotificationType,
-                        is_error: !!n.is_error,
-                        is_user: !!n.is_user,
-                        user_ids: await this.getUserIdsByNotificationId(n.id),
-                    }),
-            ),
+        const mapped = list.map(
+            (n) =>
+                new NotificationSummaryDTO({
+                    id: n.id,
+                    title: n.title,
+                    type: n.type as NotificationType,
+                    is_error: !!n.is_error,
+                    is_user: !!n.is_user,
+                    users: n.users ?? [],
+                    created_at: n.created_at,
+                    updated_at: n.updated_at,
+                    deleted_at: n.deleted_at ?? undefined,
+                } as Partial<NotificationSummaryDTO>),
         );
         return mapped;
     }
@@ -88,28 +90,32 @@ export class NotificationService {
         if (!notifIds.length) return [];
         const list = await this.notificationRepository.find({
             where: { id: In(notifIds) },
+            relations: ['users'],
             order: { created_at: 'DESC' },
         });
-        const mapped = await Promise.all(
-            list.map(
-                async (n) =>
-                    new NotificationSummaryDTO({
-                        id: n.id,
-                        title: n.title,
-                        type: n.type as NotificationType,
-                        is_error: !!n.is_error,
-                        is_user: !!n.is_user,
-                        user_ids: await this.getUserIdsByNotificationId(n.id),
-                    }),
-            ),
+        const mapped = list.map(
+            (n) =>
+                new NotificationSummaryDTO({
+                    id: n.id,
+                    title: n.title,
+                    type: n.type as NotificationType,
+                    is_error: !!n.is_error,
+                    is_user: !!n.is_user,
+                    users: n.users ?? [],
+                    created_at: n.created_at,
+                    updated_at: n.updated_at,
+                    deleted_at: n.deleted_at ?? undefined,
+                } as Partial<NotificationSummaryDTO>),
         );
         return mapped;
     }
 
     async getById(id: number): Promise<NotificationDetailDTO | null> {
-        const n = await this.notificationRepository.findOne({ where: { id } });
+        const n = await this.notificationRepository.findOne({
+            where: { id },
+            relations: ['users'],
+        });
         if (!n) return null;
-        const userIds = await this.getUserIdsByNotificationId(id);
         return new NotificationDetailDTO({
             id: n.id,
             title: n.title,
@@ -117,8 +123,11 @@ export class NotificationService {
             is_error: !!n.is_error,
             is_user: !!n.is_user,
             description: n.description,
-            user_ids: userIds,
-        });
+            users: n.users ?? [],
+            created_at: n.created_at,
+            updated_at: n.updated_at,
+            deleted_at: n.deleted_at ?? undefined,
+        } as Partial<NotificationDetailDTO>);
     }
 
     async create(dto: NotificationDTO): Promise<NotificationDetailDTO> {

@@ -1,4 +1,5 @@
 import { UserEntity } from '../entity/user.entity';
+import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import {
@@ -12,6 +13,8 @@ import {
 import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
+import { ArticleEntity } from '@/module/article/entity/article.entity';
 
 export class UserService {
     constructor(
@@ -35,25 +38,51 @@ export class UserService {
                     phone: u.phone ?? undefined,
                     status: u.status as UserStatus,
                     login_type: u.login_type as LoginType,
-                    country_id: u.country?.id ?? undefined,
-                    supplier_id: u.supplier?.id ?? null,
-                    role_id: u.role?.id ?? undefined,
-                }),
+                    country: u.country ?? undefined,
+                    supplier: u.supplier ?? null,
+                    role: u.role ?? undefined,
+                    created_at: u.created_at,
+                    updated_at: u.updated_at,
+                    deleted_at: u.deleted_at ?? undefined,
+                } as Partial<UserSummaryDTO>),
         );
     }
 
     async getUserById(id: number): Promise<UserDetailDTO | null> {
         const u = await this.userRepository.findOne({
             where: { id },
-            relations: [
-                'country',
-                'supplier',
-                'role',
-                'tours_favorites',
-                'articles_like',
-            ],
+            relations: ['country', 'supplier', 'role'],
         });
         if (!u) return null;
+        const favRows: Array<{ tour_id: number }> =
+            await this.userRepository.query(
+                'SELECT tour_id FROM tour_users_favorites WHERE user_id = ?',
+                [id],
+            );
+        const likeRows: Array<{ article_id: number }> =
+            await this.userRepository.query(
+                'SELECT article_id FROM user_article_likes WHERE user_id = ?',
+                [id],
+            );
+        const tourIds = Array.from(
+            new Set(favRows.map((r) => Number(r.tour_id))),
+        );
+        const articleIds = Array.from(
+            new Set(likeRows.map((r) => Number(r.article_id))),
+        );
+        const tourRepo = this.userRepository.manager.getRepository(TourEntity);
+        const articleRepo =
+            this.userRepository.manager.getRepository(ArticleEntity);
+        const tours = tourIds.length
+            ? await tourRepo.find({
+                  where: tourIds.map((tid) => ({ id: tid })),
+              })
+            : [];
+        const articles = articleIds.length
+            ? await articleRepo.find({
+                  where: articleIds.map((aid) => ({ id: aid })),
+              })
+            : [];
         return new UserDetailDTO({
             id: u.id,
             uuid: u.uuid,
@@ -63,17 +92,21 @@ export class UserService {
             phone: u.phone ?? undefined,
             status: u.status as UserStatus,
             login_type: u.login_type as LoginType,
-            country_id: u.country?.id ?? undefined,
-            supplier_id: u.supplier?.id ?? null,
-            role_id: u.role?.id ?? undefined,
-            tour_favorite_ids: (u.tours_favorites ?? []).map((t) => t.id),
-            article_like_ids: (u.articles_like ?? []).map((a) => a.id),
-        });
+            country: u.country ?? undefined,
+            supplier: u.supplier ?? null,
+            role: u.role ?? undefined,
+            tours_favorites: tours,
+            articles_like: articles,
+            created_at: u.created_at,
+            updated_at: u.updated_at,
+            deleted_at: u.deleted_at ?? undefined,
+        } as Partial<UserDetailDTO>);
     }
 
     async createUser(dto: UserDTO): Promise<UserDetailDTO> {
         const user = await this.userRepository.save(
             this.userRepository.create({
+                uuid: randomUUID(),
                 username: dto.username,
                 password: dto.password,
                 full_name: dto.full_name,
@@ -90,6 +123,9 @@ export class UserService {
                 role: dto.role_id
                     ? ({ id: dto.role_id } as RoleEntity)
                     : undefined,
+                created_at: dto.created_at,
+                updated_at: dto.updated_at,
+                deleted_at: dto.deleted_at ?? undefined,
             } as DeepPartial<UserEntity>),
         );
         return (await this.getUserById(user.id)) as UserDetailDTO;
@@ -115,6 +151,7 @@ export class UserService {
                 ? ({ id: dto.supplier_id } as SupplierEntity)
                 : null;
         if (dto.role_id) user.role = { id: dto.role_id } as RoleEntity;
+        user.updated_at = dto.updated_at ?? new Date();
         await this.userRepository.save(user);
         return this.getUserById(id);
     }

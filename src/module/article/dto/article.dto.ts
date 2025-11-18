@@ -2,6 +2,7 @@ import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import {
     IsArray,
     IsBoolean,
+    IsDate,
     IsInt,
     IsNotEmpty,
     IsOptional,
@@ -66,6 +67,24 @@ export class ArticleDTO {
         type: [ArticleImageDTO],
     })
     images?: ArticleImageDTO[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class ArticleSummaryDTO {
@@ -89,6 +108,24 @@ export class ArticleSummaryDTO {
 
     @ApiProperty({ description: 'ID người viết bài' })
     user_id: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 
     constructor(partial: Partial<ArticleSummaryDTO>) {
         Object.assign(this, partial);
