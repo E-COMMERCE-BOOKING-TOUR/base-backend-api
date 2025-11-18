@@ -590,7 +590,208 @@ export class UserTourPopularDTO {
     @ApiProperty({ type: [String], example: ['tour item'] })
     tags: string[];
 
+    @ApiProperty({ example: 'tour-slug' })
+    slug: string;
+
     constructor(partial: Partial<UserTourPopularDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class TourActivityDTO {
+    @ApiProperty({ example: 'What You Will Do' })
+    title: string;
+
+    @ApiProperty({ type: [String] })
+    items: string[];
+
+    constructor(partial: Partial<TourActivityDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class TourDetailsInfoDTO {
+    @ApiProperty({ type: [String], example: ['English', 'French'] })
+    language: string[];
+
+    @ApiProperty({ example: '2 hours' })
+    duration: string;
+
+    @ApiProperty({ example: '5 People' })
+    capacity: string;
+
+    constructor(partial: Partial<TourDetailsInfoDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class TourTestimonialDTO {
+    @ApiProperty({ example: 'James' })
+    name: string;
+
+    @ApiProperty({ example: 'United Kingdom' })
+    country: string;
+
+    @ApiProperty()
+    text: string;
+
+    constructor(partial: Partial<TourTestimonialDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class UserTourDetailDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty()
+    title: string;
+
+    @ApiProperty()
+    slug: string;
+
+    @ApiProperty()
+    location: string;
+
+    @ApiProperty({ example: 100000 })
+    price: number;
+
+    @ApiProperty({ example: 500000, required: false })
+    oldPrice?: number;
+
+    @ApiProperty({ example: 4 })
+    rating: number;
+
+    @ApiProperty({ example: 1113 })
+    reviewCount: number;
+
+    @ApiProperty({ example: 8.7 })
+    score: number;
+
+    @ApiProperty({ example: 'Fabulous' })
+    scoreLabel: string;
+
+    @ApiProperty({ example: 9.1 })
+    staffScore: number;
+
+    @ApiProperty({ type: [String] })
+    images: string[];
+
+    @ApiProperty({ type: TourTestimonialDTO, required: false })
+    testimonial?: TourTestimonialDTO;
+
+    @ApiProperty()
+    mapUrl: string;
+
+    @ApiProperty({ required: false })
+    mapPreview?: string;
+
+    @ApiProperty()
+    description: string;
+
+    @ApiProperty()
+    summary: string;
+
+    @ApiProperty({ type: TourActivityDTO, required: false })
+    activity?: TourActivityDTO;
+
+    @ApiProperty({ type: [String] })
+    included: string[];
+
+    @ApiProperty({ type: [String] })
+    notIncluded: string[];
+
+    @ApiProperty({ type: TourDetailsInfoDTO })
+    details: TourDetailsInfoDTO;
+
+    @ApiProperty({ required: false })
+    meetingPoint?: string;
+
+    @ApiProperty({ type: [String] })
+    tags: string[];
+
+    constructor(partial: Partial<UserTourDetailDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class UserTourReviewDTO {
+    @ApiProperty({ example: '1' })
+    id: string;
+
+    @ApiProperty({ example: 'Arlene McCoy' })
+    userName: string;
+
+    @ApiProperty({ example: 'https://i.pravatar.cc/150?img=1' })
+    userAvatar: string;
+
+    @ApiProperty({ example: 4 })
+    rating: number;
+
+    @ApiProperty({ example: '2 October 2012' })
+    date: string;
+
+    @ApiProperty()
+    title: string;
+
+    @ApiProperty()
+    content: string;
+
+    @ApiProperty({ example: true })
+    verified: boolean;
+
+    constructor(partial: Partial<UserTourReviewDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class UserTourReviewCategoryDTO {
+    @ApiProperty({ example: 'Guide' })
+    label: string;
+
+    @ApiProperty({ example: 4.8 })
+    score: number;
+
+    constructor(partial: Partial<UserTourReviewCategoryDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class UserTourRelatedDTO {
+    @ApiProperty({ example: '1' })
+    id: string;
+
+    @ApiProperty()
+    image: string;
+
+    @ApiProperty()
+    title: string;
+
+    @ApiProperty()
+    location: string;
+
+    @ApiProperty({ example: 8.4 })
+    rating: number;
+
+    @ApiProperty({ example: 142 })
+    reviews: number;
+
+    @ApiProperty({ example: 'Very good' })
+    ratingText: string;
+
+    @ApiProperty({ example: '2-3 people' })
+    capacity: string;
+
+    @ApiProperty({ example: 6248000 })
+    originalPrice: number;
+
+    @ApiProperty({ example: 3248000 })
+    currentPrice: number;
+
+    @ApiProperty({ type: [String] })
+    tags: string[];
+
+    constructor(partial: Partial<UserTourRelatedDTO>) {
         Object.assign(this, partial);
     }
 }

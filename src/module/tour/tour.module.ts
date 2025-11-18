@@ -19,6 +19,7 @@ import { TourService } from './service/tour.service';
 import { TourController } from './controller/tour.controller';
 import { UserTourService } from './service/userTour.service';
 import { UserTourController } from './controller/userTour.controller';
+import { ReviewEntity } from '@/module/review/entity/review.entity';
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { UserTourController } from './controller/userTour.controller';
             DivisionEntity,
             SupplierEntity,
             TourCategoryEntity,
+            ReviewEntity,
         ]),
     ],
     controllers: [TourController, UserTourController],
