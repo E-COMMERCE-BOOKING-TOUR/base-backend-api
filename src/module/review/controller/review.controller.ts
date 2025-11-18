@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ReviewService } from '../service/review.service';
 import {
     ReviewDTO,
@@ -23,52 +23,61 @@ export class ReviewController {
         return await this.reviewService.getAllReviews();
     }
 
-    @Post('getAllByTour')
+    @Post('getAllByTour/:tourId')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getReviewsByTour(@Body() tourId: number) {
+    @ApiParam({ name: 'tourId', type: Number, example: 1 })
+    async getReviewsByTour(@Param('tourId') tourId: number) {
         return await this.reviewService.getReviewsByTour(tourId);
     }
 
-    @Post('getAllByUser')
+    @Post('getAllByUser/:userId')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getReviewsByUser(@Body() userId: number) {
+    @ApiParam({ name: 'userId', type: Number, example: 1 })
+    async getReviewsByUser(@Param('userId') userId: number) {
         return await this.reviewService.getReviewsByUser(userId);
     }
 
-    @Post('getById')
+    @Post('getById/:id')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getReviewById(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async getReviewById(@Param('id') id: number) {
         return await this.reviewService.getReviewById(id);
     }
 
     @Post('create')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: ReviewDTO })
     async create(@Body() dto: ReviewDTO) {
         return await this.reviewService.create(dto);
     }
 
-    @Post('update')
+    @Post('update/:id')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async update(@Body() payload: { id: number; data: Partial<ReviewDTO> }) {
-        return await this.reviewService.update(payload.id, payload.data);
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    @ApiBody({ type: ReviewDTO })
+    async update(@Param('id') id: number, @Body() payload: Partial<ReviewDTO>) {
+        return await this.reviewService.update(id, payload);
     }
 
-    @Post('remove')
+    @Post('remove/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async remove(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async remove(@Param('id') id: number) {
         return await this.reviewService.remove(id);
     }
 
-    @Post('addImages')
+    @Post('addImages/:id')
     @ApiResponse({ status: 201, type: [ReviewImageDetailDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'id', type: Number, example: 1 })
     async addImages(
+        @Param('id') id: number,
         @Body() payload: { reviewId: number; images: ReviewImageDTO[] },
     ) {
         return await this.reviewService.addImages(
@@ -77,20 +86,23 @@ export class ReviewController {
         );
     }
 
-    @Post('removeImage')
+    @Delete('removeImage/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeImage(@Body() imageId: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async removeImage(@Param('id') imageId: number) {
         return await this.reviewService.removeImage(imageId);
     }
 
-    @Post('updateStatus')
+    @Post('updateStatus/:id')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async updateStatus(@Body() payload: { id: number; status: ReviewStatus }) {
-        return await this.reviewService.updateStatus(
-            payload.id,
-            payload.status,
-        );
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    @ApiBody({ type: Object })
+    async updateStatus(
+        @Param('id') id: number,
+        @Body() payload: { status: ReviewStatus },
+    ) {
+        return await this.reviewService.updateStatus(id, payload.status);
     }
 }

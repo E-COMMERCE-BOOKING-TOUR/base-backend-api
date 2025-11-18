@@ -1,7 +1,14 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ArticleService } from '../service/article.service';
-import { ArticleDTO, ArticleImageDTO, ArticleDetailDTO, ArticleSummaryDTO, ArticleCommentDetailDTO, ArticleImageDetailDTO } from '../dto/article.dto';
+import {
+    ArticleDTO,
+    ArticleImageDTO,
+    ArticleDetailDTO,
+    ArticleSummaryDTO,
+    ArticleCommentDetailDTO,
+    ArticleImageDetailDTO,
+} from '../dto/article.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 
 @ApiTags('Article')
@@ -16,121 +23,146 @@ export class ArticleController {
         return await this.articleService.getAllArticles();
     }
 
-    @Post('getAllByUser')
+    @Post('getAllByUser/:userId')
     @ApiResponse({ status: 201, type: [ArticleSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getArticlesByUser(@Body() userId: number) {
+    @ApiParam({ name: 'userId', type: Number, example: 1 })
+    async getArticlesByUser(@Param('userId') userId: number) {
         return await this.articleService.getArticlesByUser(userId);
     }
 
-    @Post('getById')
+    @Post('getById/:id')
     @ApiResponse({ status: 201, type: ArticleDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getArticleById(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async getArticleById(@Param('id') id: number) {
         return await this.articleService.getArticleById(id);
     }
 
     @Post('create')
     @ApiResponse({ status: 201, type: ArticleDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: ArticleDTO })
     async create(@Body() dto: ArticleDTO) {
         return await this.articleService.create(dto);
     }
 
-    @Post('update')
+    @Post('update/:id')
     @ApiResponse({ status: 201, type: ArticleDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async update(@Body() payload: { id: number; data: Partial<ArticleDTO> }) {
-        return await this.articleService.update(payload.id, payload.data);
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    @ApiBody({ type: ArticleDTO })
+    async update(
+        @Param('id') id: number,
+        @Body() payload: Partial<ArticleDTO>,
+    ) {
+        return await this.articleService.update(id, payload);
     }
 
-    @Post('remove')
+    @Delete('remove/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async remove(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async remove(@Param('id') id: number) {
         return await this.articleService.remove(id);
     }
 
-    @Post('addComment')
+    @Post('addComment/:articleId')
     @ApiResponse({ status: 201, type: ArticleCommentDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'articleId', type: Number, example: 1 })
+    @ApiBody({ type: ArticleCommentDetailDTO })
     async addComment(
+        @Param('articleId') articleId: number,
         @Body()
         payload: {
-            articleId: number;
             userId: number;
             content: string;
             parentId?: number;
         },
     ) {
         return await this.articleService.addComment(
-            payload.articleId,
+            articleId,
             payload.userId,
             payload.content,
             payload.parentId,
         );
     }
 
-    @Post('removeComment')
+    @Delete('removeComment/:commentId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeComment(@Body() commentId: number) {
+    @ApiParam({ name: 'commentId', type: Number, example: 1 })
+    async removeComment(@Param('commentId') commentId: number) {
         return await this.articleService.removeComment(commentId);
     }
 
-    @Post('like')
+    @Post('like/:articleId/:userId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async like(@Body() payload: { articleId: number; userId: number }) {
-        return await this.articleService.like(
-            payload.articleId,
-            payload.userId,
-        );
+    @ApiParam({ name: 'articleId', type: Number, example: 1 })
+    @ApiParam({ name: 'userId', type: Number, example: 1 })
+    async like(
+        @Param('articleId') articleId: number,
+        @Param('userId') userId: number,
+    ) {
+        return await this.articleService.like(articleId, userId);
     }
 
-    @Post('unlike')
+    @Post('unlike/:articleId/:userId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async unlike(@Body() payload: { articleId: number; userId: number }) {
-        return await this.articleService.unlike(
-            payload.articleId,
-            payload.userId,
-        );
+    @ApiParam({ name: 'articleId', type: Number, example: 1 })
+    @ApiParam({ name: 'userId', type: Number, example: 1 })
+    async unlike(
+        @Param('articleId') articleId: number,
+        @Param('userId') userId: number,
+    ) {
+        return await this.articleService.unlike(articleId, userId);
     }
 
-    @Post('addImages')
+    @Post('addImages/:articleId')
     @ApiResponse({ status: 201, type: [ArticleImageDetailDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'articleId', type: Number, example: 1 })
     async addImages(
-        @Body() payload: { articleId: number; images: ArticleImageDTO[] },
+        @Param('articleId') articleId: number,
+        @Body() payload: { images: ArticleImageDTO[] },
     ) {
-        return await this.articleService.addImages(
-            payload.articleId,
-            payload.images,
-        );
+        return await this.articleService.addImages(articleId, payload.images);
     }
 
-    @Post('removeImage')
+    @Post('removeImage/:imageId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeImage(@Body() imageId: number) {
+    @ApiParam({ name: 'imageId', type: Number, example: 1 })
+    async removeImage(@Param('imageId') imageId: number) {
         return await this.articleService.removeImage(imageId);
     }
 
-    @Post('incrementView')
+    @Post('incrementView/:articleId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async incrementView(@Body() id: number) {
-        return await this.articleService.incrementView(id);
+    @ApiParam({ name: 'articleId', type: Number, example: 1 })
+    async incrementView(@Param('articleId') articleId: number) {
+        return await this.articleService.incrementView(articleId);
     }
 
-    @Post('toggleVisible')
+    @Post('toggleVisible/:articleId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async toggleVisible(@Body() payload: { id: number; visible: boolean }) {
-        return await this.articleService.toggleVisible(
-            payload.id,
-            payload.visible,
-        );
+    @ApiParam({ name: 'articleId', type: Number, example: 1 })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: { visible: { type: 'boolean', example: true } },
+            required: ['visible'],
+        },
+    })
+    async toggleVisible(
+        @Param('articleId') articleId: number,
+        @Body('visible') visible: boolean,
+    ) {
+        return await this.articleService.toggleVisible(articleId, visible);
     }
 }

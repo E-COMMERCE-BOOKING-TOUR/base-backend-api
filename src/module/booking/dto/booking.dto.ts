@@ -12,6 +12,7 @@ import {
     Min,
     ValidateNested,
     IsNumber,
+    IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -49,6 +50,24 @@ export class BookingItemDTO {
     @Min(1)
     @ApiProperty({ description: 'Số lượng khách', example: 2 })
     quantity: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 @ApiSchema({ name: 'CreateBookingRequest' })
@@ -142,6 +161,24 @@ export class BookingDTO {
         ],
     })
     booking_items: BookingItemDTO[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class BookingSummaryDTO {

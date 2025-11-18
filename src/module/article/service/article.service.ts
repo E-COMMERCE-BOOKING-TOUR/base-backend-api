@@ -14,12 +14,6 @@ import {
 import { UserEntity } from '@/module/user/entity/user.entity';
 
 export class ArticleService {
-    getAll() {
-        throw new Error('Method not implemented.');
-    }
-    getAllByUser(userId: number) {
-        throw new Error('Method not implemented.');
-    }
     constructor(
         @InjectRepository(ArticleEntity)
         private readonly articleRepository: Repository<ArticleEntity>,
@@ -34,7 +28,7 @@ export class ArticleService {
     async getAllArticles(): Promise<ArticleSummaryDTO[]> {
         const articles = await this.articleRepository.find({
             relations: ['user'],
-            order: { created_at: 'DESC' as any },
+            order: { created_at: 'DESC' },
         });
         return articles.map(
             (a) =>
@@ -45,8 +39,11 @@ export class ArticleService {
                     count_likes: a.count_likes,
                     count_comments: a.count_comments,
                     is_visible: a.is_visible,
-                    user_id: a.user?.id,
-                }),
+                    user: a.user,
+                    created_at: a.created_at,
+                    updated_at: a.updated_at,
+                    deleted_at: a.deleted_at ?? undefined,
+                } as Partial<ArticleSummaryDTO>),
         );
     }
 
@@ -54,7 +51,7 @@ export class ArticleService {
         const articles = await this.articleRepository.find({
             where: { user: { id: userId } },
             relations: ['user'],
-            order: { created_at: 'DESC' as any },
+            order: { created_at: 'DESC' },
         });
         return articles.map(
             (a) =>
@@ -65,15 +62,24 @@ export class ArticleService {
                     count_likes: a.count_likes,
                     count_comments: a.count_comments,
                     is_visible: a.is_visible,
-                    user_id: a.user?.id,
-                }),
+                    user: a.user,
+                    created_at: a.created_at,
+                    updated_at: a.updated_at,
+                    deleted_at: a.deleted_at ?? undefined,
+                } as Partial<ArticleSummaryDTO>),
         );
     }
 
     async getArticleById(id: number): Promise<ArticleDetailDTO | null> {
         const a = await this.articleRepository.findOne({
             where: { id },
-            relations: ['user', 'images', 'comments', 'comments.user'],
+            relations: [
+                'user',
+                'images',
+                'comments',
+                'comments.user',
+                'comments.parent',
+            ],
         });
         if (!a) return null;
         return new ArticleDetailDTO({
@@ -84,7 +90,10 @@ export class ArticleService {
             count_likes: a.count_likes,
             count_comments: a.count_comments,
             is_visible: a.is_visible,
-            user_id: a.user?.id,
+            user: a.user,
+            created_at: a.created_at,
+            updated_at: a.updated_at,
+            deleted_at: a.deleted_at ?? undefined,
             images: (a.images ?? []).map(
                 (img) =>
                     new ArticleImageDetailDTO({
@@ -97,11 +106,11 @@ export class ArticleService {
                     new ArticleCommentDetailDTO({
                         id: c.id,
                         content: c.content,
-                        user_id: c.user?.id as number,
-                        parent_id: c.parent_id ?? null,
-                    }),
+                        user: c.user,
+                        parent: c.parent ?? null,
+                    } as Partial<ArticleCommentDetailDTO>),
             ),
-        });
+        } as Partial<ArticleDetailDTO>);
     }
 
     async create(dto: ArticleDTO): Promise<ArticleDetailDTO> {
@@ -110,7 +119,7 @@ export class ArticleService {
                 title: dto.title,
                 content: dto.content,
                 is_visible: dto.is_visible ?? false,
-                user: { id: dto.user_id } as any,
+                user: { id: dto.user_id },
             }),
         );
 
@@ -160,21 +169,25 @@ export class ArticleService {
         const user = await this.userRepository.findOne({
             where: { id: userId },
         });
+        const parent = parentId
+            ? await this.commentRepository.findOne({ where: { id: parentId } })
+            : null;
         if (!article || !user) return null;
         const comment = await this.commentRepository.save(
             this.commentRepository.create({
                 content,
                 article,
                 user,
+                parent: parent ?? undefined,
                 parent_id: parentId ?? null,
             }),
         );
         return new ArticleCommentDetailDTO({
             id: comment.id,
             content: comment.content,
-            user_id: user.id,
-            parent_id: comment.parent_id ?? null,
-        });
+            user: user,
+            parent: parent ?? null,
+        } as Partial<ArticleCommentDetailDTO>);
     }
 
     async removeComment(commentId: number): Promise<boolean> {

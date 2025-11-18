@@ -37,9 +37,12 @@ export class ReviewService {
                     title: r.title,
                     rating: r.rating,
                     status: r.status as ReviewStatus,
-                    user_id: r.user?.id,
-                    tour_id: r.tour?.id,
-                }),
+                    user: r.user,
+                    tour: r.tour,
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
+                    deleted_at: r.deleted_at ?? undefined,
+                } as Partial<ReviewSummaryDTO>),
         );
     }
 
@@ -56,9 +59,12 @@ export class ReviewService {
                     title: r.title,
                     rating: r.rating,
                     status: r.status as ReviewStatus,
-                    user_id: r.user?.id,
-                    tour_id: r.tour?.id,
-                }),
+                    user: r.user,
+                    tour: r.tour,
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
+                    deleted_at: r.deleted_at ?? undefined,
+                } as Partial<ReviewSummaryDTO>),
         );
     }
 
@@ -75,9 +81,12 @@ export class ReviewService {
                     title: r.title,
                     rating: r.rating,
                     status: r.status as ReviewStatus,
-                    user_id: r.user?.id,
-                    tour_id: r.tour?.id,
-                }),
+                    user: r.user,
+                    tour: r.tour,
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
+                    deleted_at: r.deleted_at ?? undefined,
+                } as Partial<ReviewSummaryDTO>),
         );
     }
 
@@ -92,20 +101,23 @@ export class ReviewService {
             title: r.title,
             rating: r.rating,
             status: r.status as ReviewStatus,
-            user_id: r.user?.id,
-            tour_id: r.tour?.id,
+            user: r.user,
+            tour: r.tour,
             content: r.content,
-            sort_no: r.sort_no ?? undefined,
+            sort_no: r.sort_no ?? 0,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            deleted_at: r.deleted_at ?? undefined,
             images: (r.images ?? []).map(
                 (img) =>
                     new ReviewImageDetailDTO({
                         id: img.id,
                         image_url: img.image_url,
-                        sort_no: img.sort_no ?? undefined,
+                        sort_no: img.sort_no ?? 0,
                         is_visible: !!img.is_visible,
                     }),
             ),
-        });
+        } as Partial<ReviewDetailDTO>);
     }
 
     async create(dto: ReviewDTO): Promise<ReviewDetailDTO> {

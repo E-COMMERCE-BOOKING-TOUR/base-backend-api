@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TourService } from '../service/tour.service';
 import {
     TourDTO,
@@ -28,152 +28,187 @@ export class TourController {
         return await this.tourService.getAllTours();
     }
 
-    @Post('getAllBySupplier')
+    @Post('getAllBySupplier/:supplierId')
     @ApiResponse({ status: 201, type: [TourSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getToursBySupplier(@Body() supplierId: number) {
+    @ApiParam({ name: 'supplierId', type: Number, example: 1 })
+    async getToursBySupplier(@Param('supplierId') supplierId: number) {
         return await this.tourService.getToursBySupplier(supplierId);
     }
 
-    @Post('getById')
+    @Post('getById/:id')
     @ApiResponse({ status: 201, type: TourDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getTourById(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async getTourById(@Param('id') id: number) {
         return await this.tourService.getTourById(id);
     }
 
     @Post('create')
     @ApiResponse({ status: 201, type: TourDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: TourDTO })
     async createTour(@Body() dto: TourDTO) {
         return await this.tourService.createTour(dto);
     }
 
-    @Post('update')
+    @Post('update/:id')
     @ApiResponse({ status: 201, type: TourDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async updateTour(@Body() payload: { id: number; data: Partial<TourDTO> }) {
-        return await this.tourService.updateTour(payload.id, payload.data);
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    @ApiBody({ type: TourDTO })
+    async updateTour(
+        @Param('id') id: number,
+        @Body() payload: Partial<TourDTO>,
+    ) {
+        return await this.tourService.updateTour(id, payload);
     }
 
-    @Post('remove')
+    @Post('remove/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeTour(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async removeTour(@Param('id') id: number) {
         return await this.tourService.removeTour(id);
     }
 
-    @Post('addImages')
+    @Post('addImages/:tourId')
     @ApiResponse({ status: 201, type: [TourImageDetailDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'tourId', type: Number, example: 1 })
     async addImages(
-        @Body() payload: { tourId: number; images: TourImageDTO[] },
+        @Param('tourId') tourId: number,
+        @Body() payload: TourImageDTO[],
     ) {
-        return await this.tourService.addImages(payload.tourId, payload.images);
+        return await this.tourService.addImages(tourId, payload);
     }
 
-    @Post('removeImage')
+    @Post('removeImage/:imageId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeImage(@Body() imageId: number) {
+    @ApiParam({ name: 'imageId', type: Number, example: 1 })
+    async removeImage(@Param('imageId') imageId: number) {
         return await this.tourService.removeImage(imageId);
     }
 
-    @Post('addVariant')
+    @Post('addVariant/:tourId')
     @ApiResponse({ status: 201, type: TourVariantSummaryDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async addVariant(@Body() dto: TourVariantDTO) {
-        return await this.tourService.addVariant(dto);
-    }
-
-    @Post('updateVariant')
-    @ApiResponse({ status: 201, type: TourVariantSummaryDTO })
-    @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async updateVariant(
-        @Body() payload: { id: number; data: Partial<TourVariantDTO> },
+    @ApiParam({ name: 'tourId', type: Number, example: 1 })
+    @ApiBody({ type: TourVariantDTO })
+    async addVariant(
+        @Param('tourId') tourId: number,
+        @Body() dto: TourVariantDTO,
     ) {
-        return await this.tourService.updateVariant(payload.id, payload.data);
+        return await this.tourService.addVariant(tourId, dto);
     }
 
-    @Post('removeVariant')
+    @Post('updateVariant/:variantId')
+    @ApiResponse({ status: 201, type: TourVariantSummaryDTO })
+    @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'variantId', type: Number, example: 1 })
+    @ApiBody({ type: TourVariantDTO })
+    async updateVariant(
+        @Param('variantId') variantId: number,
+        @Body() payload: Partial<TourVariantDTO>,
+    ) {
+        return await this.tourService.updateVariant(variantId, payload);
+    }
+
+    @Delete('removeVariant/:variantId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeVariant(@Body() id: number) {
-        return await this.tourService.removeVariant(id);
+    @ApiParam({ name: 'variantId', type: Number, example: 1 })
+    async removeVariant(@Param('variantId') variantId: number) {
+        return await this.tourService.removeVariant(variantId);
     }
 
     @Post('addSession')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: TourSessionDTO })
     async addSession(@Body() dto: TourSessionDTO) {
         return await this.tourService.addSession(dto);
     }
 
-    @Post('updateSession')
+    @Post('updateSession/:sessionId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'sessionId', type: Number, example: 1 })
+    @ApiBody({ type: TourSessionDTO })
     async updateSession(
-        @Body() payload: { id: number; data: Partial<TourSessionDTO> },
+        @Param('sessionId') sessionId: number,
+        @Body() payload: Partial<TourSessionDTO>,
     ) {
-        return await this.tourService.updateSession(payload.id, payload.data);
+        return await this.tourService.updateSession(sessionId, payload);
     }
 
-    @Post('removeSession')
+    @Delete('removeSession/:sessionId')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removeSession(@Body() id: number) {
-        return await this.tourService.removeSession(id);
+    @ApiParam({ name: 'sessionId', type: Number, example: 1 })
+    async removeSession(@Param('sessionId') sessionId: number) {
+        return await this.tourService.removeSession(sessionId);
     }
 
     @Post('setPolicy')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: TourPolicyDTO })
     async setPolicy(@Body() dto: TourPolicyDTO) {
         return await this.tourService.setPolicy(dto);
     }
 
-    @Post('updatePolicy')
+    @Post('updatePolicy/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     async updatePolicy(
-        @Body() payload: { id: number; data: Partial<TourPolicyDTO> },
+        @Param('id') id: number,
+        @Body() payload: Partial<TourPolicyDTO>,
     ) {
-        return await this.tourService.updatePolicy(payload.id, payload.data);
+        return await this.tourService.updatePolicy(id, payload);
     }
 
-    @Post('removePolicy')
+    @Delete('removePolicy/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removePolicy(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async removePolicy(@Param('id') id: number) {
         return await this.tourService.removePolicy(id);
     }
 
     @Post('addPriceRule')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: TourPriceRuleDTO })
     async addPriceRule(@Body() dto: TourPriceRuleDTO) {
         return await this.tourService.addPriceRule(dto);
     }
 
-    @Post('updatePriceRule')
+    @Post('updatePriceRule/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    @ApiBody({ type: TourPriceRuleDTO })
     async updatePriceRule(
-        @Body() payload: { id: number; data: Partial<TourPriceRuleDTO> },
+        @Param('id') id: number,
+        @Body() payload: Partial<TourPriceRuleDTO>,
     ) {
-        return await this.tourService.updatePriceRule(payload.id, payload.data);
+        return await this.tourService.updatePriceRule(id, payload);
     }
 
-    @Post('removePriceRule')
+    @Delete('removePriceRule/:id')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async removePriceRule(@Body() id: number) {
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async removePriceRule(@Param('id') id: number) {
         return await this.tourService.removePriceRule(id);
     }
 
     @Post('setVariantPaxTypePrice')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiBody({ type: TourVariantPaxTypePriceDTO })
     async setVariantPaxTypePrice(@Body() dto: TourVariantPaxTypePriceDTO) {
         return await this.tourService.setVariantPaxTypePrice(dto);
     }

@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { NotificationEntity } from '@/module/user/entity/notification.entity';
 import { UserEntity } from '@/module/user/entity/user.entity';
@@ -19,6 +19,9 @@ export default class NotificationSeeder implements Seeder {
             return;
         }
 
+        const allUserIds = allUsers.map((u) => u.id);
+        const customerIds = customers.map((u) => u.id);
+
         const notifications = [
             // System notifications for all users
             {
@@ -27,7 +30,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'welcome',
                 is_error: false,
                 is_user: true,
-                users: allUsers,
+                user_ids: allUserIds,
             },
             {
                 title: 'New Feature: Virtual Tour Preview',
@@ -35,7 +38,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'feature',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 5),
+                user_ids: customers.slice(0, 5).map((u) => u.id),
             },
             {
                 title: 'Summer Sale - Up to 30% Off',
@@ -43,7 +46,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'promotion',
                 is_error: false,
                 is_user: true,
-                users: customers,
+                user_ids: customerIds,
             },
             {
                 title: 'Payment Successful',
@@ -51,7 +54,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'payment',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 8),
+                user_ids: customers.slice(0, 8).map((u) => u.id),
             },
             {
                 title: 'Booking Confirmed',
@@ -59,7 +62,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'booking',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 8),
+                user_ids: customers.slice(0, 8).map((u) => u.id),
             },
             {
                 title: 'Tour Reminder',
@@ -67,7 +70,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'reminder',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 3),
+                user_ids: customers.slice(0, 3).map((u) => u.id),
             },
             {
                 title: 'Review Your Recent Tour',
@@ -75,7 +78,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'review',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(2, 7),
+                user_ids: customers.slice(2, 7).map((u) => u.id),
             },
             {
                 title: 'Payment Failed',
@@ -83,7 +86,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'payment',
                 is_error: true,
                 is_user: true,
-                users: customers.slice(10, 11),
+                user_ids: customers.slice(10, 11).map((u) => u.id),
             },
             {
                 title: 'Booking Cancelled',
@@ -91,7 +94,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'booking',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(11, 13),
+                user_ids: customers.slice(11, 13).map((u) => u.id),
             },
             {
                 title: 'New Tours Added in Your Favorite Destination',
@@ -99,7 +102,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'recommendation',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 5),
+                user_ids: customers.slice(0, 5).map((u) => u.id),
             },
             {
                 title: 'Complete Your Profile',
@@ -107,7 +110,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'profile',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(5, 8),
+                user_ids: customers.slice(5, 8).map((u) => u.id),
             },
             {
                 title: 'Price Drop Alert!',
@@ -115,7 +118,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'alert',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 4),
+                user_ids: customers.slice(0, 4).map((u) => u.id),
             },
             {
                 title: 'Tour Itinerary Updated',
@@ -123,7 +126,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'update',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 2),
+                user_ids: customers.slice(0, 2).map((u) => u.id),
             },
             {
                 title: 'Limited Seats Available',
@@ -131,7 +134,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'alert',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(3, 6),
+                user_ids: customers.slice(3, 6).map((u) => u.id),
             },
             {
                 title: 'Earn Rewards Points',
@@ -139,7 +142,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'reward',
                 is_error: false,
                 is_user: true,
-                users: customers.slice(0, 8),
+                user_ids: customers.slice(0, 8).map((u) => u.id),
             },
             // System-wide announcements
             {
@@ -148,7 +151,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'maintenance',
                 is_error: false,
                 is_user: false,
-                users: allUsers,
+                user_ids: allUserIds,
             },
             {
                 title: 'New Cancellation Policy',
@@ -156,7 +159,7 @@ export default class NotificationSeeder implements Seeder {
                 type: 'policy',
                 is_error: false,
                 is_user: false,
-                users: allUsers,
+                user_ids: allUserIds,
             },
             {
                 title: 'Holiday Season Special Offers',
@@ -164,16 +167,25 @@ export default class NotificationSeeder implements Seeder {
                 type: 'promotion',
                 is_error: false,
                 is_user: false,
-                users: customers,
+                user_ids: customerIds,
             },
         ];
 
         for (const notification of notifications) {
-            const exists = await notificationRepository.findOne({
-                where: { title: notification.title },
-            });
+            const exists = await notificationRepository.findOne({ where: { title: notification.title } });
             if (!exists) {
-                await notificationRepository.save(notificationRepository.create(notification));
+                const users = notification.user_ids?.length
+                    ? await userRepository.find({ where: { id: In(notification.user_ids) } })
+                    : [];
+                const entity = notificationRepository.create({
+                    title: notification.title,
+                    description: notification.description,
+                    type: notification.type,
+                    is_error: notification.is_error ?? false,
+                    is_user: notification.is_user ?? false,
+                    users,
+                });
+                await notificationRepository.save(entity);
             }
         }
 

@@ -12,6 +12,7 @@ import {
     MaxLength,
     ValidateNested,
     IsNumber,
+    IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -94,6 +95,24 @@ export class ReviewDTO {
         type: [ReviewImageDTO],
     })
     images?: ReviewImageDTO[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 }
 
 export class ReviewImageDetailDTO {
@@ -132,6 +151,24 @@ export class ReviewSummaryDTO {
 
     @ApiProperty()
     tour_id: number;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
 
     constructor(partial: Partial<ReviewSummaryDTO>) {
         Object.assign(this, partial);

@@ -17,11 +17,52 @@ export class NotificationService {
         private readonly userRepository: Repository<UserEntity>,
     ) {}
 
+    private async getUserIdsByNotificationId(id: number): Promise<number[]> {
+        const ids: number[] = [];
+        for (const table of ['notification_users']) {
+            try {
+                const rows: Array<{ user_id: number }> =
+                    await this.notificationRepository.query(
+                        `SELECT user_id FROM ${table} WHERE notification_id = ?`,
+                        [id],
+                    );
+                for (const r of rows) ids.push(Number(r.user_id));
+            } catch (error: any) {
+                throw new Error(
+                    `Error getting user ids for notification ${id}: ${error}`,
+                );
+            }
+        }
+        return Array.from(new Set(ids));
+    }
+
+    private async getNotificationIdsByUserId(
+        userId: number,
+    ): Promise<number[]> {
+        const ids: number[] = [];
+        for (const table of ['notification_users']) {
+            try {
+                const rows: Array<{ notification_id: number }> =
+                    await this.notificationRepository.query(
+                        `SELECT notification_id FROM ${table} WHERE user_id = ?`,
+                        [userId],
+                    );
+                for (const r of rows) ids.push(Number(r.notification_id));
+            } catch (error: any) {
+                throw new Error(
+                    `Error getting notification ids for user ${userId}: ${error}`,
+                );
+            }
+        }
+        return Array.from(new Set(ids));
+    }
+
     async getAllNotifications(): Promise<NotificationSummaryDTO[]> {
         const list = await this.notificationRepository.find({
+            relations: ['users'],
             order: { created_at: 'DESC' },
         });
-        return list.map(
+        const mapped = list.map(
             (n) =>
                 new NotificationSummaryDTO({
                     id: n.id,
@@ -29,8 +70,13 @@ export class NotificationService {
                     type: n.type as NotificationType,
                     is_error: !!n.is_error,
                     is_user: !!n.is_user,
-                }),
+                    users: n.users ?? [],
+                    created_at: n.created_at,
+                    updated_at: n.updated_at,
+                    deleted_at: n.deleted_at ?? undefined,
+                } as Partial<NotificationSummaryDTO>),
         );
+        return mapped;
     }
 
     async getNotificationsByUser(
@@ -38,16 +84,16 @@ export class NotificationService {
     ): Promise<NotificationSummaryDTO[]> {
         const user = await this.userRepository.findOne({
             where: { id: userId },
-            relations: ['tours_favorites'],
         });
         if (!user) return [];
-        const list = await this.notificationRepository
-            .createQueryBuilder('n')
-            .leftJoin('n.users', 'u')
-            .where('u.id = :userId', { userId })
-            .orderBy('n.created_at', 'DESC')
-            .getMany();
-        return list.map(
+        const notifIds = await this.getNotificationIdsByUserId(userId);
+        if (!notifIds.length) return [];
+        const list = await this.notificationRepository.find({
+            where: { id: In(notifIds) },
+            relations: ['users'],
+            order: { created_at: 'DESC' },
+        });
+        const mapped = list.map(
             (n) =>
                 new NotificationSummaryDTO({
                     id: n.id,
@@ -55,8 +101,13 @@ export class NotificationService {
                     type: n.type as NotificationType,
                     is_error: !!n.is_error,
                     is_user: !!n.is_user,
-                }),
+                    users: n.users ?? [],
+                    created_at: n.created_at,
+                    updated_at: n.updated_at,
+                    deleted_at: n.deleted_at ?? undefined,
+                } as Partial<NotificationSummaryDTO>),
         );
+        return mapped;
     }
 
     async getById(id: number): Promise<NotificationDetailDTO | null> {
@@ -72,8 +123,11 @@ export class NotificationService {
             is_error: !!n.is_error,
             is_user: !!n.is_user,
             description: n.description,
-            user_ids: (n.users ?? []).map((u) => u.id),
-        });
+            users: n.users ?? [],
+            created_at: n.created_at,
+            updated_at: n.updated_at,
+            deleted_at: n.deleted_at ?? undefined,
+        } as Partial<NotificationDetailDTO>);
     }
 
     async create(dto: NotificationDTO): Promise<NotificationDetailDTO> {
