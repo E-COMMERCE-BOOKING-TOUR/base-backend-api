@@ -2,6 +2,7 @@ import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import {
     IsArray,
     IsBoolean,
+    IsIn,
     IsEnum,
     IsInt,
     IsNotEmpty,
@@ -9,6 +10,7 @@ import {
     IsString,
     IsNumber,
     Min,
+    Max,
     MinLength,
     MaxLength,
     ValidateNested,
@@ -16,7 +18,7 @@ import {
     IsDate,
     Matches,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export enum TourStatus {
     draft = 'draft',
@@ -527,6 +529,128 @@ export class TourSummaryDTO {
     }
 }
 
+const transformStringArray = ({ value }: { value: unknown }) => {
+    if (Array.isArray(value)) {
+        const filtered = value
+            .filter((item): item is string => typeof item === 'string')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+        return filtered.length ? filtered : undefined;
+    }
+    if (typeof value === 'string' && value.trim().length > 0) {
+        return value
+            .split(',')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+    }
+    return undefined;
+};
+
+export class UserTourSearchQueryDTO {
+    @IsOptional()
+    @IsString()
+    @MinLength(2)
+    @ApiProperty({
+        required: false,
+        description: 'Từ khóa tìm kiếm theo tên/địa điểm tour',
+        example: 'Ha Long',
+    })
+    keyword?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @Transform(transformStringArray)
+    @ApiProperty({
+        required: false,
+        description: 'Danh sách điểm đến (tên tỉnh/thành phố)',
+        type: [String],
+        example: ['Da Nang, Vietnam'],
+    })
+    destinations?: string[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @Transform(transformStringArray)
+    @ApiProperty({
+        required: false,
+        description: 'Danh sách tag/danh mục cần lọc',
+        type: [String],
+        example: ['Family', 'Adventure'],
+    })
+    tags?: string[];
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber({ allowInfinity: false, allowNaN: false })
+    @Min(0)
+    @ApiProperty({
+        required: false,
+        description: 'Giá tối thiểu',
+        example: 500000,
+    })
+    minPrice?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber({ allowInfinity: false, allowNaN: false })
+    @Min(0)
+    @ApiProperty({
+        required: false,
+        description: 'Giá tối đa',
+        example: 5000000,
+    })
+    maxPrice?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber({ allowInfinity: false, allowNaN: false, maxDecimalPlaces: 1 })
+    @Min(0)
+    @ApiProperty({
+        required: false,
+        description: 'Điểm đánh giá tối thiểu',
+        example: 8,
+    })
+    minRating?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({
+        required: false,
+        description: 'Vị trí bắt đầu phân trang',
+        example: 0,
+        default: 0,
+    })
+    offset: number = 0;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @Max(48)
+    @ApiProperty({
+        required: false,
+        description: 'Số lượng bản ghi tối đa trên mỗi trang',
+        example: 12,
+        default: 12,
+    })
+    limit: number = 12;
+
+    @IsOptional()
+    @IsString()
+    @IsIn(['popular', 'price_asc', 'price_desc', 'rating_desc', 'newest'])
+    @ApiProperty({
+        required: false,
+        description: 'Kiểu sắp xếp',
+        enum: ['popular', 'price_asc', 'price_desc', 'rating_desc', 'newest'],
+        default: 'popular',
+    })
+    sort?: string;
+}
+
 export class TourDetailDTO extends TourSummaryDTO {
     @ApiProperty()
     description: string;
@@ -798,6 +922,9 @@ export class UserTourRelatedDTO {
 
     @ApiProperty({ type: [String] })
     tags: string[];
+
+    @ApiProperty({ example: 'tour-slug' })
+    slug: string;
 
     constructor(partial: Partial<UserTourRelatedDTO>) {
         Object.assign(this, partial);

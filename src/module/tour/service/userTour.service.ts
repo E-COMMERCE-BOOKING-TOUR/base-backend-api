@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { TourEntity } from "../entity/tour.entity";
-import { Repository } from "typeorm";
+import { Brackets, Repository, SelectQueryBuilder } from "typeorm";
 import { 
     UserTourPopularDTO, 
     UserTourDetailDTO, 
@@ -10,7 +10,8 @@ import {
     TourTestimonialDTO,
     UserTourReviewDTO,
     UserTourReviewCategoryDTO,
-    UserTourRelatedDTO
+    UserTourRelatedDTO,
+    UserTourSearchQueryDTO
 } from "../dto/tour.dto";
 import { ReviewEntity } from "@/module/review/entity/review.entity";
 
@@ -23,78 +24,198 @@ export class UserTourService {
         private readonly reviewRepository: Repository<ReviewEntity>,
     ) {}
 
-    async getPopularTours(limit: number = 8): Promise<UserTourPopularDTO[]> {
-        const tours = await this.tourRepository
+    private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
+        return this.tourRepository
             .createQueryBuilder('tour')
             .leftJoinAndSelect('tour.images', 'images')
             .leftJoinAndSelect('tour.variants', 'variants')
+            .leftJoinAndSelect('variants.tour_variant_pax_type_prices', 'prices')
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
-            .leftJoinAndSelect('tour.reviews', 'reviews', 'reviews.status = :status', { status: 'approved' })
-            .leftJoinAndSelect('variants.tour_variant_pax_type_prices', 'prices')
+            .leftJoinAndSelect('tour.reviews', 'reviews', 'reviews.status = :reviewStatus', { reviewStatus: 'approved' })
             .leftJoinAndSelect('tour.tour_categories', 'categories')
-            .where('tour.status = :status', { status: 'active' })
-            .andWhere('tour.is_visible = :isVisible', { isVisible: true })
+            .where('tour.status = :tourStatus', { tourStatus: 'active' })
+            .andWhere('tour.is_visible = :isVisible', { isVisible: true });
+    }
+
+    private mapToPopularDTO(tour: TourEntity): UserTourPopularDTO {
+        const coverImage = tour.images?.find(img => img.is_cover) || tour.images?.[0];
+        const imageUrl: string = coverImage?.image_url || '/assets/images/travel.jpg';
+
+        const reviewsCount: number = tour.reviews?.length || 0;
+        const avgRating: number = tour.score_rating || 0;
+
+        let ratingText: string = 'Good';
+        if (avgRating >= 9) ratingText = 'Excellent';
+        else if (avgRating >= 8) ratingText = 'Very good';
+        else if (avgRating >= 7) ratingText = 'Good';
+        else if (avgRating >= 6) ratingText = 'Okay';
+
+        const location: string = tour.division && tour.country 
+            ? `${tour.division.name}, ${tour.country.name}`
+            : tour.address;
+
+        const minPax: number = tour.min_pax || 1;
+        const maxPax: number = tour.max_pax || minPax + 2;
+        const capacity: string = `${minPax}-${maxPax} people`;
+
+        let currentPrice: number = 0;
+        let originalPrice: number | undefined;
+
+        if (tour.variants && tour.variants.length > 0) {
+            const activeVariant = tour.variants.find(v => v.status === 'active');
+            if (activeVariant && activeVariant.tour_variant_pax_type_prices?.length > 0) {
+                const prices: number[] = activeVariant.tour_variant_pax_type_prices
+                    .map(p => p.price)
+                    .filter(p => p > 0);
+                
+                if (prices.length > 0) {
+                    currentPrice = Math.min(...prices);
+                    originalPrice = Math.round(currentPrice * 1.3);
+                }
+            }
+        }
+
+        const tags: string[] = tour.tour_categories?.map(cat => cat.name) || [];
+
+        return new UserTourPopularDTO({
+            id: tour.id,
+            title: tour.title,
+            location,
+            image: imageUrl,
+            rating: avgRating,
+            reviews: reviewsCount,
+            ratingText,
+            capacity,
+            originalPrice,
+            currentPrice,
+            tags,
+            slug: tour.slug,
+        });
+    }
+
+    async getPopularTours(limit: number = 8): Promise<UserTourPopularDTO[]> {
+        const tours = await this.createBaseTourQuery()
             .orderBy('tour.score_rating', 'DESC')
             .addOrderBy('tour.created_at', 'DESC')
             .take(limit)
             .getMany();
 
-        return tours.map((tour): UserTourPopularDTO => {
-            const coverImage = tour.images?.find(img => img.is_cover) || tour.images?.[0];
-            const imageUrl: string = coverImage?.image_url || '/assets/images/travel.jpg';
+        return tours.map((tour) => this.mapToPopularDTO(tour));
+    }
 
-            const reviewsCount: number = tour.reviews?.length || 0;
-            const avgRating: number = tour.score_rating || 0;
+    async searchTours(query: UserTourSearchQueryDTO) {
+        const qb = this.createBaseTourQuery();
 
-            let ratingText: string = 'Good';
-            if (avgRating >= 9) ratingText = 'Excellent';
-            else if (avgRating >= 8) ratingText = 'Very good';
-            else if (avgRating >= 7) ratingText = 'Good';
-            else if (avgRating >= 6) ratingText = 'Okay';
+        if (query.keyword) {
+            const normalizedKeyword = query.keyword.toLowerCase();
+            qb.andWhere(
+                new Brackets((subQb) => {
+                    const keywordParam = `%${normalizedKeyword}%`;
+                    subQb.where('LOWER(tour.title) LIKE :keyword', { keyword: keywordParam })
+                        .orWhere('LOWER(tour.summary) LIKE :keyword', { keyword: keywordParam })
+                        .orWhere('LOWER(tour.address) LIKE :keyword', { keyword: keywordParam })
+                        .orWhere('LOWER(division.name) LIKE :keyword', { keyword: keywordParam })
+                        .orWhere('LOWER(country.name) LIKE :keyword', { keyword: keywordParam });
+                }),
+            );
+        }
 
-            const location: string = tour.division && tour.country 
-                ? `${tour.division.name}, ${tour.country.name}`
-                : tour.address;
+        if (query.destinations?.length) {
+            qb.andWhere(
+                new Brackets((destinationQb) => {
+                    query.destinations?.forEach((destination, index) => {
+                        const destinationParam = `destination_${index}`;
+                        const countryParam = `country_${index}`;
+                        const combinedParam = `combined_${index}`;
+                        const value = `%${destination.toLowerCase()}%`;
 
-            const minPax: number = tour.min_pax || 1;
-            const maxPax: number = tour.max_pax || minPax + 2;
-            const capacity: string = `${minPax}-${maxPax} people`;
+                        destinationQb.orWhere(`LOWER(division.name) LIKE :${destinationParam}`, {
+                            [destinationParam]: value,
+                        });
+                        destinationQb.orWhere(`LOWER(country.name) LIKE :${countryParam}`, {
+                            [countryParam]: value,
+                        });
+                        destinationQb.orWhere(
+                            `LOWER(CONCAT(COALESCE(division.name, ''), ', ', COALESCE(country.name, ''))) LIKE :${combinedParam}`,
+                            { [combinedParam]: value },
+                        );
+                    });
+                }),
+            );
+        }
 
-            let currentPrice: number = 0;
-            let originalPrice: number | undefined;
+        if (query.tags?.length) {
+            qb.andWhere('categories.name IN (:...tags)', { tags: query.tags });
+        }
 
-            if (tour.variants && tour.variants.length > 0) {
-                const activeVariant = tour.variants.find(v => v.status === 'active');
-                if (activeVariant && activeVariant.tour_variant_pax_type_prices?.length > 0) {
-                    const prices: number[] = activeVariant.tour_variant_pax_type_prices
-                        .map(p => p.price)
-                        .filter(p => p > 0);
-                    
-                    if (prices.length > 0) {
-                        currentPrice = Math.min(...prices);
-                        originalPrice = Math.round(currentPrice * 1.3);
-                    }
-                }
-            }
+        if (typeof query.minRating === 'number') {
+            qb.andWhere('tour.score_rating >= :minRating', { minRating: query.minRating });
+        }
 
-            const tags: string[] = tour.tour_categories?.map(cat => cat.name) || [];
+        const priceFilterSubQuery = (operator: '>=' | '<=', paramName: string) => `
+            EXISTS (
+                SELECT 1
+                FROM tour_variants tv
+                INNER JOIN tour_variant_pax_type_prices tvp ON tvp.tour_variant_id = tv.id
+                WHERE tv.tour_id = tour.id
+                  AND tv.status = 'active'
+                  AND tvp.price ${operator} :${paramName}
+            )
+        `;
 
-            return new UserTourPopularDTO({
-                id: tour.id,
-                title: tour.title,
-                location,
-                image: imageUrl,
-                rating: avgRating,
-                reviews: reviewsCount,
-                ratingText,
-                capacity,
-                originalPrice,
-                currentPrice,
-                tags,
-                slug: tour.slug,
-            });
-        });
+        if (typeof query.minPrice === 'number') {
+            qb.andWhere(priceFilterSubQuery('>=', 'minPrice'), { minPrice: query.minPrice });
+        }
+
+        if (typeof query.maxPrice === 'number') {
+            qb.andWhere(priceFilterSubQuery('<=', 'maxPrice'), { maxPrice: query.maxPrice });
+        }
+
+        const priceOrderSubQuery = `
+            (SELECT MIN(tvp.price)
+             FROM tour_variants tv
+             INNER JOIN tour_variant_pax_type_prices tvp ON tvp.tour_variant_id = tv.id
+             WHERE tv.tour_id = tour.id
+               AND tv.status = 'active')
+        `;
+
+        switch (query.sort) {
+            case 'price_asc':
+                qb.addSelect(priceOrderSubQuery, 'min_price_value')
+                    .orderBy('CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END', 'ASC')
+                    .addOrderBy('min_price_value', 'ASC');
+                break;
+            case 'price_desc':
+                qb.addSelect(priceOrderSubQuery, 'min_price_value')
+                    .orderBy('CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END', 'ASC')
+                    .addOrderBy('min_price_value', 'DESC');
+                break;
+            case 'rating_desc':
+                qb.orderBy('tour.score_rating', 'DESC')
+                    .addOrderBy('tour.created_at', 'DESC');
+                break;
+            case 'newest':
+                qb.orderBy('tour.created_at', 'DESC');
+                break;
+            default:
+                qb.orderBy('tour.score_rating', 'DESC')
+                    .addOrderBy('tour.created_at', 'DESC');
+        }
+
+        const offset = query.offset || 0;
+        const limit = query.limit || 12;
+
+        qb.skip(offset).take(limit);
+
+        const [tours, total] = await qb.getManyAndCount();
+
+        return {
+            data: tours.map((tour) => this.mapToPopularDTO(tour)),
+            total,
+            limit,
+            offset,
+        };
     }
 
     async getTourDetailBySlug(slug: string): Promise<UserTourDetailDTO> {
@@ -394,6 +515,7 @@ export class UserTourService {
                 originalPrice,
                 currentPrice,
                 tags,
+                slug: tour.slug,
             });
         });
     }

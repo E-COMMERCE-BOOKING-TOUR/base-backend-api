@@ -1,18 +1,36 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { UserTourService } from "../service/userTour.service";
 import { 
     UserTourPopularDTO, 
     UserTourDetailDTO, 
     UserTourReviewDTO, 
     UserTourReviewCategoryDTO,
-    UserTourRelatedDTO 
+    UserTourRelatedDTO,
+    UserTourSearchQueryDTO
 } from "../dto/tour.dto";
 
 @ApiTags('User Tour')
 @Controller('user/tour')
 export class UserTourController {
     constructor(private readonly userTourService: UserTourService) {}
+    @Get('search/list')
+    @ApiOperation({ summary: 'Search tours with filters' })
+    @ApiResponse({
+        status: 200,
+        description: 'Filtered tour list',
+        schema: {
+            properties: {
+                data: { type: 'array', items: { $ref: getSchemaPath(UserTourPopularDTO) } },
+                total: { type: 'number' },
+                limit: { type: 'number' },
+                offset: { type: 'number' },
+            },
+        },
+    })
+    async searchTours(@Query() query: UserTourSearchQueryDTO) {
+        return this.userTourService.searchTours(query);
+    }
 
     @Get('popular')
     @ApiOperation({ summary: 'Get popular tours' })
