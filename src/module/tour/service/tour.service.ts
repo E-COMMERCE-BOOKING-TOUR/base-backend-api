@@ -67,28 +67,54 @@ export class TourService {
         private readonly categoryRepository: Repository<TourCategoryEntity>,
     ) {}
 
-    async getAllTours(): Promise<TourSummaryDTO[]> {
+    async getAllTours(): Promise<TourDTO[]> {
         const tours = await this.tourRepository.find({
-            relations: ['currency', 'supplier'],
+            relations: [
+                'country',
+                'division',
+                'currency',
+                'supplier',
+                'tour_categories',
+                'images',
+            ],
             order: { created_at: 'DESC' },
         });
         return tours.map(
             (t) =>
-                new TourSummaryDTO({
-                    id: t.id,
+                new TourDTO({
                     title: t.title,
-                    status: (t.status as TourStatus) ?? TourStatus.inactive,
-                    is_visible: !!t.is_visible,
-                    score_rating: t.score_rating ?? 0,
+                    description: t.description,
+                    summary: t.summary,
+                    map_url: t.map_url ?? undefined,
+                    slug: t.slug,
+                    address: t.address,
                     tax: t.tax ?? 0,
+                    is_visible: !!t.is_visible,
+                    published_at: t.published_at ?? undefined,
+                    status: (t.status as TourStatus) ?? TourStatus.inactive,
+                    duration_hours: t.duration_hours ?? undefined,
+                    duration_days: t.duration_days ?? undefined,
                     min_pax: t.min_pax,
                     max_pax: t.max_pax ?? undefined,
-                    currency: t.currency,
-                    supplier: t.supplier,
+                    country_id: t.country?.id ?? undefined,
+                    division_id: t.division?.id ?? undefined,
+                    currency_id: t.currency?.id ?? undefined,
+                    supplier_id: t.supplier?.id ?? undefined,
+                    tour_category_ids: (t.tour_categories ?? []).map(
+                        (c) => c.id,
+                    ),
+                    images: (t.images ?? []).map(
+                        (img) =>
+                            new TourImageDTO({
+                                image_url: img.image_url,
+                                sort_no: img.sort_no ?? undefined,
+                                is_cover: !!img.is_cover,
+                            } as Partial<TourImageDTO>),
+                    ),
                     created_at: t.created_at,
                     updated_at: t.updated_at,
                     deleted_at: t.deleted_at ?? undefined,
-                } as Partial<TourSummaryDTO>),
+                } as Partial<TourDTO>),
         );
     }
 

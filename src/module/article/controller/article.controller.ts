@@ -17,7 +17,7 @@ export class ArticleController {
     constructor(private readonly articleService: ArticleService) {}
 
     @Get('getAll')
-    @ApiResponse({ status: 201, type: [ArticleSummaryDTO] })
+    @ApiResponse({ status: 201, type: [ArticleDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     async getAllArticles() {
         return await this.articleService.getAllArticles();

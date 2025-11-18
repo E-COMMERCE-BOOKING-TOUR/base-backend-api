@@ -22,7 +22,7 @@ export class TourController {
     constructor(private readonly tourService: TourService) {}
 
     @Get('getAll')
-    @ApiResponse({ status: 201, type: [TourSummaryDTO] })
+    @ApiResponse({ status: 201, type: [TourDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     async getAllTours() {
         return await this.tourService.getAllTours();
