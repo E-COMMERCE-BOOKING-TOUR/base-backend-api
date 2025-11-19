@@ -1,9 +1,9 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Entity, JoinColumn, ManyToOne } from "typeorm";
-import { PrimaryGeneratedColumn } from "typeorm";
-import { Column } from "typeorm";
-import { ReviewEntity } from "./review.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import { Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { PrimaryGeneratedColumn } from 'typeorm';
+import { Column } from 'typeorm';
+import { ReviewEntity } from './review.entity';
 
 @Entity('review_images')
 export class ReviewImageEntity extends BaseEntityTimestamp {
@@ -31,8 +31,10 @@ export class ReviewImageEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Hiển thị' })
     is_visible: boolean;
 
-    @ManyToOne(() => ReviewEntity, (review) => review.images, { nullable: false })
+    @ManyToOne(() => ReviewEntity, (review) => review.images, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'review_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Đánh giá' })
     review: ReviewEntity;
-} 
+}

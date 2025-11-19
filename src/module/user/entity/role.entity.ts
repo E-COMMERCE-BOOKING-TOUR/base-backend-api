@@ -2,7 +2,14 @@ import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
 import { PermissionEntity } from './permission.entity';
 import { UserEntity } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('roles')
 export class RoleEntity extends BaseEntityTimestamp {
@@ -30,7 +37,10 @@ export class RoleEntity extends BaseEntityTimestamp {
     @JoinTable({
         name: 'role_permissions',
         joinColumn: { name: 'role_id', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
+        inverseJoinColumn: {
+            name: 'permission_id',
+            referencedColumnName: 'id',
+        },
     })
     @ApiProperty({
         type: () => [PermissionEntity],

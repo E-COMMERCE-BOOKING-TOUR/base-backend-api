@@ -8,13 +8,15 @@ export default class ReviewImageSeeder implements Seeder {
         const imageRepository = dataSource.getRepository(ReviewImageEntity);
         const reviewRepository = dataSource.getRepository(ReviewEntity);
 
-        const reviews = await reviewRepository.find({ 
+        const reviews = await reviewRepository.find({
             where: { status: 'approved' },
             take: 30, // Only add images to some reviews
         });
 
         if (reviews.length === 0) {
-            console.log('⚠️ No approved reviews found, skipping review image seeder');
+            console.log(
+                '⚠️ No approved reviews found, skipping review image seeder',
+            );
             return;
         }
 
@@ -31,7 +33,7 @@ export default class ReviewImageSeeder implements Seeder {
             if (Math.random() > 0.4) {
                 // Add 1-3 images per review
                 const numImages = Math.floor(Math.random() * 3) + 1;
-                
+
                 for (let i = 0; i < numImages; i++) {
                     const exists = await imageRepository.findOne({
                         where: { review: { id: review.id }, sort_no: i + 1 },
@@ -39,7 +41,12 @@ export default class ReviewImageSeeder implements Seeder {
                     if (!exists) {
                         await imageRepository.save(
                             imageRepository.create({
-                                image_url: imageUrls[Math.floor(Math.random() * imageUrls.length)],
+                                image_url:
+                                    imageUrls[
+                                        Math.floor(
+                                            Math.random() * imageUrls.length,
+                                        )
+                                    ],
                                 sort_no: i + 1,
                                 is_visible: true,
                                 review: review,
@@ -53,4 +60,3 @@ export default class ReviewImageSeeder implements Seeder {
         console.log('Review Image seeded');
     }
 }
-

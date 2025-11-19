@@ -38,14 +38,14 @@ export default class MainSeeder implements Seeder {
                     CurrencySeeder,
                     CountrySeeder,
                     DivisionSeeder,
-                    
+
                     // User Module
                     PermissionSeeder,
                     RoleSeeder,
                     SupplierSeeder,
                     UserSeeder,
                     PaymentInformationSeeder,
-                    
+
                     // Tour Module
                     TourCategorySeeder,
                     TourPaxTypeSeeder,
@@ -57,20 +57,20 @@ export default class MainSeeder implements Seeder {
                     TourPriceRuleSeeder,
                     TourPolicySeeder,
                     TourCategoryRelationSeeder,
-                    
+
                     // Article Module
                     ArticleSeeder,
                     ArticleImageSeeder,
                     ArticleCommentSeeder,
-                    
+
                     // Review Module
                     ReviewSeeder,
                     ReviewImageSeeder,
-                    
+
                     // Booking Module
                     BookingPaymentSeeder,
                     BookingSeeder,
-                    
+
                     // Notification Module
                     NotificationSeeder,
                 ],
@@ -81,4 +81,3 @@ export default class MainSeeder implements Seeder {
         }
     }
 }
-

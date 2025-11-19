@@ -8,19 +8,28 @@ import { TourPaxTypeEntity } from '@/module/tour/entity/tourPaxType.entity';
 export default class TourPriceRuleSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
         const ruleRepository = dataSource.getRepository(TourPriceRuleEntity);
-        const rulePriceRepository = dataSource.getRepository(TourRulePaxTypePriceEntity);
+        const rulePriceRepository = dataSource.getRepository(
+            TourRulePaxTypePriceEntity,
+        );
         const variantRepository = dataSource.getRepository(TourVariantEntity);
         const paxTypeRepository = dataSource.getRepository(TourPaxTypeEntity);
 
         const variants = await variantRepository.find({
             where: { status: 'active' },
-            relations: ['tour', 'currency', 'tour_variant_pax_type_prices', 'tour_variant_pax_type_prices.pax_type'],
+            relations: [
+                'tour',
+                'currency',
+                'tour_variant_pax_type_prices',
+                'tour_variant_pax_type_prices.pax_type',
+            ],
         });
 
         const paxTypes = await paxTypeRepository.find();
 
         if (variants.length === 0 || paxTypes.length === 0) {
-            console.log('⚠️ Required data not found, skipping tour price rule seeder');
+            console.log(
+                '⚠️ Required data not found, skipping tour price rule seeder',
+            );
             return;
         }
 
@@ -176,4 +185,3 @@ export default class TourPriceRuleSeeder implements Seeder {
         console.log('Tour Price Rule seeded');
     }
 }
-

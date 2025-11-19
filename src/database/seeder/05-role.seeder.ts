@@ -12,7 +12,9 @@ export default class RoleSeeder implements Seeder {
         const allPermissions = await permissionRepository.find();
 
         // Admin role - all permissions
-        let adminRole = await roleRepository.findOne({ where: { name: 'admin' } });
+        let adminRole = await roleRepository.findOne({
+            where: { name: 'admin' },
+        });
         if (!adminRole) {
             adminRole = roleRepository.create({
                 name: 'admin',
@@ -23,13 +25,16 @@ export default class RoleSeeder implements Seeder {
         }
 
         // Supplier role - tour and booking management
-        let supplierRole = await roleRepository.findOne({ where: { name: 'supplier' } });
+        let supplierRole = await roleRepository.findOne({
+            where: { name: 'supplier' },
+        });
         if (!supplierRole) {
-            const supplierPermissions = allPermissions.filter(p =>
-                p.permission_name.startsWith('tour:') ||
-                p.permission_name.startsWith('booking:') ||
-                p.permission_name === 'review:read' ||
-                p.permission_name === 'report:read'
+            const supplierPermissions = allPermissions.filter(
+                (p) =>
+                    p.permission_name.startsWith('tour:') ||
+                    p.permission_name.startsWith('booking:') ||
+                    p.permission_name === 'review:read' ||
+                    p.permission_name === 'report:read',
             );
             supplierRole = roleRepository.create({
                 name: 'supplier',
@@ -40,17 +45,20 @@ export default class RoleSeeder implements Seeder {
         }
 
         // Customer role - basic user
-        let customerRole = await roleRepository.findOne({ where: { name: 'customer' } });
+        let customerRole = await roleRepository.findOne({
+            where: { name: 'customer' },
+        });
         if (!customerRole) {
-            const customerPermissions = allPermissions.filter(p =>
-                p.permission_name === 'tour:read' ||
-                p.permission_name === 'booking:read' ||
-                p.permission_name === 'booking:create' ||
-                p.permission_name === 'booking:cancel' ||
-                p.permission_name === 'article:read' ||
-                p.permission_name === 'review:read' ||
-                p.permission_name === 'review:create' ||
-                p.permission_name === 'payment:read'
+            const customerPermissions = allPermissions.filter(
+                (p) =>
+                    p.permission_name === 'tour:read' ||
+                    p.permission_name === 'booking:read' ||
+                    p.permission_name === 'booking:create' ||
+                    p.permission_name === 'booking:cancel' ||
+                    p.permission_name === 'article:read' ||
+                    p.permission_name === 'review:read' ||
+                    p.permission_name === 'review:create' ||
+                    p.permission_name === 'payment:read',
             );
             customerRole = roleRepository.create({
                 name: 'customer',
@@ -61,11 +69,14 @@ export default class RoleSeeder implements Seeder {
         }
 
         // Content Manager role - article management
-        let contentRole = await roleRepository.findOne({ where: { name: 'content_manager' } });
+        let contentRole = await roleRepository.findOne({
+            where: { name: 'content_manager' },
+        });
         if (!contentRole) {
-            const contentPermissions = allPermissions.filter(p =>
-                p.permission_name.startsWith('article:') ||
-                p.permission_name.startsWith('review:')
+            const contentPermissions = allPermissions.filter(
+                (p) =>
+                    p.permission_name.startsWith('article:') ||
+                    p.permission_name.startsWith('review:'),
             );
             contentRole = roleRepository.create({
                 name: 'content_manager',
@@ -76,14 +87,17 @@ export default class RoleSeeder implements Seeder {
         }
 
         // Moderator role - review and article approval
-        let moderatorRole = await roleRepository.findOne({ where: { name: 'moderator' } });
+        let moderatorRole = await roleRepository.findOne({
+            where: { name: 'moderator' },
+        });
         if (!moderatorRole) {
-            const moderatorPermissions = allPermissions.filter(p =>
-                p.permission_name === 'article:read' ||
-                p.permission_name === 'article:publish' ||
-                p.permission_name === 'review:read' ||
-                p.permission_name === 'review:approve' ||
-                p.permission_name === 'review:reject'
+            const moderatorPermissions = allPermissions.filter(
+                (p) =>
+                    p.permission_name === 'article:read' ||
+                    p.permission_name === 'article:publish' ||
+                    p.permission_name === 'review:read' ||
+                    p.permission_name === 'review:approve' ||
+                    p.permission_name === 'review:reject',
             );
             moderatorRole = roleRepository.create({
                 name: 'moderator',
@@ -96,4 +110,3 @@ export default class RoleSeeder implements Seeder {
         console.log('Role seeded');
     }
 }
-

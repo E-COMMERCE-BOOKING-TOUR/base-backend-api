@@ -1,10 +1,10 @@
-import { BookingEntity } from "@/module/booking/entity/booking.entity";
-import { BookingPaymentEntity } from "@/module/booking/entity/bookingPayment.entity";
-import { TourEntity } from "@/module/tour/entity/tour.entity";
-import { TourVariantEntity } from "@/module/tour/entity/tourVariant.entity";
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, OneToMany } from "typeorm";
-import { PrimaryGeneratedColumn } from "typeorm";
+import { BookingEntity } from '@/module/booking/entity/booking.entity';
+import { BookingPaymentEntity } from '@/module/booking/entity/bookingPayment.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
+import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, OneToMany } from 'typeorm';
+import { PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('master_currencies')
 export class CurrencyEntity {
@@ -37,7 +37,12 @@ export class CurrencyEntity {
     @ApiProperty({ description: 'Danh sách các đơn đặt tour có tiền tệ này' })
     bookings: BookingEntity[];
 
-    @OneToMany(() => BookingPaymentEntity, (booking_payment) => booking_payment.currency)
-    @ApiProperty({ description: 'Danh sách các phương thức thanh toán có tiền tệ này' })
+    @OneToMany(
+        () => BookingPaymentEntity,
+        (booking_payment) => booking_payment.currency,
+    )
+    @ApiProperty({
+        description: 'Danh sách các phương thức thanh toán có tiền tệ này',
+    })
     booking_payments: BookingPaymentEntity[];
 }

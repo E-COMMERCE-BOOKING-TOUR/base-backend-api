@@ -1,5 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthResponseDTO, LoginDTO, MessageResponseDTO, RegisterDTO, TokenDTO } from '../dtos';
+import {
+    AuthResponseDTO,
+    LoginDTO,
+    MessageResponseDTO,
+    RegisterDTO,
+    TokenDTO,
+} from '../dtos';
 import { DataSource, DeepPartial, Repository } from 'typeorm';
 import { UserEntity } from '../entity/user.entity';
 import { generateUUID } from '@/utils/uuid.util';
@@ -20,7 +26,7 @@ export class AuthService {
         private userAuthSessionRepository: Repository<UserAuthSessionEntity>,
         private jwtService: JwtService,
         private dataSource: DataSource,
-    ) { }
+    ) {}
 
     async register(dto: RegisterDTO) {
         const user = await this.userRepository.findOne({

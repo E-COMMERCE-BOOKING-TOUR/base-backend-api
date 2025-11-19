@@ -1,8 +1,15 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { BookingEntity } from "./booking.entity";
-import { CurrencyEntity } from "@/common/entity/currency.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { BookingEntity } from './booking.entity';
+import { CurrencyEntity } from '@/common/entity/currency.entity';
 
 @Entity('booking_payments')
 export class BookingPaymentEntity extends BaseEntityTimestamp {
@@ -43,10 +50,15 @@ export class BookingPaymentEntity extends BaseEntityTimestamp {
     status: string;
 
     @OneToMany(() => BookingEntity, (booking) => booking.booking_payment)
-    @ApiProperty({ description: 'Danh sách các đơn đặt tour đã thanh toán bằng phương thức này' })
+    @ApiProperty({
+        description:
+            'Danh sách các đơn đặt tour đã thanh toán bằng phương thức này',
+    })
     bookings: BookingEntity[];
 
-    @ManyToOne(() => CurrencyEntity, (currency) => currency.booking_payments, { nullable: false })
+    @ManyToOne(() => CurrencyEntity, (currency) => currency.booking_payments, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'currency_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Tiền tệ của phương thức thanh toán' })
     currency: CurrencyEntity;

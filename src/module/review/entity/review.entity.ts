@@ -1,9 +1,16 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { UserEntity } from "@/module/user/entity/user.entity";
-import { ApiProperty } from "@nestjs/swagger";
-import { ReviewImageEntity } from "./reviewImage.entity";
-import { TourEntity } from "@/module/tour/entity/tour.entity";
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { UserEntity } from '@/module/user/entity/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { ReviewImageEntity } from './reviewImage.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
 
 @Entity('reviews')
 export class ReviewEntity extends BaseEntityTimestamp {

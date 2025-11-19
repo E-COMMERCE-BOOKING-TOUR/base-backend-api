@@ -5,7 +5,9 @@ import { UserEntity } from '@/module/user/entity/user.entity';
 
 export default class PaymentInformationSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
-        const paymentRepository = dataSource.getRepository(PaymentInfomationEntity);
+        const paymentRepository = dataSource.getRepository(
+            PaymentInfomationEntity,
+        );
         const userRepository = dataSource.getRepository(UserEntity);
 
         // Get customer users
@@ -15,7 +17,9 @@ export default class PaymentInformationSeeder implements Seeder {
         });
 
         if (customers.length === 0) {
-            console.log('⚠️ No customers found, skipping payment information seeder');
+            console.log(
+                '⚠️ No customers found, skipping payment information seeder',
+            );
             return;
         }
 
@@ -129,7 +133,9 @@ export default class PaymentInformationSeeder implements Seeder {
                     },
                 });
                 if (!exists) {
-                    await paymentRepository.save(paymentRepository.create(paymentInfo));
+                    await paymentRepository.save(
+                        paymentRepository.create(paymentInfo),
+                    );
                 }
             }
         }
@@ -137,4 +143,3 @@ export default class PaymentInformationSeeder implements Seeder {
         console.log('Payment Information seeded');
     }
 }
-

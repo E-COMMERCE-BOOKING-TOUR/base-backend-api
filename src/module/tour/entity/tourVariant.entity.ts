@@ -1,17 +1,23 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { TourEntity } from "./tour.entity";
-import { CurrencyEntity } from "@/common/entity/currency.entity";
-import { TourSessionEntity } from "./tourSession.entity";
-import { TourPolicyEntity } from "./tourPolicy.entity";
-import { TourVariantPaxTypePriceEntity } from "./tourVariantPaxTypePrice.entity";
-import { TourPriceRuleEntity } from "./tourPriceRule.entity";
-import { BookingItemEntity } from "@/module/booking/entity/bookingItem.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { TourEntity } from './tour.entity';
+import { CurrencyEntity } from '@/common/entity/currency.entity';
+import { TourSessionEntity } from './tourSession.entity';
+import { TourPolicyEntity } from './tourPolicy.entity';
+import { TourVariantPaxTypePriceEntity } from './tourVariantPaxTypePrice.entity';
+import { TourPriceRuleEntity } from './tourPriceRule.entity';
+import { BookingItemEntity } from '@/module/booking/entity/bookingItem.entity';
 
 @Entity('tour_variants')
 export class TourVariantEntity extends BaseEntityTimestamp {
-
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -72,7 +78,9 @@ export class TourVariantEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Tour' })
     tour: TourEntity;
 
-    @ManyToOne(() => CurrencyEntity, (currency) => currency.tour_variants, { nullable: false })
+    @ManyToOne(() => CurrencyEntity, (currency) => currency.tour_variants, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'currency_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Tiền tệ biến thể tour' })
     currency: CurrencyEntity;
@@ -81,19 +89,31 @@ export class TourVariantEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Danh sách các lịch chạy của biến thể tour' })
     tour_sessions: TourSessionEntity[];
 
-    @OneToMany(() => TourPolicyEntity, (tour_policy) => tour_policy.tour_variant)
+    @OneToMany(
+        () => TourPolicyEntity,
+        (tour_policy) => tour_policy.tour_variant,
+    )
     @ApiProperty({ description: 'Chính sách hủy/fee của biến thể tour' })
     tour_policy: TourPolicyEntity;
 
-    @OneToMany(() => TourVariantPaxTypePriceEntity, (tour_variant_pax_type_price) => tour_variant_pax_type_price.tour_variant)
+    @OneToMany(
+        () => TourVariantPaxTypePriceEntity,
+        (tour_variant_pax_type_price) =>
+            tour_variant_pax_type_price.tour_variant,
+    )
     @ApiProperty({ description: 'Giá áp theo rule cho loại khách' })
     tour_variant_pax_type_prices: TourVariantPaxTypePriceEntity[];
 
-    @OneToMany(() => TourPriceRuleEntity, (tour_price_rule) => tour_price_rule.tour_variant)
+    @OneToMany(
+        () => TourPriceRuleEntity,
+        (tour_price_rule) => tour_price_rule.tour_variant,
+    )
     @ApiProperty({ description: 'Quy tắc giá theo mùa/ngày trong tuần' })
     tour_price_rules: TourPriceRuleEntity[];
 
     @OneToMany(() => BookingItemEntity, (booking_item) => booking_item.variant)
-    @ApiProperty({ description: 'Danh sách các mục đặt tour có biến thể tour này' })
+    @ApiProperty({
+        description: 'Danh sách các mục đặt tour có biến thể tour này',
+    })
     booking_items: BookingItemEntity[];
 }

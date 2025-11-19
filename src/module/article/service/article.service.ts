@@ -37,11 +37,13 @@ export class ArticleService {
                     content: a.content,
                     is_visible: a.is_visible,
                     user_id: a.user.id,
-                    images: (a.images ?? []).map((img) => ({ image_url: img.image_url })),
+                    images: (a.images ?? []).map((img) => ({
+                        image_url: img.image_url,
+                    })),
                     created_at: a.created_at,
                     updated_at: a.updated_at,
                     deleted_at: a.deleted_at ?? undefined,
-                } as ArticleDTO),
+                }) as ArticleDTO,
         );
     }
 

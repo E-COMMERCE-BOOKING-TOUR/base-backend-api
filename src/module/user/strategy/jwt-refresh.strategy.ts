@@ -6,7 +6,10 @@ import { AuthService } from '../service/auth.service';
 import { jwtRefreshTokenConfig } from '@/config/jwt.config';
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+    Strategy,
+    'jwt-refresh',
+) {
     constructor(private readonly authService: AuthService) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -23,4 +26,3 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
         return payload;
     }
 }
-

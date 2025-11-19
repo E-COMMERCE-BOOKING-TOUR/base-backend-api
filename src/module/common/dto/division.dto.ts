@@ -20,4 +20,3 @@ export class UserDivisionTrendingDTO {
         Object.assign(this, partial);
     }
 }
-

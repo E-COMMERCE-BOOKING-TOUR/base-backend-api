@@ -70,7 +70,9 @@ export default class SupplierSeeder implements Seeder {
         ];
 
         for (const supplier of suppliers) {
-            const exists = await repository.findOne({ where: { email: supplier.email } });
+            const exists = await repository.findOne({
+                where: { email: supplier.email },
+            });
             if (!exists) {
                 await repository.save(repository.create(supplier));
             }
@@ -79,4 +81,3 @@ export default class SupplierSeeder implements Seeder {
         console.log('Supplier seeded');
     }
 }
-

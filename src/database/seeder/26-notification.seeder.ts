@@ -5,7 +5,8 @@ import { UserEntity } from '@/module/user/entity/user.entity';
 
 export default class NotificationSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
-        const notificationRepository = dataSource.getRepository(NotificationEntity);
+        const notificationRepository =
+            dataSource.getRepository(NotificationEntity);
         const userRepository = dataSource.getRepository(UserEntity);
 
         const customers = await userRepository.find({
@@ -26,7 +27,8 @@ export default class NotificationSeeder implements Seeder {
             // System notifications for all users
             {
                 title: 'Welcome to BookinTour!',
-                description: 'Thank you for joining BookinTour. Explore amazing tours and create unforgettable memories!',
+                description:
+                    'Thank you for joining BookinTour. Explore amazing tours and create unforgettable memories!',
                 type: 'welcome',
                 is_error: false,
                 is_user: true,
@@ -34,7 +36,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'New Feature: Virtual Tour Preview',
-                description: 'Check out our new virtual tour preview feature! Now you can explore destinations before booking.',
+                description:
+                    'Check out our new virtual tour preview feature! Now you can explore destinations before booking.',
                 type: 'feature',
                 is_error: false,
                 is_user: true,
@@ -42,7 +45,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Summer Sale - Up to 30% Off',
-                description: 'Don\'t miss our summer sale! Book your dream vacation with up to 30% discount on selected tours.',
+                description:
+                    "Don't miss our summer sale! Book your dream vacation with up to 30% discount on selected tours.",
                 type: 'promotion',
                 is_error: false,
                 is_user: true,
@@ -50,7 +54,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Payment Successful',
-                description: 'Your payment has been processed successfully. Booking confirmation has been sent to your email.',
+                description:
+                    'Your payment has been processed successfully. Booking confirmation has been sent to your email.',
                 type: 'payment',
                 is_error: false,
                 is_user: true,
@@ -58,7 +63,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Booking Confirmed',
-                description: 'Your tour booking has been confirmed! Get ready for an amazing experience.',
+                description:
+                    'Your tour booking has been confirmed! Get ready for an amazing experience.',
                 type: 'booking',
                 is_error: false,
                 is_user: true,
@@ -66,7 +72,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Tour Reminder',
-                description: 'Your tour starts tomorrow! Please arrive 15 minutes before departure time.',
+                description:
+                    'Your tour starts tomorrow! Please arrive 15 minutes before departure time.',
                 type: 'reminder',
                 is_error: false,
                 is_user: true,
@@ -74,7 +81,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Review Your Recent Tour',
-                description: 'How was your tour? Share your experience and help other travelers!',
+                description:
+                    'How was your tour? Share your experience and help other travelers!',
                 type: 'review',
                 is_error: false,
                 is_user: true,
@@ -82,7 +90,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Payment Failed',
-                description: 'We couldn\'t process your payment. Please check your payment details and try again.',
+                description:
+                    "We couldn't process your payment. Please check your payment details and try again.",
                 type: 'payment',
                 is_error: true,
                 is_user: true,
@@ -90,7 +99,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Booking Cancelled',
-                description: 'Your booking has been cancelled. Refund will be processed within 5-7 business days.',
+                description:
+                    'Your booking has been cancelled. Refund will be processed within 5-7 business days.',
                 type: 'booking',
                 is_error: false,
                 is_user: true,
@@ -98,7 +108,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'New Tours Added in Your Favorite Destination',
-                description: 'We\'ve added new exciting tours in destinations you\'ve shown interest in. Check them out!',
+                description:
+                    "We've added new exciting tours in destinations you've shown interest in. Check them out!",
                 type: 'recommendation',
                 is_error: false,
                 is_user: true,
@@ -106,7 +117,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Complete Your Profile',
-                description: 'Complete your profile to get personalized tour recommendations and special offers.',
+                description:
+                    'Complete your profile to get personalized tour recommendations and special offers.',
                 type: 'profile',
                 is_error: false,
                 is_user: true,
@@ -114,7 +126,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Price Drop Alert!',
-                description: 'Good news! The price of a tour in your wishlist has dropped. Book now before it\'s gone!',
+                description:
+                    "Good news! The price of a tour in your wishlist has dropped. Book now before it's gone!",
                 type: 'alert',
                 is_error: false,
                 is_user: true,
@@ -122,7 +135,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Tour Itinerary Updated',
-                description: 'There has been a minor change to your tour itinerary. Please check the updated details.',
+                description:
+                    'There has been a minor change to your tour itinerary. Please check the updated details.',
                 type: 'update',
                 is_error: false,
                 is_user: true,
@@ -130,7 +144,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Limited Seats Available',
-                description: 'Hurry! Only 3 seats left for your selected tour date. Book now to secure your spot!',
+                description:
+                    'Hurry! Only 3 seats left for your selected tour date. Book now to secure your spot!',
                 type: 'alert',
                 is_error: false,
                 is_user: true,
@@ -138,7 +153,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Earn Rewards Points',
-                description: 'You\'ve earned 500 reward points! Use them on your next booking for exclusive discounts.',
+                description:
+                    "You've earned 500 reward points! Use them on your next booking for exclusive discounts.",
                 type: 'reward',
                 is_error: false,
                 is_user: true,
@@ -147,7 +163,8 @@ export default class NotificationSeeder implements Seeder {
             // System-wide announcements
             {
                 title: 'System Maintenance Scheduled',
-                description: 'We will be performing system maintenance on Sunday, 2:00 AM - 4:00 AM. Service may be temporarily unavailable.',
+                description:
+                    'We will be performing system maintenance on Sunday, 2:00 AM - 4:00 AM. Service may be temporarily unavailable.',
                 type: 'maintenance',
                 is_error: false,
                 is_user: false,
@@ -155,7 +172,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'New Cancellation Policy',
-                description: 'Our cancellation policy has been updated to be more flexible. Check the new terms for your upcoming bookings.',
+                description:
+                    'Our cancellation policy has been updated to be more flexible. Check the new terms for your upcoming bookings.',
                 type: 'policy',
                 is_error: false,
                 is_user: false,
@@ -163,7 +181,8 @@ export default class NotificationSeeder implements Seeder {
             },
             {
                 title: 'Holiday Season Special Offers',
-                description: 'Celebrate the holidays with our special tour packages. Early bird discounts available!',
+                description:
+                    'Celebrate the holidays with our special tour packages. Early bird discounts available!',
                 type: 'promotion',
                 is_error: false,
                 is_user: false,
@@ -172,10 +191,14 @@ export default class NotificationSeeder implements Seeder {
         ];
 
         for (const notification of notifications) {
-            const exists = await notificationRepository.findOne({ where: { title: notification.title } });
+            const exists = await notificationRepository.findOne({
+                where: { title: notification.title },
+            });
             if (!exists) {
                 const users = notification.user_ids?.length
-                    ? await userRepository.find({ where: { id: In(notification.user_ids) } })
+                    ? await userRepository.find({
+                          where: { id: In(notification.user_ids) },
+                      })
                     : [];
                 const entity = notificationRepository.create({
                     title: notification.title,
@@ -192,4 +215,3 @@ export default class NotificationSeeder implements Seeder {
         console.log('Notification seeded');
     }
 }
-

@@ -15,12 +15,12 @@ export default class TourPaxTypeSeeder implements Seeder {
         ];
 
         for (const paxType of paxTypes) {
-            const exists = await repository.findOne({ 
-                where: { 
+            const exists = await repository.findOne({
+                where: {
                     name: paxType.name,
                     min_age: paxType.min_age,
                     max_age: paxType.max_age,
-                } 
+                },
             });
             if (!exists) {
                 await repository.save(repository.create(paxType));
@@ -30,4 +30,3 @@ export default class TourPaxTypeSeeder implements Seeder {
         console.log('Tour Pax Type seeded');
     }
 }
-

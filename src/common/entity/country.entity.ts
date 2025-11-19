@@ -1,9 +1,9 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, OneToMany } from "typeorm";
-import { PrimaryGeneratedColumn } from "typeorm";
-import { DivisionEntity } from "./division.entity";
-import { UserEntity } from "@/module/user/entity/user.entity";
-import { TourEntity } from "@/module/tour/entity/tour.entity";
+import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, OneToMany } from 'typeorm';
+import { PrimaryGeneratedColumn } from 'typeorm';
+import { DivisionEntity } from './division.entity';
+import { UserEntity } from '@/module/user/entity/user.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
 
 @Entity('master_countries')
 export class CountryEntity {

@@ -7,7 +7,10 @@ export const JWT = createParamDecorator(
         const authHeader = request.headers['authorization'];
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            return { tokenRefresh: authHeader.split(' ')[1], payload: request.user };
+            return {
+                tokenRefresh: authHeader.split(' ')[1],
+                payload: request.user,
+            };
         }
         return undefined;
     },

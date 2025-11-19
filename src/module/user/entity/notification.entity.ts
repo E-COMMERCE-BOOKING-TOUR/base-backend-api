@@ -1,7 +1,14 @@
 import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
 import { UserEntity } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('notifications')
 export class NotificationEntity extends BaseEntityTimestamp {

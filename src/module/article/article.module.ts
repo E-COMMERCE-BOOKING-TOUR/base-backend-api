@@ -22,4 +22,4 @@ import { UserEntity } from '../user/entity/user.entity';
     providers: [ArticleService, UserArticleService],
     exports: [ArticleService, UserArticleService],
 })
-export class ArticleModule { }
+export class ArticleModule {}

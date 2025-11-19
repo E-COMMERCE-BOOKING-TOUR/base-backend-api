@@ -1,11 +1,10 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
-import { TourEntity } from "./tour.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { TourEntity } from './tour.entity';
 
 @Entity('tour_categories')
 export class TourCategoryEntity extends BaseEntityTimestamp {
-
     @PrimaryGeneratedColumn()
     id: number;
 

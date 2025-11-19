@@ -6,33 +6,37 @@ import { TourPaxTypeEntity } from '@/module/tour/entity/tourPaxType.entity';
 
 export default class TourVariantPaxPriceSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
-        const priceRepository = dataSource.getRepository(TourVariantPaxTypePriceEntity);
+        const priceRepository = dataSource.getRepository(
+            TourVariantPaxTypePriceEntity,
+        );
         const variantRepository = dataSource.getRepository(TourVariantEntity);
         const paxTypeRepository = dataSource.getRepository(TourPaxTypeEntity);
 
-        const variants = await variantRepository.find({ 
+        const variants = await variantRepository.find({
             relations: ['tour', 'currency'],
             where: { status: 'active' },
         });
-        
+
         const paxTypes = await paxTypeRepository.find();
 
         if (variants.length === 0 || paxTypes.length === 0) {
-            console.log('⚠️ Required data not found, skipping variant pax price seeder');
+            console.log(
+                '⚠️ Required data not found, skipping variant pax price seeder',
+            );
             return;
         }
 
         // Find pax types
-        const infant = paxTypes.find(p => p.name === 'Infant');
-        const child = paxTypes.find(p => p.name === 'Child');
-        const youth = paxTypes.find(p => p.name === 'Youth');
-        const adult = paxTypes.find(p => p.name === 'Adult');
-        const senior = paxTypes.find(p => p.name === 'Senior');
+        const infant = paxTypes.find((p) => p.name === 'Infant');
+        const child = paxTypes.find((p) => p.name === 'Child');
+        const youth = paxTypes.find((p) => p.name === 'Youth');
+        const adult = paxTypes.find((p) => p.name === 'Adult');
+        const senior = paxTypes.find((p) => p.name === 'Senior');
 
         for (const variant of variants) {
             const isVND = variant.currency.symbol === 'VND';
             const isUSD = variant.currency.symbol === 'USD';
-            
+
             // Base prices depending on tour type
             let basePrice = 500000; // Default VND
             if (isUSD) basePrice = 50;
@@ -49,17 +53,20 @@ export default class TourVariantPaxPriceSeeder implements Seeder {
             // Adjust by tour duration
             if (variant.tour.duration_days) {
                 basePrice = basePrice * variant.tour.duration_days * 1.2;
-            } else if (variant.tour.duration_hours && variant.tour.duration_hours >= 8) {
+            } else if (
+                variant.tour.duration_hours &&
+                variant.tour.duration_hours >= 8
+            ) {
                 basePrice = basePrice * 1.5;
             }
 
             // Set prices for each pax type
             const prices = [
-                { paxType: infant, multiplier: 0 },      // Infant free
-                { paxType: child, multiplier: 0.5 },     // Child 50%
-                { paxType: youth, multiplier: 0.75 },    // Youth 75%
-                { paxType: adult, multiplier: 1 },       // Adult 100%
-                { paxType: senior, multiplier: 0.85 },   // Senior 85%
+                { paxType: infant, multiplier: 0 }, // Infant free
+                { paxType: child, multiplier: 0.5 }, // Child 50%
+                { paxType: youth, multiplier: 0.75 }, // Youth 75%
+                { paxType: adult, multiplier: 1 }, // Adult 100%
+                { paxType: senior, multiplier: 0.85 }, // Senior 85%
             ];
 
             for (const { paxType, multiplier } of prices) {
@@ -86,4 +93,3 @@ export default class TourVariantPaxPriceSeeder implements Seeder {
         console.log('Tour Variant Pax Price seeded');
     }
 }
-

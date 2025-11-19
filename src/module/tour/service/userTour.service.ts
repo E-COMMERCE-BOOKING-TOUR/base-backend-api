@@ -1,19 +1,19 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { TourEntity } from "../entity/tour.entity";
-import { Brackets, Repository, SelectQueryBuilder } from "typeorm";
-import { 
-    UserTourPopularDTO, 
-    UserTourDetailDTO, 
-    TourActivityDTO, 
-    TourDetailsInfoDTO, 
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TourEntity } from '../entity/tour.entity';
+import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+    UserTourPopularDTO,
+    UserTourDetailDTO,
+    TourActivityDTO,
+    TourDetailsInfoDTO,
     TourTestimonialDTO,
     UserTourReviewDTO,
     UserTourReviewCategoryDTO,
     UserTourRelatedDTO,
-    UserTourSearchQueryDTO
-} from "../dto/tour.dto";
-import { ReviewEntity } from "@/module/review/entity/review.entity";
+    UserTourSearchQueryDTO,
+} from '../dto/tour.dto';
+import { ReviewEntity } from '@/module/review/entity/review.entity';
 
 @Injectable()
 export class UserTourService {
@@ -29,18 +29,28 @@ export class UserTourService {
             .createQueryBuilder('tour')
             .leftJoinAndSelect('tour.images', 'images')
             .leftJoinAndSelect('tour.variants', 'variants')
-            .leftJoinAndSelect('variants.tour_variant_pax_type_prices', 'prices')
+            .leftJoinAndSelect(
+                'variants.tour_variant_pax_type_prices',
+                'prices',
+            )
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
-            .leftJoinAndSelect('tour.reviews', 'reviews', 'reviews.status = :reviewStatus', { reviewStatus: 'approved' })
+            .leftJoinAndSelect(
+                'tour.reviews',
+                'reviews',
+                'reviews.status = :reviewStatus',
+                { reviewStatus: 'approved' },
+            )
             .leftJoinAndSelect('tour.tour_categories', 'categories')
             .where('tour.status = :tourStatus', { tourStatus: 'active' })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true });
     }
 
     private mapToPopularDTO(tour: TourEntity): UserTourPopularDTO {
-        const coverImage = tour.images?.find(img => img.is_cover) || tour.images?.[0];
-        const imageUrl: string = coverImage?.image_url || '/assets/images/travel.jpg';
+        const coverImage =
+            tour.images?.find((img) => img.is_cover) || tour.images?.[0];
+        const imageUrl: string =
+            coverImage?.image_url || '/assets/images/travel.jpg';
 
         const reviewsCount: number = tour.reviews?.length || 0;
         const avgRating: number = tour.score_rating || 0;
@@ -51,9 +61,10 @@ export class UserTourService {
         else if (avgRating >= 7) ratingText = 'Good';
         else if (avgRating >= 6) ratingText = 'Okay';
 
-        const location: string = tour.division && tour.country 
-            ? `${tour.division.name}, ${tour.country.name}`
-            : tour.address;
+        const location: string =
+            tour.division && tour.country
+                ? `${tour.division.name}, ${tour.country.name}`
+                : tour.address;
 
         const minPax: number = tour.min_pax || 1;
         const maxPax: number = tour.max_pax || minPax + 2;
@@ -63,12 +74,18 @@ export class UserTourService {
         let originalPrice: number | undefined;
 
         if (tour.variants && tour.variants.length > 0) {
-            const activeVariant = tour.variants.find(v => v.status === 'active');
-            if (activeVariant && activeVariant.tour_variant_pax_type_prices?.length > 0) {
-                const prices: number[] = activeVariant.tour_variant_pax_type_prices
-                    .map(p => p.price)
-                    .filter(p => p > 0);
-                
+            const activeVariant = tour.variants.find(
+                (v) => v.status === 'active',
+            );
+            if (
+                activeVariant &&
+                activeVariant.tour_variant_pax_type_prices?.length > 0
+            ) {
+                const prices: number[] =
+                    activeVariant.tour_variant_pax_type_prices
+                        .map((p) => p.price)
+                        .filter((p) => p > 0);
+
                 if (prices.length > 0) {
                     currentPrice = Math.min(...prices);
                     originalPrice = Math.round(currentPrice * 1.3);
@@ -76,7 +93,8 @@ export class UserTourService {
             }
         }
 
-        const tags: string[] = tour.tour_categories?.map(cat => cat.name) || [];
+        const tags: string[] =
+            tour.tour_categories?.map((cat) => cat.name) || [];
 
         return new UserTourPopularDTO({
             id: tour.id,
@@ -112,11 +130,22 @@ export class UserTourService {
             qb.andWhere(
                 new Brackets((subQb) => {
                     const keywordParam = `%${normalizedKeyword}%`;
-                    subQb.where('LOWER(tour.title) LIKE :keyword', { keyword: keywordParam })
-                        .orWhere('LOWER(tour.summary) LIKE :keyword', { keyword: keywordParam })
-                        .orWhere('LOWER(tour.address) LIKE :keyword', { keyword: keywordParam })
-                        .orWhere('LOWER(division.name) LIKE :keyword', { keyword: keywordParam })
-                        .orWhere('LOWER(country.name) LIKE :keyword', { keyword: keywordParam });
+                    subQb
+                        .where('LOWER(tour.title) LIKE :keyword', {
+                            keyword: keywordParam,
+                        })
+                        .orWhere('LOWER(tour.summary) LIKE :keyword', {
+                            keyword: keywordParam,
+                        })
+                        .orWhere('LOWER(tour.address) LIKE :keyword', {
+                            keyword: keywordParam,
+                        })
+                        .orWhere('LOWER(division.name) LIKE :keyword', {
+                            keyword: keywordParam,
+                        })
+                        .orWhere('LOWER(country.name) LIKE :keyword', {
+                            keyword: keywordParam,
+                        });
                 }),
             );
         }
@@ -130,12 +159,18 @@ export class UserTourService {
                         const combinedParam = `combined_${index}`;
                         const value = `%${destination.toLowerCase()}%`;
 
-                        destinationQb.orWhere(`LOWER(division.name) LIKE :${destinationParam}`, {
-                            [destinationParam]: value,
-                        });
-                        destinationQb.orWhere(`LOWER(country.name) LIKE :${countryParam}`, {
-                            [countryParam]: value,
-                        });
+                        destinationQb.orWhere(
+                            `LOWER(division.name) LIKE :${destinationParam}`,
+                            {
+                                [destinationParam]: value,
+                            },
+                        );
+                        destinationQb.orWhere(
+                            `LOWER(country.name) LIKE :${countryParam}`,
+                            {
+                                [countryParam]: value,
+                            },
+                        );
                         destinationQb.orWhere(
                             `LOWER(CONCAT(COALESCE(division.name, ''), ', ', COALESCE(country.name, ''))) LIKE :${combinedParam}`,
                             { [combinedParam]: value },
@@ -150,10 +185,15 @@ export class UserTourService {
         }
 
         if (typeof query.minRating === 'number') {
-            qb.andWhere('tour.score_rating >= :minRating', { minRating: query.minRating });
+            qb.andWhere('tour.score_rating >= :minRating', {
+                minRating: query.minRating,
+            });
         }
 
-        const priceFilterSubQuery = (operator: '>=' | '<=', paramName: string) => `
+        const priceFilterSubQuery = (
+            operator: '>=' | '<=',
+            paramName: string,
+        ) => `
             EXISTS (
                 SELECT 1
                 FROM tour_variants tv
@@ -165,11 +205,15 @@ export class UserTourService {
         `;
 
         if (typeof query.minPrice === 'number') {
-            qb.andWhere(priceFilterSubQuery('>=', 'minPrice'), { minPrice: query.minPrice });
+            qb.andWhere(priceFilterSubQuery('>=', 'minPrice'), {
+                minPrice: query.minPrice,
+            });
         }
 
         if (typeof query.maxPrice === 'number') {
-            qb.andWhere(priceFilterSubQuery('<=', 'maxPrice'), { maxPrice: query.maxPrice });
+            qb.andWhere(priceFilterSubQuery('<=', 'maxPrice'), {
+                maxPrice: query.maxPrice,
+            });
         }
 
         const priceOrderSubQuery = `
@@ -183,24 +227,34 @@ export class UserTourService {
         switch (query.sort) {
             case 'price_asc':
                 qb.addSelect(priceOrderSubQuery, 'min_price_value')
-                    .orderBy('CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END', 'ASC')
+                    .orderBy(
+                        'CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END',
+                        'ASC',
+                    )
                     .addOrderBy('min_price_value', 'ASC');
                 break;
             case 'price_desc':
                 qb.addSelect(priceOrderSubQuery, 'min_price_value')
-                    .orderBy('CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END', 'ASC')
+                    .orderBy(
+                        'CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END',
+                        'ASC',
+                    )
                     .addOrderBy('min_price_value', 'DESC');
                 break;
             case 'rating_desc':
-                qb.orderBy('tour.score_rating', 'DESC')
-                    .addOrderBy('tour.created_at', 'DESC');
+                qb.orderBy('tour.score_rating', 'DESC').addOrderBy(
+                    'tour.created_at',
+                    'DESC',
+                );
                 break;
             case 'newest':
                 qb.orderBy('tour.created_at', 'DESC');
                 break;
             default:
-                qb.orderBy('tour.score_rating', 'DESC')
-                    .addOrderBy('tour.created_at', 'DESC');
+                qb.orderBy('tour.score_rating', 'DESC').addOrderBy(
+                    'tour.created_at',
+                    'DESC',
+                );
         }
 
         const offset = query.offset || 0;
@@ -225,10 +279,18 @@ export class UserTourService {
             .leftJoinAndSelect('tour.variants', 'variants')
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
-            .leftJoinAndSelect('tour.reviews', 'reviews', 'reviews.status = :status', { status: 'approved' })
+            .leftJoinAndSelect(
+                'tour.reviews',
+                'reviews',
+                'reviews.status = :status',
+                { status: 'approved' },
+            )
             .leftJoinAndSelect('reviews.user', 'user')
             .leftJoinAndSelect('user.country', 'userCountry')
-            .leftJoinAndSelect('variants.tour_variant_pax_type_prices', 'prices')
+            .leftJoinAndSelect(
+                'variants.tour_variant_pax_type_prices',
+                'prices',
+            )
             .leftJoinAndSelect('tour.tour_categories', 'categories')
             .where('tour.slug = :slug', { slug })
             .andWhere('tour.status = :status', { status: 'active' })
@@ -239,21 +301,23 @@ export class UserTourService {
             throw new NotFoundException(`Tour with slug "${slug}" not found`);
         }
 
-        const location: string = tour.division && tour.country 
-            ? `${tour.address}, ${tour.division.name}, ${tour.country.name}`
-            : tour.address;
+        const location: string =
+            tour.division && tour.country
+                ? `${tour.address}, ${tour.division.name}, ${tour.country.name}`
+                : tour.address;
 
-        const images: string[] = tour.images
-            ?.sort((a, b) => {
-                if (a.is_cover) return -1;
-                if (b.is_cover) return 1;
-                return (a.sort_no || 0) - (b.sort_no || 0);
-            })
-            .map(img => img.image_url) || [];
+        const images: string[] =
+            tour.images
+                ?.sort((a, b) => {
+                    if (a.is_cover) return -1;
+                    if (b.is_cover) return 1;
+                    return (a.sort_no || 0) - (b.sort_no || 0);
+                })
+                .map((img) => img.image_url) || [];
 
         const reviewsCount: number = tour.reviews?.length || 0;
         const avgRating: number = tour.score_rating || 0;
-        
+
         let scoreLabel: string = 'New';
         if (avgRating >= 9) scoreLabel = 'Excellent';
         else if (avgRating >= 8.5) scoreLabel = 'Fabulous';
@@ -264,18 +328,25 @@ export class UserTourService {
 
         // Calculate staff score (using average rating as base, slightly higher)
         // If no rating yet, use a default good score
-        const staffScore: number = avgRating > 0 ? Math.min(10, avgRating + 0.4) : 8.0;
+        const staffScore: number =
+            avgRating > 0 ? Math.min(10, avgRating + 0.4) : 8.0;
 
         let currentPrice: number = 0;
         let originalPrice: number | undefined;
 
         if (tour.variants && tour.variants.length > 0) {
-            const activeVariant = tour.variants.find(v => v.status === 'active');
-            if (activeVariant && activeVariant.tour_variant_pax_type_prices?.length > 0) {
-                const prices: number[] = activeVariant.tour_variant_pax_type_prices
-                    .map(p => p.price)
-                    .filter(p => p > 0);
-                
+            const activeVariant = tour.variants.find(
+                (v) => v.status === 'active',
+            );
+            if (
+                activeVariant &&
+                activeVariant.tour_variant_pax_type_prices?.length > 0
+            ) {
+                const prices: number[] =
+                    activeVariant.tour_variant_pax_type_prices
+                        .map((p) => p.price)
+                        .filter((p) => p > 0);
+
                 if (prices.length > 0) {
                     currentPrice = Math.min(...prices);
                     originalPrice = Math.round(currentPrice * 1.5);
@@ -283,7 +354,8 @@ export class UserTourService {
             }
         }
 
-        const tags: string[] = tour.tour_categories?.map(cat => cat.name) || [];
+        const tags: string[] =
+            tour.tour_categories?.map((cat) => cat.name) || [];
 
         // Parse duration
         let durationStr = '';
@@ -311,15 +383,19 @@ export class UserTourService {
         let testimonial: TourTestimonialDTO | undefined;
         if (tour.reviews && tour.reviews.length > 0) {
             const latestReview = tour.reviews[0];
-            const userName = latestReview.user?.full_name || latestReview.user?.username || 'Customer';
+            const userName =
+                latestReview.user?.full_name ||
+                latestReview.user?.username ||
+                'Customer';
             const userCountry = latestReview.user?.country?.name || 'Vietnam';
-            
+
             testimonial = new TourTestimonialDTO({
                 name: userName,
                 country: userCountry,
-                text: latestReview.content.length > 150 
-                    ? latestReview.content.substring(0, 150) + '...'
-                    : latestReview.content,
+                text:
+                    latestReview.content.length > 150
+                        ? latestReview.content.substring(0, 150) + '...'
+                        : latestReview.content,
             });
         }
 
@@ -330,10 +406,12 @@ export class UserTourService {
         });
 
         // Activity - should be separate table in DB, for now parse from description
-        const activity: TourActivityDTO | undefined = tour.summary ? new TourActivityDTO({
-            title: 'What You Will Do',
-            items: [tour.summary],
-        }) : undefined;
+        const activity: TourActivityDTO | undefined = tour.summary
+            ? new TourActivityDTO({
+                  title: 'What You Will Do',
+                  items: [tour.summary],
+              })
+            : undefined;
 
         return new UserTourDetailDTO({
             id: tour.id,
@@ -350,7 +428,8 @@ export class UserTourService {
             images: images.length > 0 ? images : ['/assets/images/travel.jpg'],
             testimonial,
             mapUrl: tour.map_url || '',
-            mapPreview: images.length > 0 ? images[0] : '/assets/images/travel.jpg',
+            mapPreview:
+                images.length > 0 ? images[0] : '/assets/images/travel.jpg',
             description: tour.description || '',
             summary: tour.summary || '',
             activity,
@@ -381,15 +460,18 @@ export class UserTourService {
 
         return reviews.map((review): UserTourReviewDTO => {
             const date = new Date(review.created_at);
-            const dateStr = date.toLocaleDateString('en-GB', { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric' 
+            const dateStr = date.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
             });
 
             return new UserTourReviewDTO({
                 id: review.id.toString(),
-                userName: review.user?.full_name || review.user?.username || 'Anonymous',
+                userName:
+                    review.user?.full_name ||
+                    review.user?.username ||
+                    'Anonymous',
                 userAvatar: `https://i.pravatar.cc/150?img=${review.id}`,
                 rating: review.rating,
                 date: dateStr,
@@ -400,7 +482,9 @@ export class UserTourService {
         });
     }
 
-    async getTourReviewCategories(slug: string): Promise<UserTourReviewCategoryDTO[]> {
+    async getTourReviewCategories(
+        slug: string,
+    ): Promise<UserTourReviewCategoryDTO[]> {
         const tour = await this.tourRepository.findOne({
             where: { slug, status: 'active', is_visible: true },
             relations: ['reviews'],
@@ -410,8 +494,9 @@ export class UserTourService {
             throw new NotFoundException(`Tour with slug "${slug}" not found`);
         }
 
-        const approvedReviews = tour.reviews?.filter(r => r.status === 'approved') || [];
-        
+        const approvedReviews =
+            tour.reviews?.filter((r) => r.status === 'approved') || [];
+
         if (approvedReviews.length === 0) {
             return [];
         }
@@ -419,16 +504,31 @@ export class UserTourService {
         // Calculate average rating for different categories
         // For now, use variations of the average rating
         const avgRating = tour.score_rating || 0;
-        
+
         return [
-            new UserTourReviewCategoryDTO({ label: 'Guide', score: parseFloat((avgRating + 0.1).toFixed(1)) }),
-            new UserTourReviewCategoryDTO({ label: 'Transportation', score: parseFloat((avgRating - 0.5).toFixed(1)) }),
-            new UserTourReviewCategoryDTO({ label: 'Value for money', score: parseFloat((avgRating).toFixed(1)) }),
-            new UserTourReviewCategoryDTO({ label: 'Safety', score: parseFloat((avgRating - 0.2).toFixed(1)) }),
+            new UserTourReviewCategoryDTO({
+                label: 'Guide',
+                score: parseFloat((avgRating + 0.1).toFixed(1)),
+            }),
+            new UserTourReviewCategoryDTO({
+                label: 'Transportation',
+                score: parseFloat((avgRating - 0.5).toFixed(1)),
+            }),
+            new UserTourReviewCategoryDTO({
+                label: 'Value for money',
+                score: parseFloat(avgRating.toFixed(1)),
+            }),
+            new UserTourReviewCategoryDTO({
+                label: 'Safety',
+                score: parseFloat((avgRating - 0.2).toFixed(1)),
+            }),
         ];
     }
 
-    async getRelatedTours(slug: string, limit: number = 8): Promise<UserTourRelatedDTO[]> {
+    async getRelatedTours(
+        slug: string,
+        limit: number = 8,
+    ): Promise<UserTourRelatedDTO[]> {
         const currentTour = await this.tourRepository.findOne({
             where: { slug },
             relations: ['tour_categories'],
@@ -438,7 +538,8 @@ export class UserTourService {
             throw new NotFoundException(`Tour with slug "${slug}" not found`);
         }
 
-        const categoryIds = currentTour.tour_categories?.map(cat => cat.id) || [];
+        const categoryIds =
+            currentTour.tour_categories?.map((cat) => cat.id) || [];
 
         let query = this.tourRepository
             .createQueryBuilder('tour')
@@ -446,15 +547,27 @@ export class UserTourService {
             .leftJoinAndSelect('tour.variants', 'variants')
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
-            .leftJoinAndSelect('tour.reviews', 'reviews', 'reviews.status = :status', { status: 'approved' })
-            .leftJoinAndSelect('variants.tour_variant_pax_type_prices', 'prices')
+            .leftJoinAndSelect(
+                'tour.reviews',
+                'reviews',
+                'reviews.status = :status',
+                { status: 'approved' },
+            )
+            .leftJoinAndSelect(
+                'variants.tour_variant_pax_type_prices',
+                'prices',
+            )
             .leftJoinAndSelect('tour.tour_categories', 'categories')
             .where('tour.status = :status', { status: 'active' })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true })
-            .andWhere('tour.id != :currentTourId', { currentTourId: currentTour.id });
+            .andWhere('tour.id != :currentTourId', {
+                currentTourId: currentTour.id,
+            });
 
         if (categoryIds.length > 0) {
-            query = query.andWhere('categories.id IN (:...categoryIds)', { categoryIds });
+            query = query.andWhere('categories.id IN (:...categoryIds)', {
+                categoryIds,
+            });
         }
 
         const tours = await query
@@ -464,8 +577,10 @@ export class UserTourService {
             .getMany();
 
         return tours.map((tour): UserTourRelatedDTO => {
-            const coverImage = tour.images?.find(img => img.is_cover) || tour.images?.[0];
-            const imageUrl: string = coverImage?.image_url || '/assets/images/travel.jpg';
+            const coverImage =
+                tour.images?.find((img) => img.is_cover) || tour.images?.[0];
+            const imageUrl: string =
+                coverImage?.image_url || '/assets/images/travel.jpg';
 
             const reviewsCount: number = tour.reviews?.length || 0;
             const avgRating: number = tour.score_rating || 0;
@@ -476,9 +591,10 @@ export class UserTourService {
             else if (avgRating >= 7) ratingText = 'Good';
             else if (avgRating >= 6) ratingText = 'Okay';
 
-            const location: string = tour.division && tour.country 
-                ? `${tour.division.name}, ${tour.country.name}`
-                : tour.address;
+            const location: string =
+                tour.division && tour.country
+                    ? `${tour.division.name}, ${tour.country.name}`
+                    : tour.address;
 
             const minPax: number = tour.min_pax || 1;
             const maxPax: number = tour.max_pax || minPax + 2;
@@ -488,12 +604,18 @@ export class UserTourService {
             let originalPrice: number = 0;
 
             if (tour.variants && tour.variants.length > 0) {
-                const activeVariant = tour.variants.find(v => v.status === 'active');
-                if (activeVariant && activeVariant.tour_variant_pax_type_prices?.length > 0) {
-                    const prices: number[] = activeVariant.tour_variant_pax_type_prices
-                        .map(p => p.price)
-                        .filter(p => p > 0);
-                    
+                const activeVariant = tour.variants.find(
+                    (v) => v.status === 'active',
+                );
+                if (
+                    activeVariant &&
+                    activeVariant.tour_variant_pax_type_prices?.length > 0
+                ) {
+                    const prices: number[] =
+                        activeVariant.tour_variant_pax_type_prices
+                            .map((p) => p.price)
+                            .filter((p) => p > 0);
+
                     if (prices.length > 0) {
                         currentPrice = Math.min(...prices);
                         originalPrice = Math.round(currentPrice * 1.3);
@@ -501,7 +623,8 @@ export class UserTourService {
                 }
             }
 
-            const tags: string[] = tour.tour_categories?.map(cat => cat.name) || [];
+            const tags: string[] =
+                tour.tour_categories?.map((cat) => cat.name) || [];
 
             return new UserTourRelatedDTO({
                 id: tour.id.toString(),

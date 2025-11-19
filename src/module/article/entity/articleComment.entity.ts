@@ -1,8 +1,16 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { ArticleEntity } from "./article.entity";
-import { ApiProperty } from "@nestjs/swagger";
-import { UserEntity } from "@/module/user/entity/user.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import {
+    Column,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { ArticleEntity } from './article.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { UserEntity } from '@/module/user/entity/user.entity';
 
 @Entity('article_comments')
 export class ArticleCommentEntity extends BaseEntityTimestamp {
@@ -15,7 +23,9 @@ export class ArticleCommentEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Nội dung bình luận' })
     content: string;
 
-    @ManyToOne(() => ArticleEntity, (article) => article.comments, { nullable: false })
+    @ManyToOne(() => ArticleEntity, (article) => article.comments, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'article_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Bài viết' })
     article: ArticleEntity;
@@ -29,16 +39,16 @@ export class ArticleCommentEntity extends BaseEntityTimestamp {
     @Column({ type: 'int', nullable: true })
     @ApiProperty({ description: 'ID của bình luận cha' })
     parent_id?: number | null;
-  
+
     @ManyToOne(() => ArticleCommentEntity, (c) => c.children, {
-      onDelete: 'CASCADE',
-      nullable: true,
+        onDelete: 'CASCADE',
+        nullable: true,
     })
     @JoinColumn({ name: 'parent_id' })
     @ApiProperty({ description: 'Bình luận cha' })
     parent?: ArticleCommentEntity | null;
-  
+
     @OneToMany(() => ArticleCommentEntity, (c) => c.parent)
     @ApiProperty({ description: 'Bình luận con' })
     children: ArticleCommentEntity[];
-}   
+}

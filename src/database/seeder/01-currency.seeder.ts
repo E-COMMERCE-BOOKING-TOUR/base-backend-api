@@ -20,7 +20,9 @@ export default class CurrencySeeder implements Seeder {
         ];
 
         for (const currency of currencies) {
-            const exists = await repository.findOne({ where: { symbol: currency.symbol } });
+            const exists = await repository.findOne({
+                where: { symbol: currency.symbol },
+            });
             if (!exists) {
                 await repository.save(repository.create(currency));
             }

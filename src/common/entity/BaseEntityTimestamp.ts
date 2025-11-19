@@ -1,5 +1,10 @@
 import { Exclude } from 'class-transformer';
-import { BaseEntity, CreateDateColumn, DeleteDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+    BaseEntity,
+    CreateDateColumn,
+    DeleteDateColumn,
+    UpdateDateColumn,
+} from 'typeorm';
 
 export abstract class BaseEntityTimestamp extends BaseEntity {
     @Exclude()

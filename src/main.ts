@@ -21,7 +21,10 @@ async function bootstrap() {
         }),
     );
 
-    if (process.env.APP_ENV === 'local' || process.env.APP_ENV === 'development') {
+    if (
+        process.env.APP_ENV === 'local' ||
+        process.env.APP_ENV === 'development'
+    ) {
         const config = new DocumentBuilder()
             .setTitle('Booking Tour API')
             .setDescription('Api for booking tour')

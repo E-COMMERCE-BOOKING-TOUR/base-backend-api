@@ -1,10 +1,18 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { UserEntity } from "@/module/user/entity/user.entity";
-import { ApiProperty } from "@nestjs/swagger";
-import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Column } from "typeorm";
-import { ArticleImageEntity } from "./articleImage.entity";
-import { ArticleCommentEntity } from "./articleComment.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { UserEntity } from '@/module/user/entity/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    Entity,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Column } from 'typeorm';
+import { ArticleImageEntity } from './articleImage.entity';
+import { ArticleCommentEntity } from './articleComment.entity';
 
 @Entity('articles')
 export class ArticleEntity extends BaseEntityTimestamp {
@@ -76,4 +84,4 @@ export class ArticleEntity extends BaseEntityTimestamp {
     @OneToMany(() => ArticleCommentEntity, (comment) => comment.article)
     @ApiProperty({ description: 'Bình luận bài viết' })
     comments: ArticleCommentEntity[];
-} 
+}

@@ -1,9 +1,9 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Exclude } from "class-transformer";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { UserEntity } from "./user.entity";
-import { TourEntity } from "@/module/tour/entity/tour.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { UserEntity } from './user.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
 
 @Entity('suppliers')
 export class SupplierEntity extends BaseEntityTimestamp {

@@ -1,16 +1,24 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Column } from "typeorm";
-import { CountryEntity } from "@/common/entity/country.entity";
-import { DivisionEntity } from "@/common/entity/division.entity";
-import { CurrencyEntity } from "@/common/entity/currency.entity";
-import { UserEntity } from "@/module/user/entity/user.entity";
-import { ReviewEntity } from "@/module/review/entity/review.entity";
-import { TourCategoryEntity } from "./tourCategory.entity";
-import { SupplierEntity } from "@/module/user/entity/supplier.entity";
-import { TourImageEntity } from "./tourImage.entity";
-import { TourVariantEntity } from "./tourVariant.entity";
+import { ApiProperty } from '@nestjs/swagger';
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import {
+    Entity,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Column } from 'typeorm';
+import { CountryEntity } from '@/common/entity/country.entity';
+import { DivisionEntity } from '@/common/entity/division.entity';
+import { CurrencyEntity } from '@/common/entity/currency.entity';
+import { UserEntity } from '@/module/user/entity/user.entity';
+import { ReviewEntity } from '@/module/review/entity/review.entity';
+import { TourCategoryEntity } from './tourCategory.entity';
+import { SupplierEntity } from '@/module/user/entity/supplier.entity';
+import { TourImageEntity } from './tourImage.entity';
+import { TourVariantEntity } from './tourVariant.entity';
 
 @Entity('tours')
 export class TourEntity extends BaseEntityTimestamp {
@@ -90,7 +98,7 @@ export class TourEntity extends BaseEntityTimestamp {
 
     @Column({
         type: 'enum',
-        enum: ['draft','active','inactive'],
+        enum: ['draft', 'active', 'inactive'],
         default: 'inactive',
     })
     @ApiProperty({ description: 'Trạng thái tour' })
@@ -122,7 +130,9 @@ export class TourEntity extends BaseEntityTimestamp {
         nullable: true,
         default: null,
     })
-    @ApiProperty({ description: 'Số lượng người tối đa (null: không giới hạn)' })
+    @ApiProperty({
+        description: 'Số lượng người tối đa (null: không giới hạn)',
+    })
     max_pax: number;
 
     @ManyToOne(() => CountryEntity, (country) => country.tours)
@@ -160,7 +170,10 @@ export class TourEntity extends BaseEntityTimestamp {
     @JoinTable({
         name: 'tour_tour_categories',
         joinColumn: { name: 'tour_id', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'tour_category_id', referencedColumnName: 'id' },
+        inverseJoinColumn: {
+            name: 'tour_category_id',
+            referencedColumnName: 'id',
+        },
     })
     @ApiProperty({
         type: () => [TourCategoryEntity],
@@ -168,7 +181,9 @@ export class TourEntity extends BaseEntityTimestamp {
     })
     tour_categories: TourCategoryEntity[];
 
-    @ManyToOne(() => SupplierEntity, (supplier) => supplier.tours, { nullable: false })
+    @ManyToOne(() => SupplierEntity, (supplier) => supplier.tours, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Nhà cung cấp' })
     supplier: SupplierEntity;

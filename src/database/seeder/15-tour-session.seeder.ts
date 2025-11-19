@@ -8,7 +8,7 @@ export default class TourSessionSeeder implements Seeder {
         const sessionRepository = dataSource.getRepository(TourSessionEntity);
         const variantRepository = dataSource.getRepository(TourVariantEntity);
 
-        const variants = await variantRepository.find({ 
+        const variants = await variantRepository.find({
             where: { status: 'active' },
             relations: ['tour'],
         });
@@ -27,8 +27,10 @@ export default class TourSessionSeeder implements Seeder {
             if (variant.tour.status === 'draft') continue;
 
             // Create sessions based on tour type
-            const isDailyTour = variant.tour.duration_hours && variant.tour.duration_hours <= 8;
-            const isMultiDay = variant.tour.duration_days && variant.tour.duration_days > 1;
+            const isDailyTour =
+                variant.tour.duration_hours && variant.tour.duration_hours <= 8;
+            const isMultiDay =
+                variant.tour.duration_days && variant.tour.duration_days > 1;
 
             for (let i = 0; i < 60; i++) {
                 const sessionDate = new Date(today);
@@ -48,29 +50,39 @@ export default class TourSessionSeeder implements Seeder {
                             sessionRepository.create({
                                 session_date: sessionDate,
                                 start_time: new Date('1970-01-01T08:00:00'),
-                                end_time: new Date(`1970-01-01T${8 + (variant.tour.duration_hours || 8)}:00:00`),
+                                end_time: new Date(
+                                    `1970-01-01T${8 + (variant.tour.duration_hours || 8)}:00:00`,
+                                ),
                                 capacity: variant.capacity_per_slot,
-                                status: i < 7 ? 'open' : (i < 14 ? 'open' : 'open'),
+                                status:
+                                    i < 7 ? 'open' : i < 14 ? 'open' : 'open',
                                 tour_variant: variant,
                             } as any),
                         );
                     }
 
                     // Afternoon session if half-day tour
-                    if (variant.tour.duration_hours && variant.tour.duration_hours <= 5) {
-                        const afternoonExists = await sessionRepository.findOne({
-                            where: {
-                                tour_variant: { id: variant.id },
-                                session_date: sessionDate,
-                                start_time: new Date('1970-01-01T14:00:00'),
+                    if (
+                        variant.tour.duration_hours &&
+                        variant.tour.duration_hours <= 5
+                    ) {
+                        const afternoonExists = await sessionRepository.findOne(
+                            {
+                                where: {
+                                    tour_variant: { id: variant.id },
+                                    session_date: sessionDate,
+                                    start_time: new Date('1970-01-01T14:00:00'),
+                                },
                             },
-                        });
+                        );
                         if (!afternoonExists) {
                             await sessionRepository.save(
                                 sessionRepository.create({
                                     session_date: sessionDate,
                                     start_time: new Date('1970-01-01T14:00:00'),
-                                    end_time: new Date(`1970-01-01T${14 + (variant.tour.duration_hours || 5)}:00:00`),
+                                    end_time: new Date(
+                                        `1970-01-01T${14 + (variant.tour.duration_hours || 5)}:00:00`,
+                                    ),
                                     capacity: variant.capacity_per_slot,
                                     status: 'open',
                                     tour_variant: variant,
@@ -134,4 +146,3 @@ export default class TourSessionSeeder implements Seeder {
         console.log('Tour Session seeded');
     }
 }
-

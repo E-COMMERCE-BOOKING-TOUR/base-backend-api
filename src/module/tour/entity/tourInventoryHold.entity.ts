@@ -1,12 +1,18 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { TourSessionEntity } from "./tourSession.entity";
-import { BookingEntity } from "@/module/booking/entity/booking.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToOne,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { TourSessionEntity } from './tourSession.entity';
+import { BookingEntity } from '@/module/booking/entity/booking.entity';
 
 @Entity('tour_inventory_holds')
 export class TourInventoryHoldEntity extends BaseEntityTimestamp {
-
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -24,13 +30,19 @@ export class TourInventoryHoldEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Thời điểm hết hạn' })
     expires_at: Date;
 
-    @ManyToOne(() => TourSessionEntity, (tour_session) => tour_session.tour_inventory_holds, { nullable: false })
+    @ManyToOne(
+        () => TourSessionEntity,
+        (tour_session) => tour_session.tour_inventory_holds,
+        { nullable: false },
+    )
     @JoinColumn({ name: 'tour_session_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Lịch chạy của biến thể tour' })
     tour_session: TourSessionEntity;
 
     @OneToOne(() => BookingEntity, (booking) => booking.tour_inventory_hold)
     @JoinColumn({ name: 'booking_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Đơn đặt tour (nullable nếu giữ chỗ chưa được đặt)' })
+    @ApiProperty({
+        description: 'Đơn đặt tour (nullable nếu giữ chỗ chưa được đặt)',
+    })
     booking: BookingEntity | null;
 }

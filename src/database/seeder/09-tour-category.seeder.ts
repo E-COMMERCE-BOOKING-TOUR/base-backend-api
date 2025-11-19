@@ -26,7 +26,9 @@ export default class TourCategorySeeder implements Seeder {
         ];
 
         for (const category of categories) {
-            const exists = await repository.findOne({ where: { name: category.name } });
+            const exists = await repository.findOne({
+                where: { name: category.name },
+            });
             if (!exists) {
                 await repository.save(repository.create(category));
             }
@@ -35,4 +37,3 @@ export default class TourCategorySeeder implements Seeder {
         console.log('Tour Category seeded');
     }
 }
-

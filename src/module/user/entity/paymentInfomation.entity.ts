@@ -1,7 +1,16 @@
 import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
 import { UserEntity } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { BookingEntity } from '@/module/booking/entity/booking.entity';
 
@@ -17,7 +26,7 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Mặc định' })
     is_default: boolean;
 
-    @Column({ 
+    @Column({
         type: 'varchar',
         length: 255,
     })
@@ -25,21 +34,21 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     expiry_date: string;
 
     @Exclude()
-    @Column({ 
+    @Column({
         type: 'varchar',
         length: 255,
     })
     @ApiProperty({ description: 'Số tài khoản (mã hóa)' })
     account_number: string;
 
-    @Column({ 
+    @Column({
         type: 'varchar',
         length: 255,
     })
     @ApiProperty({ description: 'Số tài khoản (hiển thị)' })
     account_number_hint: string;
 
-    @Column({ 
+    @Column({
         type: 'varchar',
         length: 255,
     })
@@ -47,19 +56,23 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     account_holder: string;
 
     @Exclude()
-    @Column({ 
+    @Column({
         type: 'varchar',
         length: 255,
     })
     @ApiProperty({ description: 'CCV (mã hóa)' })
     ccv: string;
 
-    @ManyToOne(() => UserEntity, (user) => user.payment_informations, { nullable: false })
+    @ManyToOne(() => UserEntity, (user) => user.payment_informations, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Người dùng' })
     user: UserEntity;
 
     @OneToMany(() => BookingEntity, (booking) => booking.payment_information)
-    @ApiProperty({ description: 'Danh sách các đơn đặt tour có thông tin thanh toán này' })
+    @ApiProperty({
+        description: 'Danh sách các đơn đặt tour có thông tin thanh toán này',
+    })
     bookings: BookingEntity[];
 }

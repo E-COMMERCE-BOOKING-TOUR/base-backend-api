@@ -137,7 +137,7 @@ export default class ArticleSeeder implements Seeder {
                 user: authors[Math.min(1, authors.length - 1)],
             },
             {
-                title: 'Cultural Etiquette: Do\'s and Don\'ts in Vietnam',
+                title: "Cultural Etiquette: Do's and Don'ts in Vietnam",
                 content: `<h2>Respecting Vietnamese culture</h2>
                 <p>Understanding local customs will enhance your experience and show respect.</p>
                 <h3>Greetings</h3>
@@ -203,7 +203,9 @@ export default class ArticleSeeder implements Seeder {
         ];
 
         for (const article of articles) {
-            const exists = await articleRepository.findOne({ where: { title: article.title } });
+            const exists = await articleRepository.findOne({
+                where: { title: article.title },
+            });
             if (!exists) {
                 await articleRepository.save(articleRepository.create(article));
             }
@@ -212,4 +214,3 @@ export default class ArticleSeeder implements Seeder {
         console.log('Article seeded');
     }
 }
-

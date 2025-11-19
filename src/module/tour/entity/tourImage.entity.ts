@@ -1,11 +1,16 @@
-import { BaseEntityTimestamp } from "@/common/entity/BaseEntityTimestamp";
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { TourEntity } from "./tour.entity";
+import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
+import { TourEntity } from './tour.entity';
 
 @Entity('tour_images')
 export class TourImageEntity extends BaseEntityTimestamp {
-
     @PrimaryGeneratedColumn()
     id: number;
 

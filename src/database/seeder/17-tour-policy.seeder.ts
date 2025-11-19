@@ -7,7 +7,8 @@ import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 export default class TourPolicySeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
         const policyRepository = dataSource.getRepository(TourPolicyEntity);
-        const policyRuleRepository = dataSource.getRepository(TourPolicyRuleEntity);
+        const policyRuleRepository =
+            dataSource.getRepository(TourPolicyRuleEntity);
         const variantRepository = dataSource.getRepository(TourVariantEntity);
 
         const variants = await variantRepository.find({
@@ -32,40 +33,47 @@ export default class TourPolicySeeder implements Seeder {
 
             // Create cancellation policy based on variant type
             let policyName = 'Standard Cancellation Policy';
-            let rules: Array<{ before_hours: number; fee_pct: number; sort_no: number }> = [];
+            let rules: Array<{
+                before_hours: number;
+                fee_pct: number;
+                sort_no: number;
+            }> = [];
 
-            if (variant.name.includes('VIP') || variant.name.includes('Luxury')) {
+            if (
+                variant.name.includes('VIP') ||
+                variant.name.includes('Luxury')
+            ) {
                 policyName = 'Flexible Cancellation Policy';
                 rules = [
-                    { before_hours: 168, fee_pct: 0, sort_no: 1 },   // 7 days: free
-                    { before_hours: 72, fee_pct: 25, sort_no: 2 },   // 3 days: 25%
-                    { before_hours: 24, fee_pct: 50, sort_no: 3 },   // 1 day: 50%
-                    { before_hours: 0, fee_pct: 100, sort_no: 4 },   // same day: 100%
+                    { before_hours: 168, fee_pct: 0, sort_no: 1 }, // 7 days: free
+                    { before_hours: 72, fee_pct: 25, sort_no: 2 }, // 3 days: 25%
+                    { before_hours: 24, fee_pct: 50, sort_no: 3 }, // 1 day: 50%
+                    { before_hours: 0, fee_pct: 100, sort_no: 4 }, // same day: 100%
                 ];
             } else if (variant.name.includes('Private')) {
                 policyName = 'Private Tour Cancellation Policy';
                 rules = [
-                    { before_hours: 120, fee_pct: 0, sort_no: 1 },   // 5 days: free
-                    { before_hours: 72, fee_pct: 30, sort_no: 2 },   // 3 days: 30%
-                    { before_hours: 48, fee_pct: 50, sort_no: 3 },   // 2 days: 50%
-                    { before_hours: 24, fee_pct: 75, sort_no: 4 },   // 1 day: 75%
-                    { before_hours: 0, fee_pct: 100, sort_no: 5 },   // same day: 100%
+                    { before_hours: 120, fee_pct: 0, sort_no: 1 }, // 5 days: free
+                    { before_hours: 72, fee_pct: 30, sort_no: 2 }, // 3 days: 30%
+                    { before_hours: 48, fee_pct: 50, sort_no: 3 }, // 2 days: 50%
+                    { before_hours: 24, fee_pct: 75, sort_no: 4 }, // 1 day: 75%
+                    { before_hours: 0, fee_pct: 100, sort_no: 5 }, // same day: 100%
                 ];
             } else if (variant.name.includes('Group')) {
                 policyName = 'Group Tour Cancellation Policy';
                 rules = [
-                    { before_hours: 72, fee_pct: 0, sort_no: 1 },    // 3 days: free
-                    { before_hours: 48, fee_pct: 50, sort_no: 2 },   // 2 days: 50%
-                    { before_hours: 0, fee_pct: 100, sort_no: 3 },   // less than 2 days: 100%
+                    { before_hours: 72, fee_pct: 0, sort_no: 1 }, // 3 days: free
+                    { before_hours: 48, fee_pct: 50, sort_no: 2 }, // 2 days: 50%
+                    { before_hours: 0, fee_pct: 100, sort_no: 3 }, // less than 2 days: 100%
                 ];
             } else {
                 // Standard policy
                 policyName = 'Standard Cancellation Policy';
                 rules = [
-                    { before_hours: 72, fee_pct: 10, sort_no: 1 },   // 3 days: 10%
-                    { before_hours: 48, fee_pct: 25, sort_no: 2 },   // 2 days: 25%
-                    { before_hours: 24, fee_pct: 50, sort_no: 3 },   // 1 day: 50%
-                    { before_hours: 0, fee_pct: 100, sort_no: 4 },   // same day: 100%
+                    { before_hours: 72, fee_pct: 10, sort_no: 1 }, // 3 days: 10%
+                    { before_hours: 48, fee_pct: 25, sort_no: 2 }, // 2 days: 25%
+                    { before_hours: 24, fee_pct: 50, sort_no: 3 }, // 1 day: 50%
+                    { before_hours: 0, fee_pct: 100, sort_no: 4 }, // same day: 100%
                 ];
             }
 
@@ -93,4 +101,3 @@ export default class TourPolicySeeder implements Seeder {
         console.log('Tour Policy seeded');
     }
 }
-

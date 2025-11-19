@@ -10,7 +10,7 @@ export default class ReviewSeeder implements Seeder {
         const tourRepository = dataSource.getRepository(TourEntity);
         const userRepository = dataSource.getRepository(UserEntity);
 
-        const tours = await tourRepository.find({ 
+        const tours = await tourRepository.find({
             where: { status: 'active', is_visible: true },
         });
         const customers = await userRepository.find({
@@ -18,7 +18,9 @@ export default class ReviewSeeder implements Seeder {
         });
 
         if (tours.length === 0 || customers.length === 0) {
-            console.log('⚠️ No tours or customers found, skipping review seeder');
+            console.log(
+                '⚠️ No tours or customers found, skipping review seeder',
+            );
             return;
         }
 
@@ -34,7 +36,7 @@ export default class ReviewSeeder implements Seeder {
                 contents: [
                     'This tour exceeded all my expectations. The guide was knowledgeable and friendly, making the experience truly memorable. Everything was well-organized and we had plenty of time at each location.',
                     'I highly recommend this tour to anyone visiting Vietnam. The itinerary was perfect, food was delicious, and our group had a wonderful time together. Great value for money!',
-                    'One of the best tours I\'ve ever taken. The scenery was breathtaking and the guide shared so many interesting stories about the local culture and history.',
+                    "One of the best tours I've ever taken. The scenery was breathtaking and the guide shared so many interesting stories about the local culture and history.",
                     'What an incredible experience! From start to finish, everything was professionally managed. The tour operator went above and beyond to ensure we had a great time.',
                     'This tour was the highlight of my Vietnam trip. Well-paced, informative, and lots of fun. The lunch provided was excellent and authentic.',
                 ],
@@ -77,7 +79,7 @@ export default class ReviewSeeder implements Seeder {
                     'Could be better',
                 ],
                 contents: [
-                    'Unfortunately this tour didn\'t meet my expectations. The guide seemed disinterested and we spent too much time at tourist traps.',
+                    "Unfortunately this tour didn't meet my expectations. The guide seemed disinterested and we spent too much time at tourist traps.",
                     'Not what I expected based on the description. Felt rushed and several promised activities were skipped.',
                 ],
                 rating: 2,
@@ -88,10 +90,11 @@ export default class ReviewSeeder implements Seeder {
         for (const tour of tours) {
             // Add 3-8 reviews per tour
             const numReviews = Math.floor(Math.random() * 6) + 3;
-            
+
             for (let i = 0; i < numReviews; i++) {
-                const user = customers[Math.floor(Math.random() * customers.length)];
-                
+                const user =
+                    customers[Math.floor(Math.random() * customers.length)];
+
                 // Weight towards higher ratings
                 let ratingCategory;
                 const rand = Math.random();
@@ -105,8 +108,16 @@ export default class ReviewSeeder implements Seeder {
                     ratingCategory = reviewData[0]; // 5 stars
                 }
 
-                const title = ratingCategory.titles[Math.floor(Math.random() * ratingCategory.titles.length)];
-                const content = ratingCategory.contents[Math.floor(Math.random() * ratingCategory.contents.length)];
+                const title =
+                    ratingCategory.titles[
+                        Math.floor(Math.random() * ratingCategory.titles.length)
+                    ];
+                const content =
+                    ratingCategory.contents[
+                        Math.floor(
+                            Math.random() * ratingCategory.contents.length,
+                        )
+                    ];
                 const rating = ratingCategory.rating;
 
                 // Determine status - most approved, some pending
@@ -148,7 +159,9 @@ export default class ReviewSeeder implements Seeder {
             });
 
             if (approvedReviews.length > 0) {
-                const avgRating = approvedReviews.reduce((sum, r) => sum + r.rating, 0) / approvedReviews.length;
+                const avgRating =
+                    approvedReviews.reduce((sum, r) => sum + r.rating, 0) /
+                    approvedReviews.length;
                 tour.score_rating = Math.round(avgRating * 10) / 10; // Round to 1 decimal
                 await tourRepository.save(tour);
             }
@@ -157,4 +170,3 @@ export default class ReviewSeeder implements Seeder {
         console.log('Review seeded');
     }
 }
-

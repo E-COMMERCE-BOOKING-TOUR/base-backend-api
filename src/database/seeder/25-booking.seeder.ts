@@ -15,38 +15,61 @@ import { CurrencyEntity } from '@/common/entity/currency.entity';
 export default class BookingSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
         const bookingRepository = dataSource.getRepository(BookingEntity);
-        const bookingItemRepository = dataSource.getRepository(BookingItemEntity);
-        const passengerRepository = dataSource.getRepository(BookingPassengerEntity);
-        const inventoryHoldRepository = dataSource.getRepository(TourInventoryHoldEntity);
+        const bookingItemRepository =
+            dataSource.getRepository(BookingItemEntity);
+        const passengerRepository = dataSource.getRepository(
+            BookingPassengerEntity,
+        );
+        const inventoryHoldRepository = dataSource.getRepository(
+            TourInventoryHoldEntity,
+        );
         const sessionRepository = dataSource.getRepository(TourSessionEntity);
         const variantRepository = dataSource.getRepository(TourVariantEntity);
         const paxTypeRepository = dataSource.getRepository(TourPaxTypeEntity);
         const userRepository = dataSource.getRepository(UserEntity);
-        const paymentInfoRepository = dataSource.getRepository(PaymentInfomationEntity);
-        const bookingPaymentRepository = dataSource.getRepository(BookingPaymentEntity);
+        const paymentInfoRepository = dataSource.getRepository(
+            PaymentInfomationEntity,
+        );
+        const bookingPaymentRepository =
+            dataSource.getRepository(BookingPaymentEntity);
         const currencyRepository = dataSource.getRepository(CurrencyEntity);
 
         // Get data
-        const customers = await userRepository.find({ 
+        const customers = await userRepository.find({
             where: { role: { name: 'customer' } },
             take: 8,
         });
 
         const variants = await variantRepository.find({
             where: { status: 'active' },
-            relations: ['tour', 'currency', 'tour_variant_pax_type_prices', 'tour_variant_pax_type_prices.pax_type'],
+            relations: [
+                'tour',
+                'currency',
+                'tour_variant_pax_type_prices',
+                'tour_variant_pax_type_prices.pax_type',
+            ],
             take: 10,
         });
 
         const paxTypes = await paxTypeRepository.find();
-        const adultPaxType = paxTypes.find(p => p.name === 'Adult');
-        const childPaxType = paxTypes.find(p => p.name === 'Child');
-        const youthPaxType = paxTypes.find(p => p.name === 'Youth');
+        const adultPaxType = paxTypes.find((p) => p.name === 'Adult');
+        const childPaxType = paxTypes.find((p) => p.name === 'Child');
+        const youthPaxType = paxTypes.find((p) => p.name === 'Youth');
 
-        const paymentMethods = await bookingPaymentRepository.find({ where: { status: 'active' } });
-        const vnd = await currencyRepository.findOne({ where: { symbol: 'VND' } });
+        const paymentMethods = await bookingPaymentRepository.find({
+            where: { status: 'active' },
+        });
+        const vnd = await currencyRepository.findOne({
+            where: { symbol: 'VND' },
+        });
 
-        if (customers.length === 0 || variants.length === 0 || !adultPaxType || paymentMethods.length === 0 || !vnd) {
+        if (
+            customers.length === 0 ||
+            variants.length === 0 ||
+            !adultPaxType ||
+            paymentMethods.length === 0 ||
+            !vnd
+        ) {
             console.log('⚠️ Required data not found, skipping booking seeder');
             return;
         }
@@ -54,7 +77,8 @@ export default class BookingSeeder implements Seeder {
         // Create 15 bookings with different statuses
         for (let i = 0; i < 15; i++) {
             const customer = customers[i % customers.length];
-            const variant = variants[Math.floor(Math.random() * variants.length)];
+            const variant =
+                variants[Math.floor(Math.random() * variants.length)];
 
             // Get a future session (next 7-30 days)
             const daysAhead = Math.floor(Math.random() * 23) + 7;
@@ -80,9 +104,13 @@ export default class BookingSeeder implements Seeder {
             if (!paymentInfo) continue;
 
             // Determine booking status
-            let bookingStatus: 'pending' | 'confirmed' | 'cancelled' | 'expired';
+            let bookingStatus:
+                | 'pending'
+                | 'confirmed'
+                | 'cancelled'
+                | 'expired';
             let paymentStatus: 'unpaid' | 'paid' | 'refunded' | 'partial';
-            
+
             if (i < 8) {
                 bookingStatus = 'confirmed';
                 paymentStatus = 'paid';
@@ -99,17 +127,30 @@ export default class BookingSeeder implements Seeder {
 
             // Calculate booking details
             const numAdults = Math.floor(Math.random() * 3) + 2; // 2-4 adults
-            const numChildren = Math.random() > 0.6 ? Math.floor(Math.random() * 2) + 1 : 0; // 0-2 children
+            const numChildren =
+                Math.random() > 0.6 ? Math.floor(Math.random() * 2) + 1 : 0; // 0-2 children
             const numYouth = Math.random() > 0.7 ? 1 : 0;
 
             const totalPax = numAdults + numChildren + numYouth;
 
             // Get prices
-            const adultPrice = variant.tour_variant_pax_type_prices.find(p => p.pax_type.name === 'Adult')?.price || 1000000;
-            const childPrice = variant.tour_variant_pax_type_prices.find(p => p.pax_type.name === 'Child')?.price || 500000;
-            const youthPrice = variant.tour_variant_pax_type_prices.find(p => p.pax_type.name === 'Youth')?.price || 750000;
+            const adultPrice =
+                variant.tour_variant_pax_type_prices.find(
+                    (p) => p.pax_type.name === 'Adult',
+                )?.price || 1000000;
+            const childPrice =
+                variant.tour_variant_pax_type_prices.find(
+                    (p) => p.pax_type.name === 'Child',
+                )?.price || 500000;
+            const youthPrice =
+                variant.tour_variant_pax_type_prices.find(
+                    (p) => p.pax_type.name === 'Youth',
+                )?.price || 750000;
 
-            const totalAmount = (numAdults * adultPrice) + (numChildren * childPrice) + (numYouth * youthPrice);
+            const totalAmount =
+                numAdults * adultPrice +
+                numChildren * childPrice +
+                numYouth * youthPrice;
 
             // Create inventory hold
             const expiresAt = new Date();
@@ -118,7 +159,8 @@ export default class BookingSeeder implements Seeder {
             const inventoryHold = await inventoryHoldRepository.save(
                 inventoryHoldRepository.create({
                     quantity: totalPax,
-                    expires_at: bookingStatus === 'expired' ? new Date() : expiresAt,
+                    expires_at:
+                        bookingStatus === 'expired' ? new Date() : expiresAt,
                     tour_session: session,
                 }),
             );
@@ -136,7 +178,10 @@ export default class BookingSeeder implements Seeder {
                     currency: variant.currency,
                     payment_information: paymentInfo,
                     tour_inventory_hold: inventoryHold,
-                    booking_payment: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+                    booking_payment:
+                        paymentMethods[
+                            Math.floor(Math.random() * paymentMethods.length)
+                        ],
                 }),
             );
 
@@ -195,26 +240,38 @@ export default class BookingSeeder implements Seeder {
             // Create passengers for confirmed bookings
             if (bookingStatus === 'confirmed') {
                 const passengerNames = [
-                    'Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C', 'Phạm Thị D',
-                    'Hoàng Văn E', 'Đỗ Thị F', 'Vũ Văn G', 'Bùi Thị H',
+                    'Nguyễn Văn A',
+                    'Trần Thị B',
+                    'Lê Văn C',
+                    'Phạm Thị D',
+                    'Hoàng Văn E',
+                    'Đỗ Thị F',
+                    'Vũ Văn G',
+                    'Bùi Thị H',
                 ];
 
                 let passengerIndex = 0;
 
                 for (const item of bookingItems) {
                     for (let p = 0; p < item.quantity; p++) {
-                        const birthYear = item.pax_type.name === 'Adult' 
-                            ? Math.floor(Math.random() * 40) + 25
-                            : item.pax_type.name === 'Youth'
-                            ? Math.floor(Math.random() * 6) + 12
-                            : Math.floor(Math.random() * 8) + 3;
+                        const birthYear =
+                            item.pax_type.name === 'Adult'
+                                ? Math.floor(Math.random() * 40) + 25
+                                : item.pax_type.name === 'Youth'
+                                  ? Math.floor(Math.random() * 6) + 12
+                                  : Math.floor(Math.random() * 8) + 3;
 
                         const birthdate = new Date();
-                        birthdate.setFullYear(birthdate.getFullYear() - birthYear);
+                        birthdate.setFullYear(
+                            birthdate.getFullYear() - birthYear,
+                        );
 
                         await passengerRepository.save(
                             passengerRepository.create({
-                                full_name: passengerNames[passengerIndex % passengerNames.length],
+                                full_name:
+                                    passengerNames[
+                                        passengerIndex % passengerNames.length
+                                    ],
                                 birthdate: birthdate,
                                 phone_number: p === 0 ? customer.phone : null,
                                 booking_item: item,
@@ -230,4 +287,3 @@ export default class BookingSeeder implements Seeder {
         console.log('Booking seeded');
     }
 }
-

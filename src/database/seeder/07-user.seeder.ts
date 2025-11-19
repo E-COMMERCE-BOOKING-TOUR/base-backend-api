@@ -15,14 +15,26 @@ export default class UserSeeder implements Seeder {
         const countryRepository = dataSource.getRepository(CountryEntity);
 
         // Get roles
-        const adminRole = await roleRepository.findOne({ where: { name: 'admin' } });
-        const supplierRole = await roleRepository.findOne({ where: { name: 'supplier' } });
-        const customerRole = await roleRepository.findOne({ where: { name: 'customer' } });
-        const contentRole = await roleRepository.findOne({ where: { name: 'content_manager' } });
-        const moderatorRole = await roleRepository.findOne({ where: { name: 'moderator' } });
+        const adminRole = await roleRepository.findOne({
+            where: { name: 'admin' },
+        });
+        const supplierRole = await roleRepository.findOne({
+            where: { name: 'supplier' },
+        });
+        const customerRole = await roleRepository.findOne({
+            where: { name: 'customer' },
+        });
+        const contentRole = await roleRepository.findOne({
+            where: { name: 'content_manager' },
+        });
+        const moderatorRole = await roleRepository.findOne({
+            where: { name: 'moderator' },
+        });
 
         // Get Vietnam
-        const vietnam = await countryRepository.findOne({ where: { iso3: 'VN' } });
+        const vietnam = await countryRepository.findOne({
+            where: { iso3: 'VN' },
+        });
         const usa = await countryRepository.findOne({ where: { iso3: 'US' } });
 
         // Get suppliers
@@ -234,7 +246,9 @@ export default class UserSeeder implements Seeder {
         ];
 
         for (const user of users) {
-            const exists = await userRepository.findOne({ where: { username: user.username } });
+            const exists = await userRepository.findOne({
+                where: { username: user.username },
+            });
             if (!exists) {
                 await userRepository.save(userRepository.create(user as any));
             }
@@ -243,4 +257,3 @@ export default class UserSeeder implements Seeder {
         console.log('User seeded');
     }
 }
-

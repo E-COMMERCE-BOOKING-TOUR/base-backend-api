@@ -185,7 +185,9 @@ export class UserArticlePopularDTO {
     @ApiProperty({ example: 'Introducing the charm of the paradise' })
     title: string;
 
-    @ApiProperty({ example: 'Would you like to spend an extraordinary moment...' })
+    @ApiProperty({
+        example: 'Would you like to spend an extraordinary moment...',
+    })
     description: string;
 
     @ApiProperty({ example: '/assets/images/travel.jpg' })

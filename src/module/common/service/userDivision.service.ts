@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { DivisionEntity } from "@/common/entity/division.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { UserDivisionTrendingDTO } from "../dto/division.dto";
+import { Injectable } from '@nestjs/common';
+import { DivisionEntity } from '@/common/entity/division.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserDivisionTrendingDTO } from '../dto/division.dto';
 
 @Injectable()
 export class UserDivisionService {
@@ -11,14 +11,21 @@ export class UserDivisionService {
         private readonly divisionRepository: Repository<DivisionEntity>,
     ) {}
 
-    async getTrendingDestinations(limit: number = 6): Promise<UserDivisionTrendingDTO[]> {
+    async getTrendingDestinations(
+        limit: number = 6,
+    ): Promise<UserDivisionTrendingDTO[]> {
         const divisions = await this.divisionRepository
             .createQueryBuilder('division')
             .leftJoin('division.country', 'country')
-            .leftJoin('division.tours', 'tours', 'tours.status = :status AND tours.is_visible = :isVisible', { 
-                status: 'active', 
-                isVisible: true 
-            })
+            .leftJoin(
+                'division.tours',
+                'tours',
+                'tours.status = :status AND tours.is_visible = :isVisible',
+                {
+                    status: 'active',
+                    isVisible: true,
+                },
+            )
             .select('division.id', 'id')
             .addSelect('division.name', 'name')
             .addSelect('country.iso3', 'countryCode')
@@ -31,7 +38,7 @@ export class UserDivisionService {
             .addOrderBy('division.name', 'ASC')
             .limit(limit)
             .getRawMany();
-            
+
         return divisions.map((division): UserDivisionTrendingDTO => {
             const flag: string = this.getCountryFlag(division.countryCode);
             const title: string = division.name.toUpperCase();
@@ -50,16 +57,16 @@ export class UserDivisionService {
 
     private getCountryFlag(countryCode: string): string {
         const flagEmojis: Record<string, string> = {
-            'VN': '🇻🇳',
-            'VNM': '🇻🇳',
-            'TH': '🇹🇭',
-            'THA': '🇹🇭',
-            'JP': '🇯🇵',
-            'JPN': '🇯🇵',
-            'KR': '🇰🇷',
-            'KOR': '🇰🇷',
-            'US': '🇺🇸',
-            'USA': '🇺🇸',
+            VN: '🇻🇳',
+            VNM: '🇻🇳',
+            TH: '🇹🇭',
+            THA: '🇹🇭',
+            JP: '🇯🇵',
+            JPN: '🇯🇵',
+            KR: '🇰🇷',
+            KOR: '🇰🇷',
+            US: '🇺🇸',
+            USA: '🇺🇸',
         };
         return flagEmojis[countryCode] || '🌍';
     }

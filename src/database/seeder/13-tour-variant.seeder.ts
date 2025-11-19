@@ -11,11 +11,17 @@ export default class TourVariantSeeder implements Seeder {
         const currencyRepository = dataSource.getRepository(CurrencyEntity);
 
         const tours = await tourRepository.find({ relations: ['currency'] });
-        const vnd = await currencyRepository.findOne({ where: { symbol: 'VND' } });
-        const usd = await currencyRepository.findOne({ where: { symbol: 'USD' } });
+        const vnd = await currencyRepository.findOne({
+            where: { symbol: 'VND' },
+        });
+        const usd = await currencyRepository.findOne({
+            where: { symbol: 'USD' },
+        });
 
         if (tours.length === 0 || !vnd || !usd) {
-            console.log('⚠️ Required data not found, skipping tour variant seeder');
+            console.log(
+                '⚠️ Required data not found, skipping tour variant seeder',
+            );
             return;
         }
 
@@ -80,7 +86,8 @@ export default class TourVariantSeeder implements Seeder {
                             cutoff_hours: 72,
                             status: 'active',
                             tour: tour,
-                            currency: tour.currency.symbol === 'VND' ? vnd : usd,
+                            currency:
+                                tour.currency.symbol === 'VND' ? vnd : usd,
                         }),
                     );
                 }
@@ -112,4 +119,3 @@ export default class TourVariantSeeder implements Seeder {
         console.log('Tour Variant seeded');
     }
 }
-

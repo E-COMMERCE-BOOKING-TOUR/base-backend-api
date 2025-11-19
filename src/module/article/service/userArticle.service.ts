@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { ArticleEntity } from "../entity/article.entity";
-import { Repository } from "typeorm";
-import { UserArticlePopularDTO } from "../dto/article.dto";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ArticleEntity } from '../entity/article.entity';
+import { Repository } from 'typeorm';
+import { UserArticlePopularDTO } from '../dto/article.dto';
 
 @Injectable()
 export class UserArticleService {
@@ -11,7 +11,9 @@ export class UserArticleService {
         private readonly articleRepository: Repository<ArticleEntity>,
     ) {}
 
-    async getPopularArticles(limit: number = 10): Promise<UserArticlePopularDTO[]> {
+    async getPopularArticles(
+        limit: number = 10,
+    ): Promise<UserArticlePopularDTO[]> {
         const articles = await this.articleRepository
             .createQueryBuilder('article')
             .leftJoinAndSelect('article.images', 'images')
@@ -25,8 +27,10 @@ export class UserArticleService {
 
         return articles.map((article): UserArticlePopularDTO => {
             const firstImage = article.images?.[0];
-            const imageUrl: string = firstImage?.image_url || '/assets/images/travel.jpg';
-            const description: string = article.content?.substring(0, 150) + '...' || '';
+            const imageUrl: string =
+                firstImage?.image_url || '/assets/images/travel.jpg';
+            const description: string =
+                article.content?.substring(0, 150) + '...' || '';
             const timestamp: string = this.getRelativeTime(article.created_at);
             const tags: string[] = [];
 
@@ -58,7 +62,8 @@ export class UserArticleService {
         if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
         if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
         if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-        if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        if (minutes > 0)
+            return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
         return 'Just now';
     }
 }

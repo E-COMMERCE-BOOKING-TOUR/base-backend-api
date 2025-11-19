@@ -1,7 +1,21 @@
 import { AuthExceptionFilter } from '@/common/exceptions/auth.exception';
-import { Body, Controller, Get, Post, UseFilters, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Post,
+    UseFilters,
+    UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthResponseDTO, LoginDTO, MessageResponseDTO, RegisterDTO, TokenDTO, UnauthorizedResponseDto } from '../dtos';
+import {
+    AuthResponseDTO,
+    LoginDTO,
+    MessageResponseDTO,
+    RegisterDTO,
+    TokenDTO,
+    UnauthorizedResponseDto,
+} from '../dtos';
 import { AuthService } from '../service/auth.service';
 import { JwtExceptionFilter } from '@/common/exceptions/jwt.exception';
 import { AuthGuard } from '@nestjs/passport';
@@ -13,7 +27,7 @@ import { JWT } from '../decorator/jwt.decorator';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(private readonly authService: AuthService) {}
 
     @Post('register')
     @UseFilters(AuthExceptionFilter)

@@ -45,7 +45,10 @@ export default class TourImageSeeder implements Seeder {
 
         for (const tour of tours) {
             let urls: string[] = [];
-            if (tour.slug.includes('saigon') || tour.slug.includes('chi-minh')) {
+            if (
+                tour.slug.includes('saigon') ||
+                tour.slug.includes('chi-minh')
+            ) {
                 urls = imageUrls.saigon;
             } else if (tour.slug.includes('halong')) {
                 urls = imageUrls.halong;
@@ -53,7 +56,10 @@ export default class TourImageSeeder implements Seeder {
                 urls = imageUrls.sapa;
             } else if (tour.slug.includes('hoi-an')) {
                 urls = imageUrls.hoian;
-            } else if (tour.slug.includes('nha-trang') || tour.slug.includes('phu-quoc')) {
+            } else if (
+                tour.slug.includes('nha-trang') ||
+                tour.slug.includes('phu-quoc')
+            ) {
                 urls = imageUrls.beach;
             } else {
                 urls = imageUrls.saigon;
@@ -79,4 +85,3 @@ export default class TourImageSeeder implements Seeder {
         console.log('Tour Image seeded');
     }
 }
-

@@ -79,7 +79,10 @@ export class UserEntity extends BaseEntityTimestamp {
     @JoinColumn({ name: 'role_id', referencedColumnName: 'id' })
     role: RoleEntity;
 
-    @OneToMany(() => PaymentInfomationEntity, (payment_information) => payment_information.user)
+    @OneToMany(
+        () => PaymentInfomationEntity,
+        (payment_information) => payment_information.user,
+    )
     @ApiProperty({ description: 'Thông tin thanh toán' })
     payment_informations: PaymentInfomationEntity[];
 
@@ -108,7 +111,9 @@ export class UserEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Danh sách các bài viết thích' })
     articles_like: ArticleEntity[];
 
-    @ManyToOne(() => SupplierEntity, (supplier) => supplier.users, { nullable: true })
+    @ManyToOne(() => SupplierEntity, (supplier) => supplier.users, {
+        nullable: true,
+    })
     @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Nhà cung cấp' })
     supplier: SupplierEntity | null;
@@ -116,7 +121,7 @@ export class UserEntity extends BaseEntityTimestamp {
     @OneToMany(() => BookingEntity, (booking) => booking.user)
     @ApiProperty({ description: 'Danh sách các đơn đặt tour' })
     bookings: BookingEntity[];
-    
+
     toJSON() {
         return {
             uuid: this.uuid,

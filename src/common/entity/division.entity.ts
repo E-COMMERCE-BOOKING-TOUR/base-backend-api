@@ -1,8 +1,15 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from "typeorm";
-import { PrimaryGeneratedColumn } from "typeorm";
-import { CountryEntity } from "./country.entity";
-import { TourEntity } from "@/module/tour/entity/tour.entity";
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    Column,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+} from 'typeorm';
+import { PrimaryGeneratedColumn } from 'typeorm';
+import { CountryEntity } from './country.entity';
+import { TourEntity } from '@/module/tour/entity/tour.entity';
 
 @Entity('master_divisions')
 export class DivisionEntity {
@@ -38,7 +45,9 @@ export class DivisionEntity {
     @ApiProperty({ description: 'Mã bưu chính' })
     code: string;
 
-    @ManyToOne(() => CountryEntity, (country) => country.divisions, { nullable: false })
+    @ManyToOne(() => CountryEntity, (country) => country.divisions, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Quốc gia' })
     country: CountryEntity;

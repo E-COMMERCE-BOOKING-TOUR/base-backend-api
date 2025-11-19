@@ -8,7 +8,9 @@ export default class ArticleImageSeeder implements Seeder {
         const imageRepository = dataSource.getRepository(ArticleImageEntity);
         const articleRepository = dataSource.getRepository(ArticleEntity);
 
-        const articles = await articleRepository.find({ where: { is_visible: true } });
+        const articles = await articleRepository.find({
+            where: { is_visible: true },
+        });
 
         if (articles.length === 0) {
             console.log('⚠️ No articles found, skipping article image seeder');
@@ -28,9 +30,9 @@ export default class ArticleImageSeeder implements Seeder {
             const numImages = Math.floor(Math.random() * 2) + 2;
             for (let i = 0; i < numImages; i++) {
                 const exists = await imageRepository.findOne({
-                    where: { 
+                    where: {
                         article: { id: article.id },
-                        image_url: imageUrls[i % imageUrls.length]
+                        image_url: imageUrls[i % imageUrls.length],
                     },
                 });
                 if (!exists) {
@@ -47,4 +49,3 @@ export default class ArticleImageSeeder implements Seeder {
         console.log('Article Image seeded');
     }
 }
-

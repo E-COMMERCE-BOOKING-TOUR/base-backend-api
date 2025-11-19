@@ -5,14 +5,21 @@ import { CurrencyEntity } from '@/common/entity/currency.entity';
 
 export default class BookingPaymentSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
-        const paymentRepository = dataSource.getRepository(BookingPaymentEntity);
+        const paymentRepository =
+            dataSource.getRepository(BookingPaymentEntity);
         const currencyRepository = dataSource.getRepository(CurrencyEntity);
 
-        const vnd = await currencyRepository.findOne({ where: { symbol: 'VND' } });
-        const usd = await currencyRepository.findOne({ where: { symbol: 'USD' } });
+        const vnd = await currencyRepository.findOne({
+            where: { symbol: 'VND' },
+        });
+        const usd = await currencyRepository.findOne({
+            where: { symbol: 'USD' },
+        });
 
         if (!vnd || !usd) {
-            console.log('⚠️ Currencies not found, skipping booking payment seeder');
+            console.log(
+                '⚠️ Currencies not found, skipping booking payment seeder',
+            );
             return;
         }
 
@@ -87,4 +94,3 @@ export default class BookingPaymentSeeder implements Seeder {
         console.log('Booking Payment seeded');
     }
 }
-
