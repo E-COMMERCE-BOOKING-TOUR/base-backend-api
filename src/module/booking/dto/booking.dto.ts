@@ -36,6 +36,10 @@ export class BookingItemDTO {
     @ApiProperty({ description: 'ID biến thể tour', example: 1 })
     variant_id: number;
 
+    @IsString()
+    @ApiProperty({ description: 'Tên loại khách', example: 'Adult' })
+    pax_type_name: string;
+
     @IsInt()
     @Min(1)
     @ApiProperty({ description: 'ID loại khách', example: 1 })
@@ -156,8 +160,20 @@ export class BookingDTO {
         description: 'Danh sách các mục đặt tour',
         type: [BookingItemDTO],
         example: [
-            { variant_id: 1, pax_type_id: 1, tour_session_id: 1, quantity: 2 },
-            { variant_id: 1, pax_type_id: 2, tour_session_id: 1, quantity: 1 },
+            {
+                variant_id: 1,
+                pax_type_id: 1,
+                tour_session_id: 1,
+                quantity: 2,
+                pax_type_name: 'Adult',
+            },
+            {
+                variant_id: 1,
+                pax_type_id: 2,
+                tour_session_id: 1,
+                quantity: 1,
+                pax_type_name: 'Child',
+            },
         ],
     })
     booking_items: BookingItemDTO[];
@@ -258,4 +274,81 @@ export class BookingDetailDTO extends BookingSummaryDTO {
         super(partial);
         Object.assign(this, partial);
     }
+}
+
+export class UserBookingDetailDTO {
+    @ApiProperty()
+    id: number;
+
+    @ApiProperty()
+    contact_name: string;
+
+    @ApiProperty()
+    contact_email: string;
+
+    @ApiProperty()
+    contact_phone: string;
+
+    @ApiProperty()
+    total_amount: number;
+
+    @ApiProperty()
+    status: string;
+
+    @ApiProperty()
+    payment_status: string;
+
+    @ApiProperty()
+    currency: string;
+
+    @ApiProperty()
+    tour_title: string;
+
+    @ApiProperty()
+    tour_image: string;
+
+    @ApiProperty()
+    tour_location: string;
+
+    @ApiProperty()
+    start_date: Date;
+
+    @ApiProperty()
+    duration_days: number;
+
+    @ApiProperty()
+    duration_hours: number;
+
+    @ApiProperty()
+    hold_expires_at: Date;
+
+    @ApiProperty({ type: [BookingItemDTO] })
+    items: BookingItemDTO[];
+}
+
+export class ConfirmBookingDTO {
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsNumber()
+    booking_id: number;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    contact_name: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsEmail()
+    contact_email: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    contact_phone: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    payment_method: string;
 }

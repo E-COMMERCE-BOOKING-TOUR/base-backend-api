@@ -772,6 +772,42 @@ export class TourTestimonialDTO {
     }
 }
 
+export class UserTourVariantPaxPriceDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 1 })
+    pax_type_id: number;
+
+    @ApiProperty({ example: 100000 })
+    price: number;
+
+    @ApiProperty({ example: 'Adult' })
+    pax_type_name: string;
+
+    constructor(partial: Partial<UserTourVariantPaxPriceDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class UserTourVariantDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'Standard' })
+    name: string;
+
+    @ApiProperty({ example: 'active' })
+    status: string;
+
+    @ApiProperty({ type: [UserTourVariantPaxPriceDTO] })
+    prices: UserTourVariantPaxPriceDTO[];
+
+    constructor(partial: Partial<UserTourVariantDTO>) {
+        Object.assign(this, partial);
+    }
+}
+
 export class UserTourDetailDTO {
     @ApiProperty({ example: 1 })
     id: number;
@@ -841,6 +877,9 @@ export class UserTourDetailDTO {
 
     @ApiProperty({ type: [String] })
     tags: string[];
+
+    @ApiProperty({ type: [UserTourVariantDTO] })
+    variants: UserTourVariantDTO[];
 
     constructor(partial: Partial<UserTourDetailDTO>) {
         Object.assign(this, partial);
@@ -929,4 +968,48 @@ export class UserTourRelatedDTO {
     constructor(partial: Partial<UserTourRelatedDTO>) {
         Object.assign(this, partial);
     }
+}
+
+export class TourPaxTypePriceDto {
+    @ApiProperty({ description: 'ID loại khách (tour_pax_types.id)' })
+    paxTypeId: number;
+
+    @ApiProperty({ description: 'Tên loại khách (Adult / Child / Infant ...)' })
+    paxTypeName: string;
+
+    @ApiProperty({ description: 'Độ tuổi tối thiểu' })
+    minAge: number | null;
+
+    @ApiProperty({ description: 'Độ tuổi tối đa' })
+    maxAge: number | null;
+
+    @ApiProperty({
+        description: 'Giá base từ tour_variant_pax_type_prices (min theo tất cả variants)',
+        nullable: true,
+    })
+    basePrice: number | null;
+
+    @ApiProperty({
+        description: 'Giá sau khi áp rule (absolute / delta), nếu có',
+        nullable: true,
+    })
+    rulePrice: number | null;
+
+    @ApiProperty({
+        description: 'Giá cuối cùng dùng để hiển thị (ưu tiên rule > base)',
+        nullable: true,
+    })
+    finalPrice: number | null;
+
+    @ApiProperty({
+        description: 'Nguồn giá được áp dụng',
+        enum: ['rule_absolute', 'rule_delta', 'base', 'none'],
+    })
+    priceSource: 'rule_absolute' | 'rule_delta' | 'base' | 'none';
+
+    @ApiProperty({
+        description: 'Lớp giá được áp dụng',
+        enum: ['rule', 'base', 'none'],
+    })
+    priceLayer: 'rule' | 'base' | 'none';
 }

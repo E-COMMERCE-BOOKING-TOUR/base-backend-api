@@ -13,6 +13,9 @@ import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 import { TourPaxTypeEntity } from '@/module/tour/entity/tourPaxType.entity';
 import { TourSessionEntity } from '@/module/tour/entity/tourSession.entity';
 import { TourVariantPaxTypePriceEntity } from '@/module/tour/entity/tourVariantPaxTypePrice.entity';
+import { UserBookingService } from './service/userBooking.service';
+import { UserBookingController } from './controller/userBooking.controller';
+import { TourModule } from '@/module/tour/tour.module';
 
 @Module({
     imports: [
@@ -29,8 +32,9 @@ import { TourVariantPaxTypePriceEntity } from '@/module/tour/entity/tourVariantP
             TourSessionEntity,
             TourVariantPaxTypePriceEntity,
         ]),
+        TourModule,
     ],
-    controllers: [BookingController],
-    providers: [BookingService],
+    controllers: [BookingController, UserBookingController],
+    providers: [BookingService, UserBookingService],
 })
 export class BookingModule {}
