@@ -46,7 +46,7 @@ export class BookingService {
         private readonly sessionRepository: Repository<TourSessionEntity>,
         @InjectRepository(TourVariantPaxTypePriceEntity)
         private readonly priceRepository: Repository<TourVariantPaxTypePriceEntity>,
-    ) {}
+    ) { }
 
     private toSummaryDTO(b: BookingEntity): BookingSummaryDTO {
         return new BookingSummaryDTO({
