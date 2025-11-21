@@ -10,4 +10,4 @@ import { UserDivisionService } from './service/userDivision.service';
     providers: [UserDivisionService],
     exports: [UserDivisionService],
 })
-export class CommonModule {}
+export class CommonModule { }

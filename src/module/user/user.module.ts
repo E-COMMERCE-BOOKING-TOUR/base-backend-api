@@ -39,5 +39,13 @@ import { NotificationService } from './service/notification.service';
         UserService,
         NotificationService,
     ],
+    exports: [
+        TypeOrmModule, // Export TypeOrmModule to share User repositories
+        PassportModule, // Export PassportModule for authentication
+        JwtModule, // Export JwtModule with configuration
+        JwtStrategy,
+        JwtRefreshStrategy,
+        AuthService,
+    ],
 })
-export class UserModule {}
+export class UserModule { }

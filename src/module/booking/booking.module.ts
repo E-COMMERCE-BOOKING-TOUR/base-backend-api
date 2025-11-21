@@ -16,6 +16,7 @@ import { TourVariantPaxTypePriceEntity } from '@/module/tour/entity/tourVariantP
 import { UserBookingService } from './service/userBooking.service';
 import { UserBookingController } from './controller/userBooking.controller';
 import { TourModule } from '@/module/tour/tour.module';
+import { UserModule } from '@/module/user/user.module';
 
 @Module({
     imports: [
@@ -32,9 +33,13 @@ import { TourModule } from '@/module/tour/tour.module';
             TourSessionEntity,
             TourVariantPaxTypePriceEntity,
         ]),
+        UserModule, // Provides JwtStrategy, PassportModule, and JwtModule
         TourModule,
     ],
     controllers: [BookingController, UserBookingController],
-    providers: [BookingService, UserBookingService],
+    providers: [
+        BookingService,
+        UserBookingService,
+    ],
 })
-export class BookingModule {}
+export class BookingModule { }

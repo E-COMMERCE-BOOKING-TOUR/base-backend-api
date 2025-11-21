@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { BookingEntity } from '../entity/booking.entity';
@@ -22,6 +22,7 @@ import {
     BookingItemDetailDTO,
 } from '../dto/booking.dto';
 
+@Injectable()
 export class BookingService {
     constructor(
         @InjectRepository(BookingEntity)

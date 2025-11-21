@@ -14,28 +14,28 @@ import { User } from '@/module/user/decorator/user.decorator';
 export class UserBookingController {
     constructor(private readonly userBookingService: UserBookingService) { }
 
-    @Post('create')
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
     @UseGuards(AuthGuard('jwt'))
+    @Post('create')
     @ApiResponse({ status: 201, description: 'Booking created successfully' })
     async createBooking(@User() user: UserEntity, @Body() dto: CreateBookingDto) {
-        return await this.userBookingService.createBooking(user.id, dto);
+        return await this.userBookingService.createBooking(user.uuid, dto);
     }
 
-    @Get(':id')
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
     @UseGuards(AuthGuard('jwt'))
+    @Get(':id')
     @ApiResponse({ status: 200, description: 'Get booking detail' })
     async getBookingDetail(@User() user: UserEntity, @Param('id') id: number) {
-        return await this.userBookingService.getBookingDetail(id);
+        return await this.userBookingService.getBookingDetail(id, user);
     }
 
-    @Post('confirm')
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
     @UseGuards(AuthGuard('jwt'))
+    @Post('confirm')
     @ApiResponse({ status: 200, description: 'Confirm booking' })
     async confirmBooking(@User() user: UserEntity, @Body() dto: ConfirmBookingDTO) {
         return await this.userBookingService.confirmBooking(dto);

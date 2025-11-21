@@ -8,6 +8,7 @@ import { BookingModule } from './module/booking/booking.module';
 import { ArticleModule } from './module/article/article.module';
 import { TourModule } from './module/tour/tour.module';
 import { ReviewModule } from './module/review/review.module';
+import { CommonModule } from './module/common/common.module';
 
 @Module({
     imports: [
@@ -27,8 +28,9 @@ import { ReviewModule } from './module/review/review.module';
         ArticleModule,
         TourModule,
         ReviewModule,
+        CommonModule,
     ],
     controllers: [AppController],
     providers: [],
 })
-export class AppModule {}
+export class AppModule { }

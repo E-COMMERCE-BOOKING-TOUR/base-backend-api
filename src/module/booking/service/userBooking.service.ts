@@ -19,8 +19,9 @@ import {
     BookingStatus,
     PaymentStatus,
 } from '../dto/booking.dto';
-import { NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
+@Injectable()
 export class UserBookingService {
     constructor(
         @InjectRepository(BookingEntity)
@@ -48,12 +49,12 @@ export class UserBookingService {
         private readonly userTourService: UserTourService,
     ) { }
 
-    async createBooking(userId: number, dto: CreateBookingDto) {
+    async createBooking(uuid: string, dto: CreateBookingDto) {
         const { startDate, pax, variantId } = dto;
 
         // 1. Validate User
         const user = await this.userRepository.findOne({
-            where: { id: userId },
+            where: { uuid },
         });
         if (!user) throw new Error('User not found');
 
@@ -93,7 +94,7 @@ export class UserBookingService {
 
         // 5. Handle Payment Info & Booking Payment (Defaults for now)
         let paymentInfo = await this.paymentInfoRepository.findOne({
-            where: { user: { id: userId } },
+            where: { user: { id: user.id } },
         });
         if (!paymentInfo) {
             paymentInfo = this.paymentInfoRepository.create({
@@ -200,9 +201,9 @@ export class UserBookingService {
         return savedBooking;
     }
 
-    async getBookingDetail(id: number): Promise<UserBookingDetailDTO> {
+    async getBookingDetail(id: number, user: UserEntity): Promise<UserBookingDetailDTO> {
         const booking = await this.bookingRepository.findOne({
-            where: { id },
+            where: { id, user: { uuid: user.uuid } },
             relations: [
                 'booking_items',
                 'booking_items.variant',
@@ -226,7 +227,7 @@ export class UserBookingService {
         const firstItem = booking.booking_items[0];
         const tour = firstItem?.variant?.tour;
         const session = firstItem?.tour_session;
-        console.log(booking.booking_items)
+
         return {
             id: booking.id,
             contact_name: booking.contact_name,
