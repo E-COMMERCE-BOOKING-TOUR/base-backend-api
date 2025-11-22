@@ -180,7 +180,7 @@ export class ArticleDetailDTO extends ArticleSummaryDTO {
 
 export class UserArticlePopularDTO {
     @ApiProperty({ example: 1 })
-    id: number;
+    id: number | string;
 
     @ApiProperty({ example: 'Introducing the charm of the paradise' })
     title: string;
@@ -196,6 +196,9 @@ export class UserArticlePopularDTO {
     @ApiProperty({ type: [String], example: ['#travel', '#beach'] })
     tags: string[];
 
+    @ApiProperty({ type: [String], example: ['/assets/images/travel.jpg'] })
+    images: string[];
+
     @ApiProperty({ example: '2 days ago', required: false })
     timestamp?: string;
 
@@ -207,6 +210,9 @@ export class UserArticlePopularDTO {
 
     @ApiProperty({ example: 10 })
     comments: number;
+
+    @ApiProperty({ type: Object, example: { name: 'John Doe', avatar: 'url' } })
+    user: { name: string; avatar: string };
 
     constructor(partial: Partial<UserArticlePopularDTO>) {
         Object.assign(this, partial);

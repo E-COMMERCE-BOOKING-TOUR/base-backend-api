@@ -8,6 +8,9 @@ import { ArticleController } from './controller/article.controller';
 import { UserArticleService } from './service/userArticle.service';
 import { UserArticleController } from './controller/userArticle.controller';
 import { UserEntity } from '../user/entity/user.entity';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ArticleServiceProxy } from './service/article.service-proxy';
 
 @Module({
     imports: [
@@ -17,9 +20,23 @@ import { UserEntity } from '../user/entity/user.entity';
             ArticleCommentEntity,
             UserEntity,
         ]),
+        ClientsModule.registerAsync([
+            {
+                imports: [ConfigModule],
+                name: 'ARTICLE_SERVICE',
+                useFactory: async (configService: ConfigService) => ({
+                    transport: Transport.TCP,
+                    options: {
+                        host: configService.get('ARTICLE_SERVICE_HOST') || 'social-network',
+                        port: Number(configService.get('ARTICLE_SERVICE_PORT')) || 3001,
+                    },
+                }),
+                inject: [ConfigService],
+            },
+        ]),
     ],
     controllers: [ArticleController, UserArticleController],
-    providers: [ArticleService, UserArticleService],
-    exports: [ArticleService, UserArticleService],
+    providers: [ArticleService, UserArticleService, ArticleServiceProxy],
+    exports: [ArticleService, UserArticleService, ArticleServiceProxy],
 })
-export class ArticleModule {}
+export class ArticleModule { }
