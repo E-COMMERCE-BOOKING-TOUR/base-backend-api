@@ -16,9 +16,9 @@ import { DivisionEntity } from '@/common/entity/division.entity';
 import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { TourCategoryEntity } from './entity/tourCategory.entity';
 import { TourService } from './service/tour.service';
-import { TourController } from './controller/tour.controller';
-import { UserTourService } from './service/userTour.service';
-import { UserTourController } from './controller/userTour.controller';
+import { AdminTourController } from './controller/admin-tour.controller';
+import { UserTourService } from './service/user-tour.service';
+import { UserTourController } from './controller/user-tour.controller';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
 
 @Module({
@@ -42,7 +42,7 @@ import { ReviewEntity } from '@/module/review/entity/review.entity';
             ReviewEntity,
         ]),
     ],
-    controllers: [TourController, UserTourController],
+    controllers: [AdminTourController, UserTourController],
     providers: [TourService, UserTourService],
     exports: [TourService, UserTourService],
 })

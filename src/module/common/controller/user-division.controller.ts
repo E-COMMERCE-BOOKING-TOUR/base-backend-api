@@ -1,12 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { UserDivisionService } from '../service/userDivision.service';
+import { DivisionService } from '../service/division.service';
 import { UserDivisionTrendingDTO } from '../dto/division.dto';
 
 @ApiTags('User Division')
 @Controller('user/division')
 export class UserDivisionController {
-    constructor(private readonly userDivisionService: UserDivisionService) { }
+    constructor(private readonly divisionService: DivisionService) { }
 
     @Get('trending')
     @ApiOperation({ summary: 'Get trending destinations' })
@@ -26,6 +26,6 @@ export class UserDivisionController {
         @Query('limit') limit?: string,
     ): Promise<UserDivisionTrendingDTO[]> {
         const limitNum: number = limit ? parseInt(limit, 10) : 6;
-        return this.userDivisionService.getTrendingDestinations(limitNum);
+        return this.divisionService.getTrendingDestinations(limitNum);
     }
 }

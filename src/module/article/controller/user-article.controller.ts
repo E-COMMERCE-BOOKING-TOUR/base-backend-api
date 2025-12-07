@@ -1,6 +1,5 @@
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query, Post, Body, UseGuards } from '@nestjs/common';
-import { UserArticleService } from '../service/userArticle.service';
 import { UserArticlePopularDTO, ArticleDTO } from '../dto/article.dto';
 import { ArticleServiceProxy } from '../service/article.service-proxy';
 import { User } from 'src/module/user/decorator/user.decorator';

@@ -16,9 +16,9 @@ import {
 } from '../dto/tour.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 
-@ApiTags('Tour')
-@Controller('tour')
-export class TourController {
+@ApiTags('Admin Tour')
+@Controller('admin/tour')
+export class AdminTourController {
     constructor(private readonly tourService: TourService) {}
 
     @Get('getAll')

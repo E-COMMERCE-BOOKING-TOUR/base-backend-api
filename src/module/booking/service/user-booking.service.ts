@@ -11,7 +11,7 @@ import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 import { TourPaxTypeEntity } from '@/module/tour/entity/tourPaxType.entity';
 import { TourSessionEntity } from '@/module/tour/entity/tourSession.entity';
 import { TourVariantPaxTypePriceEntity } from '@/module/tour/entity/tourVariantPaxTypePrice.entity';
-import { UserTourService } from '@/module/tour/service/userTour.service';
+import { UserTourService } from '@/module/tour/service/user-tour.service';
 import { CreateBookingDto } from '../dto/create-booking.dto';
 import {
     UserBookingDetailDTO,

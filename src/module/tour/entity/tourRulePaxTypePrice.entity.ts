@@ -6,7 +6,6 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
-import { TourVariantEntity } from './tourVariant.entity';
 import { TourPaxTypeEntity } from './tourPaxType.entity';
 import { TourPriceRuleEntity } from './tourPriceRule.entity';
 

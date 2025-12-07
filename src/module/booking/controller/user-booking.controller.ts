@@ -2,7 +2,7 @@ import { Body, Controller, Param, Post, Get, UseFilters, UseGuards } from '@nest
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateBookingDto } from '../dto/create-booking.dto';
 import { ConfirmBookingDTO } from '../dto/booking.dto';
-import { UserBookingService } from '../service/userBooking.service';
+import { UserBookingService } from '../service/user-booking.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtExceptionFilter } from '@/common/exceptions/jwt.exception';
 import { ApiBearerAuth } from '@nestjs/swagger';

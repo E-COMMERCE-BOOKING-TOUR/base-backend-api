@@ -11,9 +11,9 @@ import {
 } from '../dto/booking.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 
-@ApiTags('Booking')
-@Controller('booking')
-export class BookingController {
+@ApiTags('Admin Booking')
+@Controller('admin/booking')
+export class AdminBookingController {
     constructor(private readonly bookingService: BookingService) {}
 
     @Get('getAll')

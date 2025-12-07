@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { UserDivisionTrendingDTO } from '../dto/division.dto';
 
 @Injectable()
-export class UserDivisionService {
+export class DivisionService {
     constructor(
         @InjectRepository(DivisionEntity)
         private readonly divisionRepository: Repository<DivisionEntity>,

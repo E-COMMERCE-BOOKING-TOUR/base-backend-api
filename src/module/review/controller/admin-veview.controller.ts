@@ -11,9 +11,9 @@ import {
 } from '../dto/review.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 
-@ApiTags('Review')
-@Controller('review')
-export class ReviewController {
+@ApiTags('Admin Review')
+@Controller('admin/review')
+export class AdminReviewController {
     constructor(private readonly reviewService: ReviewService) {}
 
     @Get('getAll')

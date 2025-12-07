@@ -1,7 +1,7 @@
 # ==================================
 # Development Stage
 # ==================================
-FROM node:20-alpine AS development
+FROM node:24.11.1-slim AS development
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ CMD ["npm", "run", "start:dev"]
 # ==================================
 # Build Stage
 # ==================================
-FROM node:20-alpine AS builder
+FROM node:24.11.1-slim AS builder
 
 WORKDIR /usr/src/app
 
@@ -36,7 +36,7 @@ RUN chmod -R 755 node_modules/.bin && \
 # ==================================
 # Production Stage
 # ==================================
-FROM node:20-alpine AS production
+FROM node:24.11.1-slim AS production
 
 WORKDIR /usr/src/app
 

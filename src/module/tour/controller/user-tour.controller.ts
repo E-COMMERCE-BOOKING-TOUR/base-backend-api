@@ -7,7 +7,7 @@ import {
     ApiTags,
     getSchemaPath,
 } from '@nestjs/swagger';
-import { UserTourService } from '../service/userTour.service';
+import { UserTourService } from '../service/user-tour.service';
 import {
     UserTourPopularDTO,
     UserTourDetailDTO,

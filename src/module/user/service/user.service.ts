@@ -14,7 +14,6 @@ import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
-import { ArticleEntity } from '@/module/article/entity/article.entity';
 
 export class UserService {
     constructor(
@@ -71,18 +70,7 @@ export class UserService {
             new Set(likeRows.map((r) => Number(r.article_id))),
         );
         const tourRepo = this.userRepository.manager.getRepository(TourEntity);
-        const articleRepo =
-            this.userRepository.manager.getRepository(ArticleEntity);
-        const tours = tourIds.length
-            ? await tourRepo.find({
-                  where: tourIds.map((tid) => ({ id: tid })),
-              })
-            : [];
-        const articles = articleIds.length
-            ? await articleRepo.find({
-                  where: articleIds.map((aid) => ({ id: aid })),
-              })
-            : [];
+
         return new UserDetailDTO({
             id: u.id,
             uuid: u.uuid,
@@ -95,8 +83,8 @@ export class UserService {
             country: u.country ?? undefined,
             supplier: u.supplier ?? null,
             role: u.role ?? undefined,
-            tours_favorites: tours,
-            articles_like: articles,
+            tours_favorites: [],
+            articles_like: [],
             created_at: u.created_at,
             updated_at: u.updated_at,
             deleted_at: u.deleted_at ?? undefined,

@@ -18,9 +18,6 @@ import TourSessionSeeder from './15-tour-session.seeder';
 import TourPriceRuleSeeder from './16-tour-price-rule.seeder';
 import TourPolicySeeder from './17-tour-policy.seeder';
 import TourCategoryRelationSeeder from './18-tour-category-relation.seeder';
-import ArticleSeeder from './19-article.seeder';
-import ArticleImageSeeder from './20-article-image.seeder';
-import ArticleCommentSeeder from './21-article-comment.seeder';
 import ReviewSeeder from './22-review.seeder';
 import ReviewImageSeeder from './23-review-image.seeder';
 import BookingPaymentSeeder from './24-booking-payment.seeder';
@@ -57,11 +54,6 @@ export default class MainSeeder implements Seeder {
                     TourPriceRuleSeeder,
                     TourPolicySeeder,
                     TourCategoryRelationSeeder,
-
-                    // Article Module
-                    ArticleSeeder,
-                    ArticleImageSeeder,
-                    ArticleCommentSeeder,
 
                     // Review Module
                     ReviewSeeder,

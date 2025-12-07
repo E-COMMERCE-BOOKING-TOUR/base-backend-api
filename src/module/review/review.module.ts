@@ -5,7 +5,7 @@ import { ReviewImageEntity } from './entity/reviewImage.entity';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
 import { ReviewService } from './service/review.service';
-import { ReviewController } from './controller/review.controller';
+import { AdminReviewController } from './controller/admin-veview.controller';
 
 @Module({
     imports: [
@@ -16,7 +16,7 @@ import { ReviewController } from './controller/review.controller';
             TourEntity,
         ]),
     ],
-    controllers: [ReviewController],
+    controllers: [AdminReviewController],
     providers: [ReviewService],
 })
 export class ReviewModule {}

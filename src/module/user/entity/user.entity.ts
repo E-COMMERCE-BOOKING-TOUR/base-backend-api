@@ -11,12 +11,9 @@ import {
     ManyToMany,
     ManyToOne,
     OneToMany,
-    PrimaryColumn,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PaymentInfomationEntity } from './paymentInfomation.entity';
-import { ArticleEntity } from '@/module/article/entity/article.entity';
-import { ArticleCommentEntity } from '@/module/article/entity/articleComment.entity';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
 import { CountryEntity } from '@/common/entity/country.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
@@ -86,14 +83,6 @@ export class UserEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Thông tin thanh toán' })
     payment_informations: PaymentInfomationEntity[];
 
-    @OneToMany(() => ArticleEntity, (article) => article.user)
-    @ApiProperty({ description: 'Bài viết' })
-    articles: ArticleEntity[];
-
-    @OneToMany(() => ArticleCommentEntity, (comment) => comment.user)
-    @ApiProperty({ description: 'Bình luận bài viết' })
-    comments: ArticleCommentEntity[];
-
     @OneToMany(() => ReviewEntity, (review) => review.user)
     @ApiProperty({ description: 'Đánh giá' })
     reviews: ReviewEntity[];
@@ -106,10 +95,6 @@ export class UserEntity extends BaseEntityTimestamp {
     @ManyToMany(() => TourEntity, (tour) => tour.users_favorites)
     @ApiProperty({ description: 'Danh sách các tour yêu thích' })
     tours_favorites: TourEntity[];
-
-    @ManyToMany(() => ArticleEntity, (article) => article.users_like)
-    @ApiProperty({ description: 'Danh sách các bài viết thích' })
-    articles_like: ArticleEntity[];
 
     @ManyToOne(() => SupplierEntity, (supplier) => supplier.users, {
         nullable: true,

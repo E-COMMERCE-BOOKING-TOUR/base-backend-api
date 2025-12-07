@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BookingEntity } from './entity/booking.entity';
-import { BookingController } from './controller/booking.controller';
+import { AdminBookingController } from './controller/admin-booking.controller';
 import { BookingService } from './service/booking.service';
 import { BookingItemEntity } from './entity/bookingItem.entity';
 import { BookingPaymentEntity } from './entity/bookingPayment.entity';
@@ -13,8 +13,8 @@ import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 import { TourPaxTypeEntity } from '@/module/tour/entity/tourPaxType.entity';
 import { TourSessionEntity } from '@/module/tour/entity/tourSession.entity';
 import { TourVariantPaxTypePriceEntity } from '@/module/tour/entity/tourVariantPaxTypePrice.entity';
-import { UserBookingService } from './service/userBooking.service';
-import { UserBookingController } from './controller/userBooking.controller';
+import { UserBookingService } from './service/user-booking.service';
+import { UserBookingController } from './controller/user-booking.controller';
 import { TourModule } from '@/module/tour/tour.module';
 import { UserModule } from '@/module/user/user.module';
 
@@ -36,7 +36,7 @@ import { UserModule } from '@/module/user/user.module';
         UserModule, // Provides JwtStrategy, PassportModule, and JwtModule
         TourModule,
     ],
-    controllers: [BookingController, UserBookingController],
+    controllers: [AdminBookingController, UserBookingController],
     providers: [
         BookingService,
         UserBookingService,
