@@ -22,6 +22,7 @@ import { TourPaxTypeEntity } from '../entity/tourPaxType.entity';
 import { TourVariantPaxTypePriceEntity } from '../entity/tourVariantPaxTypePrice.entity';
 import { TourPriceRuleEntity } from '../entity/tourPriceRule.entity';
 import { TourRulePaxTypePriceEntity } from '../entity/tourRulePaxTypePrice.entity';
+import { PricingService } from '@/module/pricing/pricing.service';
 
 @Injectable()
 export class UserTourService {
@@ -30,7 +31,8 @@ export class UserTourService {
         private readonly tourRepository: Repository<TourEntity>,
         @InjectRepository(ReviewEntity)
         private readonly reviewRepository: Repository<ReviewEntity>,
-    ) { }
+        private readonly pricingService: PricingService,
+    ) {}
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
         return this.tourRepository
@@ -662,9 +664,7 @@ export class UserTourService {
         });
     }
 
-    async getPricesBySlug(
-        slug: string,
-    ): Promise<TourPaxTypePriceDto[]> {
+    async getPricesBySlug(slug: string): Promise<TourPaxTypePriceDto[]> {
         const tour = await this.tourRepository.findOne({
             where: {
                 slug,
@@ -690,144 +690,12 @@ export class UserTourService {
         return this.computeTourPricing(tour);
     }
 
-    computeTourPricing(tour: TourEntity): TourPaxTypePriceDto[] {
-        const activeVariants: TourVariantEntity[] =
-            tour.variants?.filter((v) => v.status === 'active') ?? [];
+    async computeTourPricing(tour: TourEntity): Promise<TourPaxTypePriceDto[]> {
+        const ctx = await this.pricingService.calculate({
+            breakdown: [],
+            meta: { tour },
+        });
 
-        if (activeVariants.length === 0) {
-            return [];
-        }
-
-        const basePriceMap = new Map<
-            number,
-            { price: number; paxType: TourPaxTypeEntity }
-        >();
-
-        for (const variant of activeVariants) {
-            const prices: TourVariantPaxTypePriceEntity[] =
-                variant.tour_variant_pax_type_prices ?? [];
-
-            for (const p of prices) {
-                if (!p.price || p.price <= 0) continue;
-                const paxType = p.pax_type;
-                if (!paxType) continue;
-
-                const paxTypeId = paxType.id;
-                const current = basePriceMap.get(paxTypeId);
-
-                if (!current || p.price < current.price) {
-                    basePriceMap.set(paxTypeId, { price: p.price, paxType });
-                }
-            }
-        }
-
-        const ruleMap = new Map<
-            number,
-            {
-                effectivePrice: number;
-                rule: TourPriceRuleEntity;
-                rulePrice: TourRulePaxTypePriceEntity;
-            }
-        >();
-
-        for (const variant of activeVariants) {
-            const rules: TourPriceRuleEntity[] = variant.tour_price_rules ?? [];
-
-            for (const rule of rules) {
-                const rulePaxPrices: TourRulePaxTypePriceEntity[] =
-                    rule.tour_rule_pax_type_prices ?? [];
-
-                for (const rp of rulePaxPrices) {
-                    const paxType = rp.pax_type;
-                    if (!paxType) continue;
-
-                    const paxTypeId = paxType.id;
-                    const baseForPax =
-                        basePriceMap.get(paxTypeId)?.price ?? null;
-
-                    let effectivePrice: number | null = null;
-
-                    if (rule.price_type === 'absolute') {
-                        effectivePrice = rp.price;
-                    } else if (rule.price_type === 'delta') {
-                        if (baseForPax != null) {
-                            effectivePrice = baseForPax + rp.price;
-                        }
-                    }
-
-                    if (effectivePrice == null || effectivePrice <= 0) {
-                        continue;
-                    }
-
-                    const current = ruleMap.get(paxTypeId);
-
-                    if (
-                        !current ||
-                        (rule.priority ?? 0) > (current.rule.priority ?? 0)
-                    ) {
-                        ruleMap.set(paxTypeId, {
-                            effectivePrice,
-                            rule,
-                            rulePrice: rp,
-                        });
-                    }
-                }
-            }
-        }
-
-        const allPaxTypeIds = new Set<number>([
-            ...basePriceMap.keys(),
-            ...ruleMap.keys(),
-        ]);
-
-        const result: TourPaxTypePriceDto[] = [];
-
-        for (const paxTypeId of allPaxTypeIds) {
-            const base = basePriceMap.get(paxTypeId);
-            const basePrice = base?.price ?? null;
-
-            const ruleEntry = ruleMap.get(paxTypeId);
-            const rulePrice = ruleEntry?.effectivePrice ?? null;
-
-            let finalPrice: number | null = null;
-            let priceSource: TourPaxTypePriceDto['priceSource'] = 'none';
-            let priceLayer: TourPaxTypePriceDto['priceLayer'] = 'none';
-
-            if (rulePrice != null && rulePrice > 0) {
-                finalPrice = rulePrice;
-                priceLayer = 'rule';
-                priceSource =
-                    ruleEntry!.rule.price_type === 'absolute'
-                        ? 'rule_absolute'
-                        : 'rule_delta';
-            } else if (basePrice != null && basePrice > 0) {
-                finalPrice = basePrice;
-                priceLayer = 'base';
-                priceSource = 'base';
-            }
-
-            const paxType =
-                base?.paxType ??
-                activeVariants
-                    .flatMap((v) => v.tour_price_rules ?? [])
-                    .flatMap((r) => r.tour_rule_pax_type_prices ?? [])
-                    .find((rp) => rp.pax_type?.id === paxTypeId)?.pax_type;
-
-            result.push({
-                paxTypeId,
-                paxTypeName: paxType?.name ?? '',
-                minAge: paxType?.min_age ?? null,
-                maxAge: paxType?.max_age ?? null,
-                basePrice,
-                rulePrice,
-                finalPrice,
-                priceSource,
-                priceLayer,
-            });
-        }
-
-        result.sort((a, b) => a.paxTypeId - b.paxTypeId);
-
-        return result;
+        return (ctx.meta?.priceResult as TourPaxTypePriceDto[]) ?? [];
     }
 }

@@ -20,6 +20,10 @@ import { AdminTourController } from './controller/admin-tour.controller';
 import { UserTourService } from './service/user-tour.service';
 import { UserTourController } from './controller/user-tour.controller';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
+import { PricingModule } from '../pricing/pricing.module';
+import { TourBasePriceStep } from '../pricing/steps/tour-base-price.step';
+import { TourRulePriceStep } from '../pricing/steps/tour-rule-price.step';
+import { TourAssemblePriceStep } from '../pricing/steps/tour-assemble-price.step';
 
 @Module({
     imports: [
@@ -40,6 +44,11 @@ import { ReviewEntity } from '@/module/review/entity/review.entity';
             SupplierEntity,
             TourCategoryEntity,
             ReviewEntity,
+        ]),
+        PricingModule.forRoot([
+            TourBasePriceStep,
+            TourRulePriceStep,
+            TourAssemblePriceStep,
         ]),
     ],
     controllers: [AdminTourController, UserTourController],

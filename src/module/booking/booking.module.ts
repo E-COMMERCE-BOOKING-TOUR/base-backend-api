@@ -17,6 +17,7 @@ import { UserBookingService } from './service/user-booking.service';
 import { UserBookingController } from './controller/user-booking.controller';
 import { TourModule } from '@/module/tour/tour.module';
 import { UserModule } from '@/module/user/user.module';
+import { PurchaseModule } from './purchase/purchase.module';
 
 @Module({
     imports: [
@@ -35,6 +36,7 @@ import { UserModule } from '@/module/user/user.module';
         ]),
         UserModule, // Provides JwtStrategy, PassportModule, and JwtModule
         TourModule,
+        PurchaseModule.forRoot([]),
     ],
     controllers: [AdminBookingController, UserBookingController],
     providers: [
