@@ -17,6 +17,9 @@ import {
 import { Type } from 'class-transformer';
 
 export enum BookingStatus {
+    pending_info = 'pending_info',
+    pending_payment = 'pending_payment',
+    pending_confirm = 'pending_confirm',
     pending = 'pending',
     confirmed = 'confirmed',
     cancelled = 'cancelled',

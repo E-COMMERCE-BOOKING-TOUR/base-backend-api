@@ -53,7 +53,7 @@ export class BookingEntity extends BaseEntityTimestamp {
 
     @Column({
         type: 'enum',
-        enum: ['pending', 'confirmed', 'cancelled', 'expired'],
+        enum: ['pending_info', 'pending_payment', 'pending_confirm', 'pending', 'confirmed', 'cancelled', 'expired'],
         default: 'pending',
     })
     @ApiProperty({ description: 'Trạng thái đặt tour' })
