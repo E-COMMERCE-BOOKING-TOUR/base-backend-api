@@ -1,17 +1,13 @@
 import { JwtModuleOptions } from '@nestjs/jwt';
 import { SignOptions } from 'jsonwebtoken';
+import type { StringValue } from "ms";
 
 export const jwtConfig = (): JwtModuleOptions => {
-    const expiresInEnv = process.env.JWT_EXPIRES_IN || '1h';
-    // Parse to number if it's a numeric string, otherwise keep as is (e.g., "1h", "30d")
-    const expiresIn = /^\d+$/.test(expiresInEnv)
-        ? parseInt(expiresInEnv, 10)
-        : expiresInEnv;
-
+    const expiresInEnv = process.env.JWT_EXPIRES_IN as StringValue;
     return {
         secret: process.env.JWT_SECRET_PRIVATEKEY,
         signOptions: {
-            expiresIn: expiresIn as any,
+            expiresIn: expiresInEnv,
             algorithm: 'HS256',
         },
     };
@@ -22,7 +18,6 @@ export const jwtRefreshTokenConfig = (): {
     expiresIn: SignOptions;
 } => {
     const expiresInEnv = process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '30d';
-    // Parse to number if it's a numeric string, otherwise keep as is (e.g., "30d", "7d")
     const expiresIn = /^\d+$/.test(expiresInEnv)
         ? parseInt(expiresInEnv, 10)
         : expiresInEnv;
