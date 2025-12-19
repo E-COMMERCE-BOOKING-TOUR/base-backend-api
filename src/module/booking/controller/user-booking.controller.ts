@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Get, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Get, UseFilters, UseGuards, Query } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateBookingDto } from '../dto/create-booking.dto';
 import { ConfirmBookingDTO } from '../dto/booking.dto';
@@ -66,8 +66,8 @@ export class UserBookingController {
     @UseGuards(AuthGuard('jwt'))
     @Get('payment-methods')
     @ApiResponse({ status: 200, description: 'Get all active payment methods' })
-    async getPaymentMethods() {
-        return await this.userBookingService.getPaymentMethods();
+    async getPaymentMethods(@User() user: UserEntity) {
+        return await this.userBookingService.getPaymentMethods(user?.uuid);
     }
 
     @ApiBearerAuth()
@@ -86,5 +86,14 @@ export class UserBookingController {
     @ApiResponse({ status: 200, description: 'Confirm booking (legacy)' })
     async confirmBooking(@User() user: UserEntity, @Body() dto: ConfirmBookingDTO) {
         return await this.userBookingService.confirmBooking(dto);
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Post('current/cancel')
+    @ApiResponse({ status: 200, description: 'Cancel current pending booking and release hold' })
+    async cancelCurrentBooking(@User() user: UserEntity) {
+        return await this.userBookingService.cancelCurrentBooking(user.uuid);
     }
 }

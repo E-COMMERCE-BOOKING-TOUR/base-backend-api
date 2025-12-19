@@ -5,6 +5,7 @@ import { AdminBookingController } from './controller/admin-booking.controller';
 import { BookingService } from './service/booking.service';
 import { BookingItemEntity } from './entity/bookingItem.entity';
 import { BookingPaymentEntity } from './entity/bookingPayment.entity';
+import { BookingPassengerEntity } from './entity/bookingPassenger.entity';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
 import { PaymentInfomationEntity } from '@/module/user/entity/paymentInfomation.entity';
 import { TourInventoryHoldEntity } from '@/module/tour/entity/tourInventoryHold.entity';
@@ -25,6 +26,7 @@ import { PurchaseModule } from './purchase/purchase.module';
             BookingEntity,
             BookingItemEntity,
             BookingPaymentEntity,
+            BookingPassengerEntity,
             CurrencyEntity,
             PaymentInfomationEntity,
             TourInventoryHoldEntity,

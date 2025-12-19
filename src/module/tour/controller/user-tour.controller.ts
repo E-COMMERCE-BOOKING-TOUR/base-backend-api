@@ -15,12 +15,13 @@ import {
     UserTourReviewCategoryDTO,
     UserTourRelatedDTO,
     UserTourSearchQueryDTO,
+    UserTourSessionDTO,
 } from '../dto/tour.dto';
 
 @ApiTags('User Tour')
 @Controller('user/tour')
 export class UserTourController {
-    constructor(private readonly userTourService: UserTourService) {}
+    constructor(private readonly userTourService: UserTourService) { }
     @Get('search/list')
     @ApiOperation({ summary: 'Search tours with filters' })
     @ApiResponse({
@@ -142,5 +143,30 @@ export class UserTourController {
     ): Promise<UserTourRelatedDTO[]> {
         const limitNum = limit ? parseInt(limit, 10) : 8;
         return this.userTourService.getRelatedTours(slug, limitNum);
+    }
+
+    @Get(':slug/sessions')
+    @ApiOperation({ summary: 'Get tour sessions availability' })
+    @ApiParam({ name: 'slug', type: String })
+    @ApiQuery({ name: 'variant_id', type: Number, required: true })
+    @ApiQuery({ name: 'start_date', type: String, required: false })
+    @ApiQuery({ name: 'end_date', type: String, required: false })
+    @ApiResponse({
+        status: 200,
+        description: 'List of tour sessions',
+        type: [UserTourSessionDTO],
+    })
+    async getTourSessions(
+        @Param('slug') slug: string,
+        @Query('variant_id') variantId: string,
+        @Query('start_date') startDate?: string,
+        @Query('end_date') endDate?: string,
+    ): Promise<UserTourSessionDTO[]> {
+        return this.userTourService.getTourSessions(
+            slug,
+            parseInt(variantId, 10),
+            startDate,
+            endDate,
+        );
     }
 }

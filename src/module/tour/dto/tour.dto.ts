@@ -830,6 +830,9 @@ export class UserTourDetailDTO {
     @ApiProperty({ example: 4 })
     rating: number;
 
+    @ApiProperty({ example: 3 })
+    durationDays: number;
+
     @ApiProperty({ example: 1113 })
     reviewCount: number;
 
@@ -1012,4 +1015,22 @@ export class TourPaxTypePriceDto {
         enum: ['rule', 'base', 'none'],
     })
     priceLayer: 'rule' | 'base' | 'none';
+}
+
+export class UserTourSessionDTO {
+    @ApiProperty()
+    date: string;
+
+    @ApiProperty({ enum: ['open', 'full', 'closed'] })
+    status: string;
+
+    @ApiProperty()
+    capacity_available: number;
+
+    @ApiProperty()
+    price: number;
+
+    constructor(partial: Partial<UserTourSessionDTO>) {
+        Object.assign(this, partial);
+    }
 }

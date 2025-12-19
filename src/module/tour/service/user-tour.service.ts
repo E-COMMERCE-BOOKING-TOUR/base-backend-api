@@ -15,13 +15,11 @@ import {
     TourPaxTypePriceDto,
     UserTourVariantDTO,
     UserTourVariantPaxPriceDTO,
+    UserTourSessionDTO,
 } from '../dto/tour.dto';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
 import { TourVariantEntity } from '../entity/tourVariant.entity';
-import { TourPaxTypeEntity } from '../entity/tourPaxType.entity';
-import { TourVariantPaxTypePriceEntity } from '../entity/tourVariantPaxTypePrice.entity';
-import { TourPriceRuleEntity } from '../entity/tourPriceRule.entity';
-import { TourRulePaxTypePriceEntity } from '../entity/tourRulePaxTypePrice.entity';
+import { TourSessionEntity } from '../entity/tourSession.entity';
 import { PricingService } from '@/module/pricing/pricing.service';
 
 @Injectable()
@@ -31,8 +29,10 @@ export class UserTourService {
         private readonly tourRepository: Repository<TourEntity>,
         @InjectRepository(ReviewEntity)
         private readonly reviewRepository: Repository<ReviewEntity>,
+        @InjectRepository(TourSessionEntity)
+        private readonly sessionRepository: Repository<TourSessionEntity>,
         private readonly pricingService: PricingService,
-    ) {}
+    ) { }
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
         return this.tourRepository
@@ -344,21 +344,35 @@ export class UserTourService {
         let originalPrice: number | undefined;
 
         if (tour.variants && tour.variants.length > 0) {
-            const activeVariant = tour.variants.find(
-                (v) => v.status === 'active',
-            );
-            if (
-                activeVariant &&
-                activeVariant.tour_variant_pax_type_prices?.length > 0
-            ) {
-                const prices: number[] =
-                    activeVariant.tour_variant_pax_type_prices
-                        .map((p) => p.price)
-                        .filter((p) => p > 0);
+            try {
+                // Use PricingService to ensure price consistency with checkout
+                const computedPrices = await this.computeTourPricing(tour);
+                const prices = computedPrices
+                    .map((p) => p.finalPrice)
+                    .filter((p): p is number => p !== null && p !== undefined && p > 0);
 
                 if (prices.length > 0) {
                     currentPrice = Math.min(...prices);
                     originalPrice = Math.round(currentPrice * 1.5);
+                }
+            } catch (error) {
+                // Fallback to basic calculation if pricing service fails
+                const activeVariant = tour.variants.find(
+                    (v) => v.status === 'active',
+                );
+                if (
+                    activeVariant &&
+                    activeVariant.tour_variant_pax_type_prices?.length > 0
+                ) {
+                    const prices: number[] =
+                        activeVariant.tour_variant_pax_type_prices
+                            .map((p) => p.price)
+                            .filter((p) => p > 0);
+
+                    if (prices.length > 0) {
+                        currentPrice = Math.min(...prices);
+                        originalPrice = Math.round(currentPrice * 1.5);
+                    }
                 }
             }
         }
@@ -425,6 +439,7 @@ export class UserTourService {
             price: currentPrice,
             oldPrice: originalPrice,
             rating: avgRating > 0 ? Math.round(avgRating) : 0,
+            durationDays: tour.duration_days || 1,
             reviewCount: reviewsCount,
             score: avgRating,
             scoreLabel,
@@ -688,6 +703,97 @@ export class UserTourService {
         }
 
         return this.computeTourPricing(tour);
+    }
+
+    async computeVariantPricing(
+        variant: TourVariantEntity,
+    ): Promise<TourPaxTypePriceDto[]> {
+        const ctx = await this.pricingService.calculate({
+            breakdown: [],
+            meta: { variant },
+        });
+
+        return (ctx.meta?.priceResult as TourPaxTypePriceDto[]) ?? [];
+    }
+
+    async getTourSessions(
+        slug: string,
+        variantId: number,
+        startDateStr?: string,
+        endDateStr?: string,
+    ): Promise<UserTourSessionDTO[]> {
+        // Find variant to ensure it belongs to the tour and get capacity info
+        const tour = await this.tourRepository.findOne({
+            where: { slug, status: 'active' },
+            relations: ['variants', 'variants.tour_variant_pax_type_prices', 'variants.tour_variant_pax_type_prices.pax_type'],
+        });
+
+        if (!tour) {
+            throw new NotFoundException(`Tour with slug "${slug}" not found`);
+        }
+
+        const variant = tour.variants.find((v) => v.id === variantId);
+        if (!variant) {
+            throw new NotFoundException(
+                `Variant ${variantId} not found in tour ${slug}`,
+            );
+        }
+
+        // Determine date range
+        const start = startDateStr ? new Date(startDateStr) : new Date();
+        const end = endDateStr ? new Date(endDateStr) : new Date(start);
+        if (!endDateStr) {
+            end.setDate(end.getDate() + 60); // Default 60 days
+        }
+
+        // Query sessions
+        const sessions = await this.sessionRepository
+            .createQueryBuilder('session')
+            .leftJoinAndSelect('session.tour_variant', 'variant')
+            .leftJoinAndSelect('session.booking_items', 'booking_items')
+            .leftJoinAndSelect('session.tour_inventory_holds', 'holds')
+            .where('session.tour_variant_id = :variantId', { variantId })
+            .andWhere('session.session_date >= :start', { start })
+            .andWhere('session.session_date <= :end', { end })
+            .orderBy('session.session_date', 'ASC')
+            .getMany();
+
+        // Calculate pricing (using variant base pricing for now as representative)
+        const computedPrices = await this.computeVariantPricing(variant);
+        const validPrices = computedPrices
+            .map((p) => p.finalPrice)
+            .filter((p): p is number => p !== null && p > 0);
+        const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+
+        return sessions.map((session) => {
+            // Capacity logic
+            const totalCapacity =
+                session.capacity ?? variant.capacity_per_slot ?? 0;
+            const booked = (session.booking_items ?? []).reduce(
+                (sum, item) => sum + (item.quantity || 0),
+                0,
+            );
+            const held = (session.tour_inventory_holds ?? []).reduce(
+                (sum, hold) =>
+                    hold.expires_at > new Date() ? sum + (hold.quantity || 0) : sum,
+                0,
+            );
+            const available = Math.max(0, totalCapacity - booked - held);
+
+            let status = session.status;
+            if (status === 'open' && available <= 0) {
+                status = 'full';
+            }
+
+            return new UserTourSessionDTO({
+                date: session.session_date instanceof Date
+                    ? session.session_date.toISOString().split('T')[0]
+                    : session.session_date, // TypeORM might return string for date type
+                status,
+                capacity_available: available,
+                price: minPrice, // In future, apply date-specific pricing rules here
+            });
+        });
     }
 
     async computeTourPricing(tour: TourEntity): Promise<TourPaxTypePriceDto[]> {

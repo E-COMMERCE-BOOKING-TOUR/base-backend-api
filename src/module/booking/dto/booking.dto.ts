@@ -279,6 +279,17 @@ export class BookingDetailDTO extends BookingSummaryDTO {
     }
 }
 
+export class BookingPassengerDTO {
+    @ApiProperty()
+    full_name: string;
+
+    @ApiProperty()
+    phone_number: string;
+
+    @ApiProperty()
+    pax_type_name: string;
+}
+
 export class UserBookingDetailDTO {
     @ApiProperty()
     id: number;
@@ -327,6 +338,15 @@ export class UserBookingDetailDTO {
 
     @ApiProperty({ type: [BookingItemDTO] })
     items: BookingItemDTO[];
+
+    @ApiProperty({ type: [BookingPassengerDTO] })
+    passengers: BookingPassengerDTO[];
+
+    @ApiProperty({ required: false })
+    booking_payment?: {
+        id: number;
+        payment_method_name: string;
+    };
 }
 
 export class ConfirmBookingDTO {

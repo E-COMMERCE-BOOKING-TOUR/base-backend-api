@@ -11,11 +11,16 @@ export class TourBasePriceStep implements PriceStep {
     priority = 10;
 
     execute(ctx: PriceContext): PriceContext {
-        const tour = ctx.meta?.tour as TourEntity | undefined;
-        if (!tour) return ctx;
+        const targetVariant = ctx.meta?.variant as TourVariantEntity | undefined;
+        let activeVariants: TourVariantEntity[] = [];
 
-        const activeVariants: TourVariantEntity[] =
-            tour.variants?.filter((v) => v.status === 'active') ?? [];
+        if (targetVariant) {
+            activeVariants = [targetVariant];
+        } else {
+            const tour = ctx.meta?.tour as TourEntity | undefined;
+            if (!tour) return ctx;
+            activeVariants = tour.variants?.filter((v) => v.status === 'active') ?? [];
+        }
 
         const basePriceMap = new Map<number, BasePriceEntry>();
 
@@ -29,16 +34,20 @@ export class TourBasePriceStep implements PriceStep {
                 const paxTypeId = paxType.id;
                 const current = basePriceMap.get(paxTypeId);
 
-                if (!current || p.price < current.price) {
+                // If targeting specific variant, overwrite/set. If scanning all (tour level), find min.
+                if (targetVariant) {
                     basePriceMap.set(paxTypeId, { price: p.price, paxType });
+                } else {
+                    if (!current || p.price < current.price) {
+                        basePriceMap.set(paxTypeId, { price: p.price, paxType });
+                    }
                 }
             }
         }
 
         ctx.meta = {
             ...(ctx.meta ?? {}),
-            tour,
-            activeVariants,
+            activeVariants, // Note: this might override original 'activeVariants' meaning in context, but for pricing result it is fine
             basePriceMap,
         };
 
