@@ -548,9 +548,9 @@ export class UserBookingService {
         doc.moveDown();
 
         // Brand
-        doc.fillColor('#3182ce').fontSize(20).text('Antigravity Travel', 50, 100);
+        doc.fillColor('#3182ce').fontSize(20).text('TripConnect', 50, 100);
         doc.fillColor('#718096').fontSize(10).text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
-        doc.text('support@antigravity.travel | +84 123 456 789', 50, 140);
+        doc.text('support@tripconnect.com | +84 123 456 789', 50, 140);
 
         doc.moveTo(50, 160).lineTo(550, 160).strokeColor('#e2e8f0').stroke();
         doc.moveDown(2);
@@ -576,7 +576,7 @@ export class UserBookingService {
         doc.fillColor('#3182ce').fontSize(20).text(amountStr, 350, 312, { align: 'right', width: 180 });
 
         // Footer
-        doc.fillColor('#a0aec0').fontSize(10).text('Thank you for choosing Antigravity Travel!', 50, 700, { align: 'center' });
+        doc.fillColor('#a0aec0').fontSize(10).text('Thank you for choosing TripConnect!', 50, 700, { align: 'center' });
 
         doc.end();
     }
@@ -611,7 +611,7 @@ export class UserBookingService {
         doc.moveDown();
 
         // Brand
-        doc.fillColor('#3182ce').fontSize(20).text('Antigravity Travel', 50, 100);
+        doc.fillColor('#3182ce').fontSize(20).text('TripConnect', 50, 100);
         doc.fillColor('#718096').fontSize(10).text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
         doc.moveDown(2);
 
