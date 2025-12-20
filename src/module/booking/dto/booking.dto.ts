@@ -347,6 +347,14 @@ export class UserBookingDetailDTO {
         id: number;
         payment_method_name: string;
     };
+
+    @ApiProperty({ required: false })
+    payment_information?: {
+        brand?: string;
+        last4?: string;
+        expiry_date?: string;
+        account_holder?: string;
+    };
 }
 
 export class ConfirmBookingDTO {

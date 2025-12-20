@@ -109,6 +109,7 @@ export class UserEntity extends BaseEntityTimestamp {
 
     toJSON() {
         return {
+            id: this.id,
             uuid: this.uuid,
             username: this.username,
             full_name: this.full_name,

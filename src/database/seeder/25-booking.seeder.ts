@@ -96,12 +96,13 @@ export default class BookingSeeder implements Seeder {
 
             if (!session) continue;
 
-            // Get customer's payment information
+            // Get customer's payment information (most recent)
             const paymentInfo = await paymentInfoRepository.findOne({
-                where: { user: { id: customer.id }, is_default: true },
+                where: { user: { id: customer.id } },
+                order: { id: 'DESC' },
             });
 
-            if (!paymentInfo) continue;
+            // Payment info is optional - booking can proceed without saved card
 
             // Determine booking status
             let bookingStatus:
@@ -176,11 +177,11 @@ export default class BookingSeeder implements Seeder {
                     payment_status: paymentStatus,
                     user: customer,
                     currency: variant.currency,
-                    payment_information: paymentInfo,
+                    ...(paymentInfo && { payment_information: paymentInfo }),
                     tour_inventory_hold: inventoryHold,
                     booking_payment:
                         paymentMethods[
-                            Math.floor(Math.random() * paymentMethods.length)
+                        Math.floor(Math.random() * paymentMethods.length)
                         ],
                 }),
             );
@@ -258,8 +259,8 @@ export default class BookingSeeder implements Seeder {
                             item.pax_type.name === 'Adult'
                                 ? Math.floor(Math.random() * 40) + 25
                                 : item.pax_type.name === 'Youth'
-                                  ? Math.floor(Math.random() * 6) + 12
-                                  : Math.floor(Math.random() * 8) + 3;
+                                    ? Math.floor(Math.random() * 6) + 12
+                                    : Math.floor(Math.random() * 8) + 3;
 
                         const birthdate = new Date();
                         birthdate.setFullYear(
@@ -270,7 +271,7 @@ export default class BookingSeeder implements Seeder {
                             passengerRepository.create({
                                 full_name:
                                     passengerNames[
-                                        passengerIndex % passengerNames.length
+                                    passengerIndex % passengerNames.length
                                     ],
                                 birthdate: birthdate,
                                 phone_number: p === 0 ? customer.phone : null,

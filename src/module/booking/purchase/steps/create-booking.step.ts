@@ -17,15 +17,14 @@ export class CreateBookingStep implements PurchaseStep {
         private readonly bookingItemRepository: Repository<BookingItemEntity>,
         @InjectRepository(TourInventoryHoldEntity)
         private readonly inventoryHoldRepository: Repository<TourInventoryHoldEntity>,
-    ) {}
+    ) { }
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         if (
             !ctx.user ||
+            !ctx.variant ||
             !ctx.bookingItems ||
             !ctx.inventoryHold ||
-            !ctx.paymentInfo ||
-            !ctx.bookingPayment ||
             ctx.totalAmount === undefined
         ) {
             throw new Error(
@@ -42,10 +41,10 @@ export class CreateBookingStep implements PurchaseStep {
             status: 'pending',
             payment_status: 'unpaid',
             user: ctx.user,
-            currency: ctx.bookingPayment.currency,
-            payment_information: ctx.paymentInfo,
+            currency: ctx.variant.currency,
+            payment_information: ctx.paymentInfo || undefined,
             tour_inventory_hold: ctx.inventoryHold,
-            booking_payment: ctx.bookingPayment,
+            booking_payment: ctx.bookingPayment || undefined,
             booking_items: ctx.bookingItems,
         });
 

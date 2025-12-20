@@ -82,7 +82,7 @@ export class BookingEntity extends BaseEntityTimestamp {
     @ManyToOne(
         () => PaymentInfomationEntity,
         (payment_information) => payment_information.bookings,
-        { nullable: false },
+        { nullable: true },
     )
     @JoinColumn({ name: 'payment_information_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Thông tin thanh toán' })
@@ -104,7 +104,7 @@ export class BookingEntity extends BaseEntityTimestamp {
     @ManyToOne(
         () => BookingPaymentEntity,
         (booking_payment) => booking_payment.bookings,
-        { nullable: false },
+        { nullable: true },
     )
     @JoinColumn({ name: 'booking_payment_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Phương thức thanh toán' })

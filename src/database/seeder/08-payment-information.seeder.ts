@@ -17,110 +17,127 @@ export default class PaymentInformationSeeder implements Seeder {
         });
 
         if (customers.length === 0) {
-            console.log(
-                '⚠️ No customers found, skipping payment information seeder',
-            );
+            console.log('No customers found, skipping payment information seeder');
             return;
         }
 
         const paymentInfos = [
-            // Customer 1 - multiple cards
+            // Customer 1 - Visa
             {
                 user: customers[0],
-                is_default: true,
-                expiry_date: '12/2025',
-                account_number: 'encrypted_4532123456789012',
-                account_number_hint: '**** **** **** 9012',
+                brand: 'Visa',
+                funding: 'credit',
+                country: 'VN',
                 account_holder: customers[0]?.full_name || 'Customer 1',
-                ccv: 'encrypted_123',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_1',
+                fingerprint: 'fp_1234567890abcdef',
+                expiry_date: '12/25',
+                last4: '4242',
             },
+            // Customer 1 - Mastercard (secondary)
             {
                 user: customers[0],
-                is_default: false,
-                expiry_date: '06/2026',
-                account_number: 'encrypted_5412345678901234',
-                account_number_hint: '**** **** **** 1234',
+                brand: 'Mastercard',
+                funding: 'credit',
+                country: 'VN',
                 account_holder: customers[0]?.full_name || 'Customer 1',
-                ccv: 'encrypted_456',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_1b',
+                fingerprint: 'fp_abcdef1234567890',
+                expiry_date: '06/26',
+                last4: '5555',
             },
-            // Customer 2
+            // Customer 2 - Visa
             {
                 user: customers[1],
-                is_default: true,
-                expiry_date: '09/2025',
-                account_number: 'encrypted_4716234567890123',
-                account_number_hint: '**** **** **** 0123',
+                brand: 'Visa',
+                funding: 'debit',
+                country: 'VN',
                 account_holder: customers[1]?.full_name || 'Customer 2',
-                ccv: 'encrypted_789',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_2',
+                fingerprint: 'fp_2222222222222222',
+                expiry_date: '09/25',
+                last4: '1234',
             },
-            // Customer 3
+            // Customer 3 - Mastercard
             {
                 user: customers[2],
-                is_default: true,
-                expiry_date: '03/2026',
-                account_number: 'encrypted_4024007156789012',
-                account_number_hint: '**** **** **** 9012',
+                brand: 'Mastercard',
+                funding: 'credit',
+                country: 'VN',
                 account_holder: customers[2]?.full_name || 'Customer 3',
-                ccv: 'encrypted_321',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_3',
+                fingerprint: 'fp_3333333333333333',
+                expiry_date: '03/26',
+                last4: '8888',
             },
-            // Customer 4
+            // Customer 4 - American Express
             {
                 user: customers[3],
-                is_default: true,
-                expiry_date: '11/2025',
-                account_number: 'encrypted_3782822463100053',
-                account_number_hint: '**** ****** *0053',
+                brand: 'American Express',
+                funding: 'credit',
+                country: 'US',
                 account_holder: customers[3]?.full_name || 'Customer 4',
-                ccv: 'encrypted_654',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_4',
+                fingerprint: 'fp_4444444444444444',
+                expiry_date: '11/25',
+                last4: '0005',
             },
-            // Customer 5
+            // Customer 5 - Discover
             {
                 user: customers[4],
-                is_default: true,
-                expiry_date: '08/2026',
-                account_number: 'encrypted_6011123456789012',
-                account_number_hint: '**** **** **** 9012',
+                brand: 'Discover',
+                funding: 'credit',
+                country: 'US',
                 account_holder: customers[4]?.full_name || 'Customer 5',
-                ccv: 'encrypted_987',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_5',
+                fingerprint: 'fp_5555555555555555',
+                expiry_date: '08/26',
+                last4: '9012',
             },
-            // Customer 6 - multiple cards
+            // Customer 6 - Visa
             {
                 user: customers[5],
-                is_default: true,
-                expiry_date: '07/2025',
-                account_number: 'encrypted_5555555555554444',
-                account_number_hint: '**** **** **** 4444',
+                brand: 'Visa',
+                funding: 'prepaid',
+                country: 'VN',
                 account_holder: customers[5]?.full_name || 'Customer 6',
-                ccv: 'encrypted_111',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_6',
+                fingerprint: 'fp_6666666666666666',
+                expiry_date: '07/25',
+                last4: '4444',
             },
-            {
-                user: customers[5],
-                is_default: false,
-                expiry_date: '12/2026',
-                account_number: 'encrypted_4111111111111111',
-                account_number_hint: '**** **** **** 1111',
-                account_holder: customers[5]?.full_name || 'Customer 6',
-                ccv: 'encrypted_222',
-            },
-            // Customer 7
+            // Customer 7 - Diners Club
             {
                 user: customers[6],
-                is_default: true,
-                expiry_date: '05/2026',
-                account_number: 'encrypted_3056930009020004',
-                account_number_hint: '**** ****** *0004',
+                brand: 'Diners Club',
+                funding: 'credit',
+                country: 'JP',
                 account_holder: customers[6]?.full_name || 'Customer 7',
-                ccv: 'encrypted_333',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_7',
+                fingerprint: 'fp_7777777777777777',
+                expiry_date: '05/26',
+                last4: '0004',
             },
-            // Customer 8 (International)
+            // Customer 8 - JCB (International)
             {
                 user: customers[7],
-                is_default: true,
-                expiry_date: '10/2026',
-                account_number: 'encrypted_4532123456789000',
-                account_number_hint: '**** **** **** 9000',
+                brand: 'JCB',
+                funding: 'credit',
+                country: 'JP',
                 account_holder: customers[7]?.full_name || 'John Smith',
-                ccv: 'encrypted_444',
+                cvc_check: 'pass',
+                customer_id: 'cus_test_customer_8',
+                fingerprint: 'fp_8888888888888888',
+                expiry_date: '10/26',
+                last4: '0000',
             },
         ];
 
@@ -129,7 +146,8 @@ export default class PaymentInformationSeeder implements Seeder {
                 const exists = await paymentRepository.findOne({
                     where: {
                         user: { id: paymentInfo.user.id },
-                        account_number_hint: paymentInfo.account_number_hint,
+                        last4: paymentInfo.last4,
+                        customer_id: paymentInfo.customer_id,
                     },
                 });
                 if (!exists) {

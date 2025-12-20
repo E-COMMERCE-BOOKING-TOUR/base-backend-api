@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { BookingEntity } from '../entity/booking.entity';
 import { BookingPaymentEntity } from '../entity/bookingPayment.entity';
 import { BookingPassengerEntity } from '../entity/bookingPassenger.entity';
@@ -14,8 +14,14 @@ import {
 } from '../dto/booking.dto';
 import { UpdateBookingContactDto } from '../dto/update-booking-contact.dto';
 import { UpdateBookingPaymentDto } from '../dto/update-booking-payment.dto';
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import * as express from 'express';
+import * as path from 'path';
 import { PurchaseService } from '../purchase/purchase.service';
+import { UserPaymentService } from '@/module/user/service/user-payment.service';
+import { PaymentInfomationEntity } from '@/module/user/entity/paymentInfomation.entity';
+import { PaymentCardID } from '../entity/bookingPayment.entity';
+import PDFDocument = require('pdfkit');
 
 @Injectable()
 export class UserBookingService {
@@ -28,7 +34,10 @@ export class UserBookingService {
         private readonly bookingPassengerRepository: Repository<BookingPassengerEntity>,
         @InjectRepository(TourInventoryHoldEntity)
         private readonly inventoryHoldRepository: Repository<TourInventoryHoldEntity>,
+        @InjectRepository(PaymentInfomationEntity)
+        private readonly paymentInfoRepository: Repository<PaymentInfomationEntity>,
         private readonly purchaseService: PurchaseService,
+        private readonly userPaymentService: UserPaymentService,
     ) { }
 
     async createBooking(uuid: string, dto: CreateBookingDto) {
@@ -70,6 +79,11 @@ export class UserBookingService {
                 { user: { uuid: userUuid }, status: BookingStatus.pending_info },
                 { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
                 { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.confirmed,
+                    updated_at: MoreThan(new Date(Date.now() - 5 * 60 * 1000))
+                },
             ],
             relations: [
                 'booking_items',
@@ -170,6 +184,12 @@ export class UserBookingService {
                 id: booking.booking_payment.id,
                 payment_method_name: booking.booking_payment.payment_method_name,
             } : undefined,
+            payment_information: booking.payment_information ? {
+                brand: booking.payment_information.brand || undefined,
+                last4: booking.payment_information.last4 || undefined,
+                expiry_date: booking.payment_information.expiry_date || undefined,
+                account_holder: booking.payment_information.account_holder || undefined,
+            } : undefined,
         };
     }
 
@@ -178,7 +198,11 @@ export class UserBookingService {
      */
     async updateBookingContact(userUuid: string, dto: UpdateBookingContactDto): Promise<any> {
         const booking = await this.bookingRepository.findOne({
-            where: { user: { uuid: userUuid }, status: BookingStatus.pending_info },
+            where: [
+                { user: { uuid: userUuid }, status: BookingStatus.pending_info },
+                { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
+                { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
+            ],
             relations: ['tour_inventory_hold', 'booking_items', 'booking_items.pax_type'],
             order: { id: 'DESC' },
         });
@@ -266,7 +290,11 @@ export class UserBookingService {
      */
     async updateBookingPayment(userUuid: string, dto: UpdateBookingPaymentDto): Promise<any> {
         const booking = await this.bookingRepository.findOne({
-            where: { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
+            where: [
+                { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
+                { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
+                { user: { uuid: userUuid }, status: BookingStatus.pending_info },
+            ],
             relations: ['tour_inventory_hold'],
             order: { id: 'DESC' },
         });
@@ -303,11 +331,29 @@ export class UserBookingService {
             );
         }
 
+        if (dto.payment_information_id) {
+            const paymentInfo = await this.bookingRepository.manager.getRepository(PaymentInfomationEntity).findOne({
+                where: { id: dto.payment_information_id }
+            });
+            if (paymentInfo) {
+                booking.payment_information = paymentInfo;
+            }
+        }
+
         // Update booking with payment method
-        // Update booking with payment method
-        booking.status = BookingStatus.pending_confirm;
-        booking.booking_payment = paymentMethod;
-        await this.bookingRepository.save(booking);
+        const updateData: any = {
+            status: BookingStatus.pending_confirm,
+            booking_payment: { id: paymentMethod.id } as any,
+        };
+
+        if (dto.payment_information_id) {
+            updateData.payment_information = { id: dto.payment_information_id } as any;
+        }
+
+        await this.bookingRepository.update(
+            { id: booking.id },
+            updateData
+        );
 
         return { success: true, bookingId: booking.id };
     }
@@ -318,7 +364,7 @@ export class UserBookingService {
     async confirmCurrentBooking(userUuid: string): Promise<any> {
         const booking = await this.bookingRepository.findOne({
             where: { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
-            relations: ['tour_inventory_hold'],
+            relations: ['tour_inventory_hold', 'booking_payment', 'payment_information', 'currency'],
             order: { id: 'DESC' },
         });
 
@@ -333,15 +379,33 @@ export class UserBookingService {
                 throw new BadRequestException('Your booking hold has expired. Please start a new booking.');
             }
         }
+        // Check if payment method is Credit Card and process Stripe charge
+        const isCreditCard = booking.booking_payment?.id === PaymentCardID.CREDIT_CARD;
 
-        // Use update to avoid cascade issues
-        await this.bookingRepository.update(
-            { id: booking.id },
-            {
-                status: BookingStatus.confirmed,
-                payment_status: PaymentStatus.paid,
+        if (isCreditCard) {
+            if (!booking.payment_information?.customer_id) {
+                throw new BadRequestException('No card information found for this booking. Please add a card.');
             }
-        );
+
+            // Charge the customer via Stripe
+            const customerId = booking.payment_information.customer_id;
+            const amount = Number(booking.total_amount);
+            const currency = booking.currency.symbol.toLowerCase();
+
+            await this.userPaymentService.chargeCustomer(customerId, amount, currency);
+        }
+
+        // Update booking status
+        booking.status = BookingStatus.confirmed;
+        booking.payment_status = PaymentStatus.paid;
+
+        // Clear expiry to prevent frontend alert
+        if (booking.tour_inventory_hold) {
+            booking.tour_inventory_hold.expires_at = null as any;
+            await this.inventoryHoldRepository.save(booking.tour_inventory_hold);
+        }
+
+        await this.bookingRepository.save(booking);
 
         return { success: true, bookingId: booking.id };
     }
@@ -454,5 +518,142 @@ export class UserBookingService {
         );
 
         return { success: true, message: 'Booking cancelled successfully' };
+    }
+
+    async downloadReceipt(id: number, user: UserEntity, res: express.Response) {
+        const booking = await this.bookingRepository.findOne({
+            where: { id },
+            relations: ['user', 'booking_payment', 'payment_information', 'currency'],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+        if (booking.user.uuid !== user.uuid) throw new ForbiddenException('You do not have permission to access this receipt');
+        if (booking.status !== BookingStatus.confirmed) throw new BadRequestException('Receipt is only available for confirmed bookings');
+
+        const doc = new PDFDocument();
+        const fontPath = path.join(__dirname, '../../../assets/fonts/RobotoFlex-VariableFont.ttf');
+        doc.registerFont('vn', fontPath);
+        doc.font('vn');
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=receipt-${booking.id}.pdf`);
+        doc.pipe(res);
+
+
+        // Header
+        doc.fillColor('#1a365d').fontSize(25).text('BOOKING RECEIPT', { align: 'center' });
+        doc.moveDown();
+        doc.fillColor('#4a5568').fontSize(12).text(`Receipt No: REC-${booking.id}`, { align: 'right' });
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+        doc.moveDown();
+
+        // Brand
+        doc.fillColor('#3182ce').fontSize(20).text('Antigravity Travel', 50, 100);
+        doc.fillColor('#718096').fontSize(10).text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
+        doc.text('support@antigravity.travel | +84 123 456 789', 50, 140);
+
+        doc.moveTo(50, 160).lineTo(550, 160).strokeColor('#e2e8f0').stroke();
+        doc.moveDown(2);
+
+        // Payment Info
+        doc.fillColor('#2d3748').fontSize(14).text('Payment Information', 50, 180);
+        doc.moveDown();
+        doc.fillColor('#4a5568').fontSize(11);
+        doc.text(`Customer Name: ${booking.contact_name}`);
+        doc.text(`Customer Email: ${booking.contact_email}`);
+        doc.text(`Payment Method: ${booking.booking_payment?.payment_method_name || 'N/A'}`);
+        if (booking.payment_information) {
+            doc.text(`Card: ${booking.payment_information.brand} **** ${booking.payment_information.last4}`);
+        }
+        doc.text(`Status: PAID`, { continued: true }).fillColor('#38a169').text(' (Confirmed)');
+
+        doc.moveDown(2);
+
+        // Total Amount
+        doc.rect(50, 300, 500, 50).fill('#f7fafc');
+        doc.fillColor('#2d3748').fontSize(16).text('Total Paid', 70, 315);
+        const amountStr = `${Number(booking.total_amount).toLocaleString()} ${booking.currency?.symbol || 'VND'}`;
+        doc.fillColor('#3182ce').fontSize(20).text(amountStr, 350, 312, { align: 'right', width: 180 });
+
+        // Footer
+        doc.fillColor('#a0aec0').fontSize(10).text('Thank you for choosing Antigravity Travel!', 50, 700, { align: 'center' });
+
+        doc.end();
+    }
+
+    async downloadInvoice(id: number, user: UserEntity, res: express.Response) {
+        const booking = await this.bookingRepository.findOne({
+            where: { id },
+            relations: [
+                'user', 'booking_items', 'booking_items.variant', 'booking_items.variant.tour',
+                'booking_items.pax_type', 'currency', 'booking_payment'
+            ],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+        if (booking.user.uuid !== user.uuid) throw new ForbiddenException('You do not have permission to access this invoice');
+        if (booking.status !== BookingStatus.confirmed) throw new BadRequestException('Invoice is only available for confirmed bookings');
+
+        const doc = new PDFDocument();
+        const fontPath = path.join(__dirname, '../../../assets/fonts/RobotoFlex-VariableFont.ttf');
+        doc.registerFont('vn', fontPath);
+        doc.font('vn');
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice-${booking.id}.pdf`);
+        doc.pipe(res);
+
+        // Header
+        doc.fillColor('#1a365d').fontSize(25).text('INVOICE', { align: 'center' });
+        doc.moveDown();
+        doc.fillColor('#4a5568').fontSize(12).text(`Invoice No: INV-${booking.id}`, { align: 'right' });
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+        doc.moveDown();
+
+        // Brand
+        doc.fillColor('#3182ce').fontSize(20).text('Antigravity Travel', 50, 100);
+        doc.fillColor('#718096').fontSize(10).text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
+        doc.moveDown(2);
+
+        // Bill To
+        doc.fillColor('#2d3748').fontSize(14).text('Bill To', 50, 170);
+        doc.fillColor('#4a5568').fontSize(11);
+        doc.text(booking.contact_name);
+        doc.text(booking.contact_email);
+        doc.text(booking.contact_phone);
+        doc.moveDown(2);
+
+        // Table Header
+        const tableTop = 250;
+        doc.fillColor('#1e40af').fontSize(10).text('Description', 50, tableTop);
+        doc.text('Qty', 300, tableTop);
+        doc.text('Unit Price', 350, tableTop, { width: 90, align: 'right' });
+        doc.text('Total', 450, tableTop, { width: 100, align: 'right' });
+
+        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor('#cbd5e1').stroke();
+
+        // Table Rows
+        let y = tableTop + 30;
+        booking.booking_items.forEach((item) => {
+            doc.fillColor('#4b5563').fontSize(10);
+            doc.text(`${item.variant.tour.title} (${item.pax_type.name})`, 50, y, { width: 240 });
+            doc.text(item.quantity.toString(), 300, y);
+            doc.text(`${Number(item.unit_price).toLocaleString()}`, 350, y, { width: 90, align: 'right' });
+            doc.text(`${Number(item.total_amount).toLocaleString()}`, 450, y, { width: 100, align: 'right' });
+            y += 20;
+        });
+
+        doc.moveTo(50, y + 10).lineTo(550, y + 10).strokeColor('#cbd5e1').stroke();
+
+        // Summary
+        y += 30;
+        doc.fillColor('#1e293b').fontSize(12).text('Total Amount:', 350, y);
+        const amountStr = `${Number(booking.total_amount).toLocaleString()} ${booking.currency?.symbol || 'VND'}`;
+        doc.fillColor('#2563eb').fontSize(14).text(amountStr, 450, y, { width: 100, align: 'right' });
+
+        // Footer
+        doc.fillColor('#94a3b8').fontSize(9).text('Payment was received via ' + (booking.booking_payment?.payment_method_name || 'Credit Card'), 50, 700, { align: 'center' });
+
+        doc.end();
     }
 }

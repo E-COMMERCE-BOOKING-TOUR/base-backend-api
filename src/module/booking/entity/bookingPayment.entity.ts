@@ -11,6 +11,13 @@ import {
 import { BookingEntity } from './booking.entity';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
 
+export enum PaymentCardID {
+    CREDIT_CARD = 1, // Credit/Debit Card
+    MOMO = 5, // Momo
+    VN_PAY = 4, // VnPay
+    ZALOPAY = 6, // Zalopay
+}
+
 @Entity('booking_payments')
 export class BookingPaymentEntity extends BaseEntityTimestamp {
     @PrimaryGeneratedColumn()

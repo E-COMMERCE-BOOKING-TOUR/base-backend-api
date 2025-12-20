@@ -16,12 +16,19 @@ import { UserService } from './service/user.service';
 import { NotificationEntity } from './entity/notification.entity';
 import { NotificationService } from './service/notification.service';
 
+import { UserPaymentController } from './controller/user-payment.controller';
+import { UserPaymentService } from './service/user-payment.service';
+import { PaymentInfomationEntity } from './entity/paymentInfomation.entity';
+import { BookingEntity } from '../booking/entity/booking.entity';
+
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             UserEntity,
             UserAuthSessionEntity,
             NotificationEntity,
+            PaymentInfomationEntity,
+            BookingEntity
         ]),
         PassportModule,
         JwtModule.register(jwtConfig()),
@@ -31,6 +38,7 @@ import { NotificationService } from './service/notification.service';
         AdminUserController,
         UserController,
         NotificationController,
+        UserPaymentController,
     ],
     providers: [
         AuthService,
@@ -38,6 +46,7 @@ import { NotificationService } from './service/notification.service';
         JwtRefreshStrategy,
         UserService,
         NotificationService,
+        UserPaymentService,
     ],
     exports: [
         TypeOrmModule, // Export TypeOrmModule to share User repositories
@@ -46,6 +55,7 @@ import { NotificationService } from './service/notification.service';
         JwtStrategy,
         JwtRefreshStrategy,
         AuthService,
+        UserPaymentService,
     ],
 })
 export class UserModule { }

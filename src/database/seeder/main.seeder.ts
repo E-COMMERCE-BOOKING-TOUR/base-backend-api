@@ -61,7 +61,7 @@ export default class MainSeeder implements Seeder {
 
                     // Booking Module
                     BookingPaymentSeeder,
-                    BookingSeeder,
+                    // BookingSeeder,
 
                     // Notification Module
                     NotificationSeeder,

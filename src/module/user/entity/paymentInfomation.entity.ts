@@ -18,48 +18,78 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     id: number;
 
     @Column({
-        type: 'boolean',
-        default: false,
+        type: 'varchar',
+        length: 50,
+        nullable: true,
     })
-    @ApiProperty({ description: 'Mặc định' })
-    is_default: boolean;
+    @ApiProperty({ description: 'Thương hiệu thẻ (Visa, Mastercard, ...)' })
+    brand: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Loại funding (credit, debit, prepaid)' })
+    funding: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 10,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Quốc gia phát hành thẻ' })
+    country: string | null;
 
     @Column({
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
-    @ApiProperty({ description: 'Ngày hết hạn' })
-    expiry_date: string;
+    @ApiProperty({ description: 'Tên chủ thẻ' })
+    account_holder: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 20,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Trạng thái kiểm tra CVC (pass, fail, unchecked)' })
+    cvc_check: string | null;
 
     @Exclude()
     @Column({
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
-    @ApiProperty({ description: 'Số tài khoản (mã hóa)' })
-    account_number: string;
-
-    @Column({
-        type: 'varchar',
-        length: 255,
-    })
-    @ApiProperty({ description: 'Số tài khoản (hiển thị)' })
-    account_number_hint: string;
-
-    @Column({
-        type: 'varchar',
-        length: 255,
-    })
-    @ApiProperty({ description: 'Tên chủ tài khoản' })
-    account_holder: string;
+    @ApiProperty({ description: 'Stripe Customer ID' })
+    customer_id: string | null;
 
     @Exclude()
     @Column({
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
-    @ApiProperty({ description: 'CCV (mã hóa)' })
-    ccv: string;
+    @ApiProperty({ description: 'Fingerprint để nhận diện thẻ duy nhất' })
+    fingerprint: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 10,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Ngày hết hạn (MM/YY)' })
+    expiry_date: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 20,
+        nullable: true,
+    })
+    @ApiProperty({ description: '4 số cuối thẻ (hiển thị)' })
+    last4: string | null;
 
     @ManyToOne(() => UserEntity, (user) => user.payment_informations, {
         nullable: false,

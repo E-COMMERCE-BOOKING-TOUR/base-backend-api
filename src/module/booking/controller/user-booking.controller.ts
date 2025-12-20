@@ -1,4 +1,5 @@
-import { Body, Controller, Param, Post, Get, UseFilters, UseGuards, Query } from '@nestjs/common';
+import { Body, Controller, Param, Post, Get, UseFilters, UseGuards, Query, Res } from '@nestjs/common';
+import * as express from 'express';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateBookingDto } from '../dto/create-booking.dto';
 import { ConfirmBookingDTO } from '../dto/booking.dto';
@@ -95,5 +96,31 @@ export class UserBookingController {
     @ApiResponse({ status: 200, description: 'Cancel current pending booking and release hold' })
     async cancelCurrentBooking(@User() user: UserEntity) {
         return await this.userBookingService.cancelCurrentBooking(user.uuid);
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Get(':id/receipt')
+    @ApiResponse({ status: 200, description: 'Download booking receipt PDF' })
+    async downloadReceipt(
+        @User() user: UserEntity,
+        @Param('id') id: number,
+        @Res() res: express.Response,
+    ) {
+        return await this.userBookingService.downloadReceipt(id, user, res);
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Get(':id/invoice')
+    @ApiResponse({ status: 200, description: 'Download booking invoice PDF' })
+    async downloadInvoice(
+        @User() user: UserEntity,
+        @Param('id') id: number,
+        @Res() res: express.Response,
+    ) {
+        return await this.userBookingService.downloadInvoice(id, user, res);
     }
 }

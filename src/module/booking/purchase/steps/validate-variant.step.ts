@@ -14,12 +14,12 @@ export class ValidateVariantStep implements PurchaseStep {
         private readonly variantRepository: Repository<TourVariantEntity>,
         @InjectRepository(TourEntity)
         private readonly tourRepository: Repository<TourEntity>,
-    ) {}
+    ) { }
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         const variant = await this.variantRepository.findOne({
             where: { id: ctx.variantId },
-            relations: ['tour', 'tour_sessions'],
+            relations: ['tour', 'tour_sessions', 'currency'],
         });
 
         if (!variant) {
