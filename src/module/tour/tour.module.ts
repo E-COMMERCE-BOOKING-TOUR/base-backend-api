@@ -24,6 +24,8 @@ import { PricingModule } from '../pricing/pricing.module';
 import { TourBasePriceStep } from '../pricing/steps/tour-base-price.step';
 import { TourRulePriceStep } from '../pricing/steps/tour-rule-price.step';
 import { TourAssemblePriceStep } from '../pricing/steps/tour-assemble-price.step';
+import { AdminTourService } from './service/admin-tour.service';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
     imports: [
@@ -50,9 +52,10 @@ import { TourAssemblePriceStep } from '../pricing/steps/tour-assemble-price.step
             TourRulePriceStep,
             TourAssemblePriceStep,
         ]),
+        CloudinaryModule,
     ],
     controllers: [AdminTourController, UserTourController],
-    providers: [TourService, UserTourService],
-    exports: [TourService, UserTourService],
+    providers: [TourService, UserTourService, AdminTourService],
+    exports: [TourService, UserTourService, AdminTourService],
 })
-export class TourModule {}
+export class TourModule { }

@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { BookingService } from '../service/booking.service';
-import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
     BookingDetailDTO,
     BookingSummaryDTO,
@@ -10,11 +10,17 @@ import {
     PaymentStatus,
 } from '../dto/booking.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '@/module/user/guard/roles.guard';
+import { Roles } from '@/module/user/decorator/roles.decorator';
 
 @ApiTags('Admin Booking')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('admin')
 @Controller('admin/booking')
 export class AdminBookingController {
-    constructor(private readonly bookingService: BookingService) {}
+    constructor(private readonly bookingService: BookingService) { }
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [BookingSummaryDTO] })
