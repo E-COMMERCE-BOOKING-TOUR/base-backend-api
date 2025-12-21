@@ -58,15 +58,29 @@ export class BookingService {
             total_amount: Number(b.total_amount),
             status: b.status as BookingStatus,
             payment_status: b.payment_status as PaymentStatus,
-            user: b.user,
-            currency: b.currency,
-            booking_payment: b.booking_payment,
-            payment_information: b.payment_information,
-            tour_inventory_hold: b.tour_inventory_hold,
+            user_id: b.user?.id,
+            currency_id: b.currency?.id,
+            booking_payment_id: b.booking_payment?.id,
+            booking_items: (b.booking_items ?? []).map(
+                (item) =>
+                    new BookingItemDetailDTO({
+                        id: item.id,
+                        total_amount: Number(item.total_amount),
+                        unit_price: Number(item.unit_price),
+                        quantity: item.quantity,
+                        variant_id: item.variant?.id,
+                        pax_type_id: item.pax_type?.id,
+                        tour_session_id: item.tour_session?.id,
+                        tour_title: item.variant?.tour?.title,
+                        session_date: item.tour_session?.session_date,
+                        start_time: item.tour_session?.start_time?.toString(),
+                        end_time: item.tour_session?.end_time?.toString(),
+                    } as any),
+            ),
             created_at: b.created_at,
             updated_at: b.updated_at,
             deleted_at: b.deleted_at ?? undefined,
-        } as Partial<BookingSummaryDTO>);
+        } as any);
     }
 
     private toDetailDTO(b: BookingEntity): BookingDetailDTO {
@@ -78,11 +92,11 @@ export class BookingService {
             total_amount: Number(b.total_amount),
             status: b.status as BookingStatus,
             payment_status: b.payment_status as PaymentStatus,
-            user: b.user,
-            currency: b.currency,
-            booking_payment: b.booking_payment,
-            payment_information: b.payment_information,
-            tour_inventory_hold: b.tour_inventory_hold,
+            user_id: b.user?.id,
+            currency_id: b.currency?.id,
+            booking_payment_id: b.booking_payment?.id,
+            payment_information_id: b.payment_information?.id,
+            tour_inventory_hold_id: b.tour_inventory_hold?.id,
             booking_items: (b.booking_items ?? []).map(
                 (item) =>
                     new BookingItemDetailDTO({
@@ -90,15 +104,28 @@ export class BookingService {
                         total_amount: Number(item.total_amount),
                         unit_price: Number(item.unit_price),
                         quantity: item.quantity,
-                        variant: item.variant,
-                        pax_type: item.pax_type,
-                        tour_session: item.tour_session,
-                    } as DeepPartial<BookingItemDetailDTO>),
+                        variant_id: item.variant?.id,
+                        pax_type_id: item.pax_type?.id,
+                        tour_session_id: item.tour_session?.id,
+                        tour_title: item.variant?.tour?.title,
+                        variant_name: item.variant?.name,
+                        pax_type_name: item.pax_type?.name,
+                        session_date: item.tour_session?.session_date,
+                        start_time: item.tour_session?.start_time?.toString(),
+                        end_time: item.tour_session?.end_time?.toString(),
+                        booking_passengers: (item.booking_passengers ?? []).map(p => ({
+                            id: p.id,
+                            full_name: p.full_name,
+                            phone_number: p.phone_number,
+                            birthdate: p.birthdate,
+                            pax_type_name: item.pax_type?.name,
+                        })),
+                    } as any),
             ),
             created_at: b.created_at,
             updated_at: b.updated_at,
             deleted_at: b.deleted_at ?? undefined,
-        } as Partial<BookingDetailDTO>);
+        } as any);
     }
 
     async getAllBooking(): Promise<BookingSummaryDTO[]> {
@@ -110,6 +137,9 @@ export class BookingService {
                     'booking_payment',
                     'payment_information',
                     'tour_inventory_hold',
+                    'booking_items',
+                    'booking_items.variant',
+                    'booking_items.variant.tour',
                 ],
                 order: { created_at: 'DESC' },
             });
@@ -132,8 +162,10 @@ export class BookingService {
                     'booking_payment',
                     'booking_items',
                     'booking_items.variant',
+                    'booking_items.variant.tour',
                     'booking_items.pax_type',
                     'booking_items.tour_session',
+                    'booking_items.booking_passengers',
                 ],
             });
             if (!b) return null;
@@ -153,6 +185,9 @@ export class BookingService {
                     'booking_payment',
                     'payment_information',
                     'tour_inventory_hold',
+                    'booking_items',
+                    'booking_items.variant',
+                    'booking_items.variant.tour',
                 ],
                 order: { created_at: 'DESC' },
             });
@@ -435,8 +470,10 @@ export class BookingService {
                 'booking_payment',
                 'booking_items',
                 'booking_items.variant',
+                'booking_items.variant.tour',
                 'booking_items.pax_type',
                 'booking_items.tour_session',
+                'booking_items.booking_passengers',
             ],
         });
         if (!booking) return null;

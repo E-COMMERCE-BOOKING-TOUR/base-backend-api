@@ -49,4 +49,13 @@ export class CreateBookingDto {
         required: false,
     })
     variantId?: number;
+
+    @IsOptional()
+    @IsInt()
+    @ApiProperty({
+        description: 'ID session tour (optional)',
+        example: 10,
+        required: false,
+    })
+    tourSessionId?: number;
 }

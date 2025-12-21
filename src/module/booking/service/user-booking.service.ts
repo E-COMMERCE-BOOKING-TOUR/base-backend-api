@@ -41,13 +41,14 @@ export class UserBookingService {
     ) { }
 
     async createBooking(uuid: string, dto: CreateBookingDto) {
-        const { startDate, pax, variantId } = dto;
+        const { startDate, pax, variantId, tourSessionId } = dto;
 
         const ctx = await this.purchaseService.execute({
             userUuid: uuid,
             variantId: variantId!,
             startDate,
             pax,
+            tourSessionId,
             meta: {},
         });
 
@@ -163,6 +164,12 @@ export class UserBookingService {
             start_date: session?.session_date,
             duration_days: tour?.duration_days || 0,
             duration_hours: tour?.duration_hours || 0,
+            session_start_time: typeof session?.start_time === 'string'
+                ? session.start_time
+                : (session?.start_time as any)?.toLocaleTimeString?.('en-GB', { hour12: false }),
+            session_end_time: typeof session?.end_time === 'string'
+                ? session.end_time
+                : (session?.end_time as any)?.toLocaleTimeString?.('en-GB', { hour12: false }),
             hold_expires_at: booking.tour_inventory_hold?.expires_at,
             items: sortedItems.map((item) => ({
                 variant_id: item.variant.id,

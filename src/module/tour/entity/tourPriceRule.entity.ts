@@ -55,7 +55,7 @@ export class TourPriceRuleEntity extends BaseEntityTimestamp {
     @ManyToOne(
         () => TourVariantEntity,
         (tour_variant) => tour_variant.tour_price_rules,
-        { nullable: false },
+        { nullable: false, onDelete: 'CASCADE' },
     )
     @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Biến thể tour' })

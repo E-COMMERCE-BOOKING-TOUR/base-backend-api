@@ -33,7 +33,7 @@ export class TourPolicyEntity extends BaseEntityTimestamp {
     @ManyToOne(
         () => TourVariantEntity,
         (tour_variant) => tour_variant.tour_policy,
-        { nullable: false },
+        { nullable: false, onDelete: 'CASCADE' },
     )
     @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Biến thể tour' })

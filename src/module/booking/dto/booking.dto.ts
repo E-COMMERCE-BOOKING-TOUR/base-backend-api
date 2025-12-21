@@ -76,6 +76,67 @@ export class BookingItemDTO {
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
 }
+export class BookingPassengerDTO {
+    @ApiProperty()
+    full_name: string;
+
+    @ApiProperty()
+    phone_number: string;
+
+    @ApiProperty()
+    pax_type_name: string;
+
+    @ApiProperty({ required: false })
+    birthdate?: Date;
+}
+
+export class BookingItemDetailDTO {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty()
+    total_amount: number;
+
+    @ApiProperty()
+    unit_price: number;
+
+    @ApiProperty()
+    quantity: number;
+
+    @ApiProperty()
+    variant_id: number;
+
+    @ApiProperty()
+    pax_type_id: number;
+
+    @ApiProperty()
+    tour_session_id: number;
+
+    @ApiProperty({ required: false })
+    tour_title?: string;
+
+    @ApiProperty({ required: false })
+    pax_type_name?: string;
+
+    @ApiProperty({ required: false })
+    session_date?: Date;
+
+    @ApiProperty({ required: false })
+    start_time?: string;
+
+    @ApiProperty({ required: false })
+    end_time?: string;
+
+    @ApiProperty({ required: false })
+    variant_name?: string;
+
+    @ApiProperty({ type: [BookingPassengerDTO], required: false })
+    booking_passengers?: BookingPassengerDTO[];
+
+    constructor(partial: Partial<BookingItemDetailDTO>) {
+        Object.assign(this, partial);
+    }
+}
 
 @ApiSchema({ name: 'CreateBookingRequest' })
 export class BookingDTO {
@@ -231,34 +292,10 @@ export class BookingSummaryDTO {
     @ApiProperty()
     booking_payment_id: number;
 
+    @ApiProperty({ type: [BookingItemDetailDTO], required: false })
+    booking_items?: BookingItemDetailDTO[];
+
     constructor(partial: Partial<BookingSummaryDTO>) {
-        Object.assign(this, partial);
-    }
-}
-
-export class BookingItemDetailDTO {
-    @ApiProperty({ example: 1 })
-    id: number;
-
-    @ApiProperty()
-    total_amount: number;
-
-    @ApiProperty()
-    unit_price: number;
-
-    @ApiProperty()
-    quantity: number;
-
-    @ApiProperty()
-    variant_id: number;
-
-    @ApiProperty()
-    pax_type_id: number;
-
-    @ApiProperty()
-    tour_session_id: number;
-
-    constructor(partial: Partial<BookingItemDetailDTO>) {
         Object.assign(this, partial);
     }
 }
@@ -270,25 +307,13 @@ export class BookingDetailDTO extends BookingSummaryDTO {
     @ApiProperty()
     tour_inventory_hold_id: number;
 
-    @ApiProperty({ type: [BookingItemDetailDTO] })
-    booking_items: BookingItemDetailDTO[];
-
     constructor(partial: Partial<BookingDetailDTO>) {
         super(partial);
         Object.assign(this, partial);
     }
 }
 
-export class BookingPassengerDTO {
-    @ApiProperty()
-    full_name: string;
 
-    @ApiProperty()
-    phone_number: string;
-
-    @ApiProperty()
-    pax_type_name: string;
-}
 
 export class UserBookingDetailDTO {
     @ApiProperty()
@@ -332,6 +357,12 @@ export class UserBookingDetailDTO {
 
     @ApiProperty()
     duration_hours: number;
+
+    @ApiProperty({ required: false })
+    session_start_time?: string;
+
+    @ApiProperty({ required: false })
+    session_end_time?: string;
 
     @ApiProperty()
     hold_expires_at: Date;

@@ -15,6 +15,7 @@ export type PurchaseContext<M extends Record<string, unknown> = Record<string, u
     variantId: number;
     startDate: string;
     pax: Array<{ paxTypeId: number; quantity: number }>;
+    tourSessionId?: number;
 
     // Resolved entities (populated by steps)
     user?: UserEntity;

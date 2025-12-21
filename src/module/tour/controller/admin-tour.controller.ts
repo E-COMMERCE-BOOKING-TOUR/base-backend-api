@@ -1,18 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiResponse, ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminTourService } from '../service/admin-tour.service';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import {
+    AdminTourQueryDTO,
+    PaginatedTourResponse,
     TourDTO,
-    TourImageDTO,
-    TourVariantDTO,
-    TourSessionDTO,
-    TourVariantPaxTypePriceDTO,
 } from '../dto/tour.dto';
 import { TourEntity } from '../entity/tour.entity';
-import { TourVariantEntity } from '../entity/tourVariant.entity';
-import { TourSessionEntity } from '../entity/tourSession.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/module/user/guard/roles.guard';
 import { Roles } from '@/module/user/decorator/roles.decorator';
@@ -35,9 +31,9 @@ export class AdminTourController {
     }
 
     @Get('getAll')
-    @ApiResponse({ status: 200, type: [TourEntity] })
-    async getAllTours() {
-        return this.adminTourService.getAllTours();
+    @ApiResponse({ status: 200, type: PaginatedTourResponse })
+    async getAllTours(@Query() query: AdminTourQueryDTO) {
+        return this.adminTourService.getAllTours(query);
     }
 
     @Get('metadata/countries')
@@ -77,60 +73,16 @@ export class AdminTourController {
         return this.adminTourService.updateTour(id, dto);
     }
 
+    @Patch('status/:id')
+    @ApiParam({ name: 'id', type: Number })
+    @ApiBody({ schema: { type: 'object', properties: { status: { type: 'string' } } } })
+    async updateStatus(@Param('id') id: number, @Body('status') status: string) {
+        return this.adminTourService.updateTour(id, { status } as any);
+    }
+
     @Delete('remove/:id')
     @ApiParam({ name: 'id', type: Number })
-    @ApiResponse({ status: 200 })
     async removeTour(@Param('id') id: number) {
         return this.adminTourService.removeTour(id);
-    }
-
-    // --- Variant ---
-
-    @Post('addVariant/:tourId')
-    @ApiParam({ name: 'tourId', type: Number })
-    @ApiBody({ type: TourVariantDTO })
-    async addVariant(@Param('tourId') tourId: number, @Body() dto: TourVariantDTO) {
-        return this.adminTourService.addVariant(tourId, dto);
-    }
-
-    @Put('updateVariant/:variantId')
-    @ApiParam({ name: 'variantId', type: Number })
-    @ApiBody({ type: TourVariantDTO })
-    async updateVariant(@Param('variantId') variantId: number, @Body() dto: Partial<TourVariantDTO>) {
-        return this.adminTourService.updateVariant(variantId, dto);
-    }
-
-    @Delete('removeVariant/:variantId')
-    @ApiParam({ name: 'variantId', type: Number })
-    async removeVariant(@Param('variantId') variantId: number) {
-        return this.adminTourService.removeVariant(variantId);
-    }
-
-    // --- Pricing ---
-
-    @Post('setVariantPaxTypePrice')
-    @ApiBody({ type: TourVariantPaxTypePriceDTO })
-    async setVariantPaxTypePrice(@Body() dto: TourVariantPaxTypePriceDTO) {
-        return this.adminTourService.setVariantPaxTypePrice(dto);
-    }
-
-    // --- Session ---
-
-    @Post('addSession')
-    @ApiBody({ type: TourSessionDTO })
-    async addSession(@Body() dto: TourSessionDTO) {
-        return this.adminTourService.addSession(dto);
-    }
-
-    @Post('bulkAddSessions')
-    @ApiBody({ type: [TourSessionDTO] })
-    async bulkAddSessions(@Body() dto: TourSessionDTO[]) {
-        return this.adminTourService.bulkAddSessions(dto);
-    }
-
-    @Delete('removeSession/:sessionId')
-    @ApiParam({ name: 'sessionId', type: Number })
-    async removeSession(@Param('sessionId') sessionId: number) {
-        return this.adminTourService.removeSession(sessionId);
     }
 }

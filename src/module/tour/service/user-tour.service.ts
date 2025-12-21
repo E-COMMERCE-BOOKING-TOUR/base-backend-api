@@ -786,9 +786,16 @@ export class UserTourService {
             }
 
             return new UserTourSessionDTO({
+                id: session.id,
                 date: session.session_date instanceof Date
                     ? session.session_date.toISOString().split('T')[0]
                     : session.session_date, // TypeORM might return string for date type
+                start_time: typeof session.start_time === 'string'
+                    ? session.start_time
+                    : (session.start_time as any)?.toLocaleTimeString?.('en-GB', { hour12: false }),
+                end_time: typeof session.end_time === 'string'
+                    ? session.end_time
+                    : (session.end_time as any)?.toLocaleTimeString?.('en-GB', { hour12: false }),
                 status,
                 capacity_available: available,
                 price: minPrice, // In future, apply date-specific pricing rules here

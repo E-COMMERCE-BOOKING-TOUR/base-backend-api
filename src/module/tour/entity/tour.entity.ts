@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntityTimestamp } from '@/common/entity/BaseEntityTimestamp';
 import {
     Entity,
+    Index,
     JoinColumn,
     JoinTable,
     ManyToMany,
@@ -25,6 +26,7 @@ export class TourEntity extends BaseEntityTimestamp {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Index()
     @Column({
         type: 'varchar',
         length: 255,
@@ -59,6 +61,7 @@ export class TourEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Slug tour' })
     slug: string;
 
+    @Index()
     @Column({
         type: 'varchar',
         length: 255,
@@ -81,6 +84,7 @@ export class TourEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Thuế tour (%)' })
     tax: number;
 
+    @Index()
     @Column({
         type: 'bool',
         default: false,
@@ -96,6 +100,7 @@ export class TourEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Ngày công bố tour' })
     published_at: Date;
 
+    @Index()
     @Column({
         type: 'enum',
         enum: ['draft', 'active', 'inactive'],
@@ -135,11 +140,13 @@ export class TourEntity extends BaseEntityTimestamp {
     })
     max_pax: number;
 
+    @Index()
     @ManyToOne(() => CountryEntity, (country) => country.tours)
     @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Quốc gia' })
     country: CountryEntity;
 
+    @Index()
     @ManyToOne(() => DivisionEntity, (division) => division.tours)
     @JoinColumn({ name: 'division_id', referencedColumnName: 'id' })
     @ApiProperty({ description: 'Phân cấp' })
@@ -181,6 +188,7 @@ export class TourEntity extends BaseEntityTimestamp {
     })
     tour_categories: TourCategoryEntity[];
 
+    @Index()
     @ManyToOne(() => SupplierEntity, (supplier) => supplier.tours, {
         nullable: false,
     })
