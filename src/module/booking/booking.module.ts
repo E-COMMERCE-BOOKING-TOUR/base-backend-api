@@ -41,9 +41,6 @@ import { PurchaseModule } from './purchase/purchase.module';
         PurchaseModule.forRoot([]),
     ],
     controllers: [AdminBookingController, UserBookingController],
-    providers: [
-        BookingService,
-        UserBookingService,
-    ],
+    providers: [BookingService, UserBookingService],
 })
-export class BookingModule { }
+export class BookingModule {}

@@ -11,7 +11,9 @@ export class TourBasePriceStep implements PriceStep {
     priority = 10;
 
     execute(ctx: PriceContext): PriceContext {
-        const targetVariant = ctx.meta?.variant as TourVariantEntity | undefined;
+        const targetVariant = ctx.meta?.variant as
+            | TourVariantEntity
+            | undefined;
         let activeVariants: TourVariantEntity[] = [];
 
         if (targetVariant) {
@@ -19,7 +21,8 @@ export class TourBasePriceStep implements PriceStep {
         } else {
             const tour = ctx.meta?.tour as TourEntity | undefined;
             if (!tour) return ctx;
-            activeVariants = tour.variants?.filter((v) => v.status === 'active') ?? [];
+            activeVariants =
+                tour.variants?.filter((v) => v.status === 'active') ?? [];
         }
 
         const basePriceMap = new Map<number, BasePriceEntry>();
@@ -39,7 +42,10 @@ export class TourBasePriceStep implements PriceStep {
                     basePriceMap.set(paxTypeId, { price: p.price, paxType });
                 } else {
                     if (!current || p.price < current.price) {
-                        basePriceMap.set(paxTypeId, { price: p.price, paxType });
+                        basePriceMap.set(paxTypeId, {
+                            price: p.price,
+                            paxType,
+                        });
                     }
                 }
             }
@@ -54,4 +60,3 @@ export class TourBasePriceStep implements PriceStep {
         return ctx;
     }
 }
-

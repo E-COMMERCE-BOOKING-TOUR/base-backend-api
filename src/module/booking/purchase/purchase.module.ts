@@ -26,7 +26,9 @@ import { TourModule } from '@/module/tour/tour.module';
 
 @Module({})
 export class PurchaseModule {
-    static forRoot(extraSteps: Array<new (...args: unknown[]) => PurchaseStep> = []): DynamicModule {
+    static forRoot(
+        extraSteps: Array<new (...args: unknown[]) => PurchaseStep> = [],
+    ): DynamicModule {
         const defaultSteps = [
             ValidateUserStep,
             ValidateVariantStep,
@@ -75,4 +77,3 @@ export class PurchaseModule {
         };
     }
 }
-

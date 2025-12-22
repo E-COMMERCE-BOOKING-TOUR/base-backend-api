@@ -13,7 +13,6 @@ import {
 import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
-import { TourEntity } from '@/module/tour/entity/tour.entity';
 
 export class UserService {
     constructor(
@@ -53,24 +52,6 @@ export class UserService {
             relations: ['country', 'supplier', 'role'],
         });
         if (!u) return null;
-        const favRows: Array<{ tour_id: number }> =
-            await this.userRepository.query(
-                'SELECT tour_id FROM tour_users_favorites WHERE user_id = ?',
-                [id],
-            );
-        const likeRows: Array<{ article_id: number }> =
-            await this.userRepository.query(
-                'SELECT article_id FROM user_article_likes WHERE user_id = ?',
-                [id],
-            );
-        const tourIds = Array.from(
-            new Set(favRows.map((r) => Number(r.tour_id))),
-        );
-        const articleIds = Array.from(
-            new Set(likeRows.map((r) => Number(r.article_id))),
-        );
-        const tourRepo = this.userRepository.manager.getRepository(TourEntity);
-
         return new UserDetailDTO({
             id: u.id,
             uuid: u.uuid,

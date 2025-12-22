@@ -37,7 +37,8 @@ export class TourRulePriceStep implements PriceStep {
                     if (!paxType) continue;
 
                     const paxTypeId = paxType.id;
-                    const baseForPax = basePriceMap.get(paxTypeId)?.price ?? null;
+                    const baseForPax =
+                        basePriceMap.get(paxTypeId)?.price ?? null;
 
                     let effectivePrice: number | null = null;
 
@@ -58,7 +59,11 @@ export class TourRulePriceStep implements PriceStep {
                         !current ||
                         (rule.priority ?? 0) > (current.rule.priority ?? 0)
                     ) {
-                        ruleMap.set(paxTypeId, { effectivePrice, rule, rulePrice: rp });
+                        ruleMap.set(paxTypeId, {
+                            effectivePrice,
+                            rule,
+                            rulePrice: rp,
+                        });
                     }
                 }
             }
@@ -72,4 +77,3 @@ export class TourRulePriceStep implements PriceStep {
         return ctx;
     }
 }
-

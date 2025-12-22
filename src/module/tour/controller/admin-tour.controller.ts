@@ -1,5 +1,24 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiParam, ApiResponse, ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Patch,
+    Post,
+    Put,
+    Query,
+    UploadedFile,
+    UseInterceptors,
+    UseGuards,
+} from '@nestjs/common';
+import {
+    ApiBearerAuth,
+    ApiBody,
+    ApiParam,
+    ApiResponse,
+    ApiTags,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminTourService } from '../service/admin-tour.service';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
@@ -21,8 +40,8 @@ import { Roles } from '@/module/user/decorator/roles.decorator';
 export class AdminTourController {
     constructor(
         private readonly adminTourService: AdminTourService,
-        private readonly cloudinaryService: CloudinaryService
-    ) { }
+        private readonly cloudinaryService: CloudinaryService,
+    ) {}
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))
@@ -75,9 +94,14 @@ export class AdminTourController {
 
     @Patch('status/:id')
     @ApiParam({ name: 'id', type: Number })
-    @ApiBody({ schema: { type: 'object', properties: { status: { type: 'string' } } } })
-    async updateStatus(@Param('id') id: number, @Body('status') status: string) {
-        return this.adminTourService.updateTour(id, { status } as any);
+    @ApiBody({
+        schema: { type: 'object', properties: { status: { type: 'string' } } },
+    })
+    async updateStatus(
+        @Param('id') id: number,
+        @Body('status') status: string,
+    ) {
+        return this.adminTourService.updateStatus(id, status);
     }
 
     @Delete('remove/:id')

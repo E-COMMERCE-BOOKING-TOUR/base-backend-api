@@ -11,5 +11,5 @@ import { Roles } from '../decorator/roles.decorator';
 @Roles('admin')
 @Controller('admin/user')
 export class AdminUserController {
-    constructor(private readonly userService: UserService) { }
+    constructor(private readonly userService: UserService) {}
 }

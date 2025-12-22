@@ -28,7 +28,7 @@ import { BookingEntity } from '../booking/entity/booking.entity';
             UserAuthSessionEntity,
             NotificationEntity,
             PaymentInfomationEntity,
-            BookingEntity
+            BookingEntity,
         ]),
         PassportModule,
         JwtModule.register(jwtConfig()),
@@ -58,4 +58,4 @@ import { BookingEntity } from '../booking/entity/booking.entity';
         UserPaymentService,
     ],
 })
-export class UserModule { }
+export class UserModule {}

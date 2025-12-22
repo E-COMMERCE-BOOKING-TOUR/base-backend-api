@@ -9,7 +9,9 @@ import { BookingItemEntity } from '../../entity/bookingItem.entity';
 import { BookingEntity } from '../../entity/booking.entity';
 import { TourPaxTypePriceDto } from '@/module/tour/dto/tour.dto';
 
-export type PurchaseContext<M extends Record<string, unknown> = Record<string, unknown>> = {
+export type PurchaseContext<
+    M extends Record<string, unknown> = Record<string, unknown>,
+> = {
     // Input
     userUuid: string;
     variantId: number;
@@ -42,4 +44,3 @@ export interface PurchaseStep {
     priority?: number; // lower runs earlier
     execute(ctx: PurchaseContext): Promise<PurchaseContext> | PurchaseContext;
 }
-

@@ -28,7 +28,7 @@ export class TourInventoryHoldEntity extends BaseEntityTimestamp {
         default: null,
     })
     @ApiProperty({ description: 'Thời điểm hết hạn' })
-    expires_at: Date;
+    expires_at: Date | null;
 
     @ManyToOne(
         () => TourSessionEntity,

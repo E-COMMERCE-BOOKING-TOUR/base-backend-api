@@ -12,10 +12,13 @@ import { UnauthorizedResponseDto } from '@/module/user/dtos';
 @Roles('admin')
 @Controller('admin/dashboard')
 export class AdminDashboardController {
-    constructor(private readonly dashboardService: DashboardService) { }
+    constructor(private readonly dashboardService: DashboardService) {}
 
     @Get('stats')
-    @ApiResponse({ status: 200, description: 'Return aggregated dashboard statistics' })
+    @ApiResponse({
+        status: 200,
+        description: 'Return aggregated dashboard statistics',
+    })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     async getStats() {
         return await this.dashboardService.getStats();

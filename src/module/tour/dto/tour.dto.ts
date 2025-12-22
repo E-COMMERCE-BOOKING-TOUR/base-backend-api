@@ -276,7 +276,9 @@ export class TourDTO {
     @ApiProperty({ description: 'URL bản đồ tour', required: false })
     map_url?: string;
 
-    @Transform(({ value }) => (value === '' ? undefined : value))
+    @Transform(({ value }: { value: unknown }) =>
+        value === '' ? undefined : value,
+    )
     @IsString()
     @IsOptional()
     @MinLength(2)
@@ -711,14 +713,22 @@ export class UserTourSearchQueryDTO {
 export class AdminTourQueryDTO {
     @IsOptional()
     @IsString()
-    @Transform(({ value }) => (value === '' ? undefined : value))
+    @Transform(({ value }: { value: unknown }) =>
+        value === '' ? undefined : value,
+    )
     @ApiProperty({ required: false, description: 'Từ khóa tìm kiếm' })
     keyword?: string;
 
     @IsOptional()
     @IsEnum(TourStatus)
-    @Transform(({ value }) => (value === '' ? undefined : value))
-    @ApiProperty({ required: false, enum: TourStatus, description: 'Trạng thái' })
+    @Transform(({ value }: { value: unknown }) =>
+        value === '' ? undefined : value,
+    )
+    @ApiProperty({
+        required: false,
+        enum: TourStatus,
+        description: 'Trạng thái',
+    })
     status?: TourStatus;
 
     @IsOptional()
@@ -1101,7 +1111,8 @@ export class TourPaxTypePriceDto {
     maxAge: number | null;
 
     @ApiProperty({
-        description: 'Giá base từ tour_variant_pax_type_prices (min theo tất cả variants)',
+        description:
+            'Giá base từ tour_variant_pax_type_prices (min theo tất cả variants)',
         nullable: true,
     })
     basePrice: number | null;

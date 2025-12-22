@@ -10,7 +10,7 @@ export class CalculatePriceStep implements PurchaseStep {
     constructor(
         private readonly pricingService: PricingService,
         private readonly userTourService: UserTourService,
-    ) { }
+    ) {}
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         if (!ctx.tour) {
@@ -18,7 +18,9 @@ export class CalculatePriceStep implements PurchaseStep {
         }
 
         if (!ctx.variant) {
-            throw new Error('Variant must be resolved before calculating price');
+            throw new Error(
+                'Variant must be resolved before calculating price',
+            );
         }
 
         // Find the variant within the loaded tour to ensure we have all relations
@@ -30,7 +32,8 @@ export class CalculatePriceStep implements PurchaseStep {
             throw new Error('Target variant not found in tour data');
         }
 
-        const prices = await this.userTourService.computeVariantPricing(targetVariant);
+        const prices =
+            await this.userTourService.computeVariantPricing(targetVariant);
 
         return {
             ...ctx,
@@ -38,4 +41,3 @@ export class CalculatePriceStep implements PurchaseStep {
         };
     }
 }
-

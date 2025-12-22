@@ -1,10 +1,11 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DeepPartial } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
 import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { CountryEntity } from '@/common/entity/country.entity';
 import { DivisionEntity } from '@/common/entity/division.entity';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
+import { TourStatus } from '@/module/tour/dto/tour.dto';
 
 export default class TourSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -18,12 +19,6 @@ export default class TourSeeder implements Seeder {
         const vietnam = await countryRepository.findOne({
             where: { iso3: 'VN' },
         });
-        const thailand = await countryRepository.findOne({
-            where: { iso3: 'TH' },
-        });
-        const singapore = await countryRepository.findOne({
-            where: { iso3: 'SG' },
-        });
 
         const vnd = await currencyRepository.findOne({
             where: { symbol: 'VND' },
@@ -31,12 +26,9 @@ export default class TourSeeder implements Seeder {
         const usd = await currencyRepository.findOne({
             where: { symbol: 'USD' },
         });
-        const thb = await currencyRepository.findOne({
-            where: { symbol: 'THB' },
-        });
 
         const suppliers = await supplierRepository.find({
-            where: { status: 'active' },
+            where: { status: TourStatus.active },
         });
 
         if (!vietnam || !vnd || suppliers.length === 0) {
@@ -72,7 +64,7 @@ export default class TourSeeder implements Seeder {
         });
         const hue = await divisionRepository.findOne({ where: { code: 'TT' } });
 
-        const tours = [
+        const tours: DeepPartial<TourEntity>[] = [
             // Ho Chi Minh City Tours
             {
                 title: 'Saigon City Tour - Discover the Pearl of the Far East',
@@ -87,15 +79,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-15'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 8,
                 duration_days: 1,
                 min_pax: 2,
                 max_pax: 15,
-                country: vietnam,
-                division: hcm,
-                currency: vnd,
-                supplier: suppliers[0],
+                country: vietnam || undefined,
+                division: hcm || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[0] || undefined,
             },
             {
                 title: 'Mekong Delta Discovery - 2 Days 1 Night',
@@ -110,15 +102,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-20'),
-                status: 'active',
-                duration_hours: null,
+                status: TourStatus.active,
+                duration_hours: undefined,
                 duration_days: 2,
                 min_pax: 4,
                 max_pax: 20,
-                country: vietnam,
-                division: hcm,
-                currency: vnd,
-                supplier: suppliers[3],
+                country: vietnam || undefined,
+                division: hcm || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[3] || undefined,
             },
             {
                 title: 'Cu Chi Tunnels Half Day Tour',
@@ -133,15 +125,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-02-01'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 5,
-                duration_days: null,
+                duration_days: undefined,
                 min_pax: 2,
                 max_pax: 25,
-                country: vietnam,
-                division: hcm,
-                currency: vnd,
-                supplier: suppliers[0],
+                country: vietnam || undefined,
+                division: hcm || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[0] || undefined,
             },
             // Hanoi Tours
             {
@@ -157,15 +149,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-10'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 4,
-                duration_days: null,
+                duration_days: undefined,
                 min_pax: 2,
                 max_pax: 12,
-                country: vietnam,
-                division: hanoi,
-                currency: vnd,
-                supplier: suppliers[2],
+                country: vietnam || undefined,
+                division: hanoi || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[2] || undefined,
             },
             {
                 title: 'Halong Bay Luxury Cruise - 2 Days 1 Night',
@@ -180,15 +172,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-05'),
-                status: 'active',
-                duration_hours: null,
+                status: TourStatus.active,
+                duration_hours: undefined,
                 duration_days: 2,
                 min_pax: 2,
                 max_pax: 30,
-                country: vietnam,
-                division: halong,
-                currency: usd,
-                supplier: suppliers[2],
+                country: vietnam || undefined,
+                division: halong || undefined,
+                currency: usd || undefined,
+                supplier: suppliers[2] || undefined,
             },
             {
                 title: 'Sapa Trekking Adventure - 3 Days 2 Nights',
@@ -203,15 +195,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-02-10'),
-                status: 'active',
-                duration_hours: null,
+                status: TourStatus.active,
+                duration_hours: undefined,
                 duration_days: 3,
                 min_pax: 4,
                 max_pax: 12,
-                country: vietnam,
-                division: sapa,
-                currency: vnd,
-                supplier: suppliers[4],
+                country: vietnam || undefined,
+                division: sapa || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[4] || undefined,
             },
             // Da Nang & Hoi An Tours
             {
@@ -227,15 +219,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-25'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 8,
                 duration_days: 1,
                 min_pax: 2,
                 max_pax: 15,
-                country: vietnam,
-                division: hoian,
-                currency: vnd,
-                supplier: suppliers[1],
+                country: vietnam || undefined,
+                division: hoian || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[1] || undefined,
             },
             {
                 title: 'Ba Na Hills & Golden Bridge Tour',
@@ -250,15 +242,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-02-05'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 9,
                 duration_days: 1,
                 min_pax: 2,
                 max_pax: 30,
-                country: vietnam,
-                division: danang,
-                currency: vnd,
-                supplier: suppliers[1],
+                country: vietnam || undefined,
+                division: danang || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[1] || undefined,
             },
             {
                 title: 'Marble Mountains & Monkey Mountain Tour',
@@ -273,15 +265,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-02-15'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 5,
-                duration_days: null,
+                duration_days: undefined,
                 min_pax: 2,
                 max_pax: 20,
-                country: vietnam,
-                division: danang,
-                currency: vnd,
-                supplier: suppliers[1],
+                country: vietnam || undefined,
+                division: danang || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[1] || undefined,
             },
             // Central Vietnam Tours
             {
@@ -297,15 +289,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-18'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 8,
                 duration_days: 1,
                 min_pax: 2,
                 max_pax: 20,
-                country: vietnam,
-                division: hue,
-                currency: vnd,
-                supplier: suppliers[6],
+                country: vietnam || undefined,
+                division: hue || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[6] || undefined,
             },
             // Beach Tours
             {
@@ -321,15 +313,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-02-20'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 8,
                 duration_days: 1,
                 min_pax: 4,
                 max_pax: 40,
-                country: vietnam,
-                division: nhatrang,
-                currency: vnd,
-                supplier: suppliers[5],
+                country: vietnam || undefined,
+                division: nhatrang || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[5] || undefined,
             },
             {
                 title: 'Phu Quoc Paradise - 3 Days 2 Nights Beach Escape',
@@ -344,15 +336,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-01-30'),
-                status: 'active',
-                duration_hours: null,
+                status: TourStatus.active,
+                duration_hours: undefined,
                 duration_days: 3,
                 min_pax: 2,
                 max_pax: 20,
-                country: vietnam,
-                division: phuquoc,
-                currency: vnd,
-                supplier: suppliers[5],
+                country: vietnam || undefined,
+                division: phuquoc || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[5] || undefined,
             },
             // Highland Tours
             {
@@ -368,15 +360,15 @@ export default class TourSeeder implements Seeder {
                 tax: 10,
                 is_visible: true,
                 published_at: new Date('2024-02-25'),
-                status: 'active',
+                status: TourStatus.active,
                 duration_hours: 8,
                 duration_days: 1,
                 min_pax: 2,
                 max_pax: 16,
-                country: vietnam,
-                division: dalat,
-                currency: vnd,
-                supplier: suppliers[4],
+                country: vietnam || undefined,
+                division: dalat || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[4] || undefined,
             },
             // Draft/Inactive Tours
             {
@@ -388,19 +380,19 @@ export default class TourSeeder implements Seeder {
                     'Cycling tour through Ninh Binh countryside - Coming soon',
                 map_url: 'https://maps.google.com/?q=Ninh+Binh',
                 address: 'To be announced',
-                score_rating: null,
+                score_rating: undefined,
                 tax: 10,
                 is_visible: false,
-                published_at: null,
-                status: 'draft',
+                published_at: undefined,
+                status: TourStatus.draft,
                 duration_hours: 8,
                 duration_days: 1,
                 min_pax: 4,
                 max_pax: 15,
-                country: vietnam,
-                division: hanoi,
-                currency: vnd,
-                supplier: suppliers[2],
+                country: vietnam || undefined,
+                division: hanoi || undefined,
+                currency: vnd || undefined,
+                supplier: suppliers[2] || undefined,
             },
         ];
 
@@ -409,7 +401,7 @@ export default class TourSeeder implements Seeder {
                 where: { slug: tour.slug },
             });
             if (!exists) {
-                await tourRepository.save(tourRepository.create(tour as any));
+                await tourRepository.save(tourRepository.create(tour));
             }
         }
 

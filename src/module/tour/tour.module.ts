@@ -58,4 +58,4 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
     providers: [TourService, UserTourService, AdminTourService],
     exports: [TourService, UserTourService, AdminTourService],
 })
-export class TourModule { }
+export class TourModule {}

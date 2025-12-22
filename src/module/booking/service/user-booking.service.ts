@@ -14,14 +14,19 @@ import {
 } from '../dto/booking.dto';
 import { UpdateBookingContactDto } from '../dto/update-booking-contact.dto';
 import { UpdateBookingPaymentDto } from '../dto/update-booking-payment.dto';
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+    ForbiddenException,
+} from '@nestjs/common';
 import * as express from 'express';
 import * as path from 'path';
 import { PurchaseService } from '../purchase/purchase.service';
 import { UserPaymentService } from '@/module/user/service/user-payment.service';
 import { PaymentInfomationEntity } from '@/module/user/entity/paymentInfomation.entity';
 import { PaymentCardID } from '../entity/bookingPayment.entity';
-import PDFDocument = require('pdfkit');
+import PDFDocument from 'pdfkit';
 
 @Injectable()
 export class UserBookingService {
@@ -38,9 +43,12 @@ export class UserBookingService {
         private readonly paymentInfoRepository: Repository<PaymentInfomationEntity>,
         private readonly purchaseService: PurchaseService,
         private readonly userPaymentService: UserPaymentService,
-    ) { }
+    ) {}
 
-    async createBooking(uuid: string, dto: CreateBookingDto) {
+    async createBooking(
+        uuid: string,
+        dto: CreateBookingDto,
+    ): Promise<BookingEntity> {
         const { startDate, pax, variantId, tourSessionId } = dto;
 
         const ctx = await this.purchaseService.execute({
@@ -59,7 +67,7 @@ export class UserBookingService {
         // Set initial status to pending_info using update to avoid cascade issues
         await this.bookingRepository.update(
             { id: ctx.booking.id },
-            { status: BookingStatus.pending_info }
+            { status: BookingStatus.pending_info },
         );
 
         // Reload booking with updated status
@@ -77,13 +85,22 @@ export class UserBookingService {
         const booking = await this.bookingRepository.findOne({
             where: [
                 { user: { uuid: userUuid }, status: BookingStatus.pending },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_info },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_info,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_payment,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_confirm,
+                },
                 {
                     user: { uuid: userUuid },
                     status: BookingStatus.confirmed,
-                    updated_at: MoreThan(new Date(Date.now() - 5 * 60 * 1000))
+                    updated_at: MoreThan(new Date(Date.now() - 5 * 60 * 1000)),
                 },
             ],
             relations: [
@@ -113,7 +130,10 @@ export class UserBookingService {
         return this.formatBookingDetail(booking);
     }
 
-    async getBookingDetail(id: number, user: UserEntity): Promise<UserBookingDetailDTO> {
+    async getBookingDetail(
+        id: number,
+        user: UserEntity,
+    ): Promise<UserBookingDetailDTO> {
         const booking = await this.bookingRepository.findOne({
             where: { id, user: { uuid: user.uuid } },
             relations: [
@@ -164,12 +184,22 @@ export class UserBookingService {
             start_date: session?.session_date,
             duration_days: tour?.duration_days || 0,
             duration_hours: tour?.duration_hours || 0,
-            session_start_time: typeof session?.start_time === 'string'
-                ? session.start_time
-                : (session?.start_time as any)?.toLocaleTimeString?.('en-GB', { hour12: false }),
-            session_end_time: typeof session?.end_time === 'string'
-                ? session.end_time
-                : (session?.end_time as any)?.toLocaleTimeString?.('en-GB', { hour12: false }),
+            session_start_time:
+                session?.start_time instanceof Date
+                    ? session.start_time.toLocaleTimeString('en-GB', {
+                          hour12: false,
+                      })
+                    : typeof session?.start_time === 'string'
+                      ? session.start_time
+                      : undefined,
+            session_end_time:
+                session?.end_time instanceof Date
+                    ? session.end_time.toLocaleTimeString('en-GB', {
+                          hour12: false,
+                      })
+                    : typeof session?.end_time === 'string'
+                      ? session.end_time
+                      : undefined,
             hold_expires_at: booking.tour_inventory_hold?.expires_at,
             items: sortedItems.map((item) => ({
                 variant_id: item.variant.id,
@@ -181,48 +211,76 @@ export class UserBookingService {
                 pax_type_name: item.pax_type.name,
             })),
             passengers: sortedItems.flatMap((item) =>
-                (item.booking_passengers || []).map(p => ({
+                (item.booking_passengers || []).map((p) => ({
                     full_name: p.full_name,
                     phone_number: p.phone_number || '', // Ensure string
-                    pax_type_name: item.pax_type.name
-                }))
+                    pax_type_name: item.pax_type.name,
+                })),
             ),
-            booking_payment: booking.booking_payment ? {
-                id: booking.booking_payment.id,
-                payment_method_name: booking.booking_payment.payment_method_name,
-            } : undefined,
-            payment_information: booking.payment_information ? {
-                brand: booking.payment_information.brand || undefined,
-                last4: booking.payment_information.last4 || undefined,
-                expiry_date: booking.payment_information.expiry_date || undefined,
-                account_holder: booking.payment_information.account_holder || undefined,
-            } : undefined,
+            booking_payment: booking.booking_payment
+                ? {
+                      id: booking.booking_payment.id,
+                      payment_method_name:
+                          booking.booking_payment.payment_method_name,
+                  }
+                : undefined,
+            payment_information: booking.payment_information
+                ? {
+                      brand: booking.payment_information.brand || undefined,
+                      last4: booking.payment_information.last4 || undefined,
+                      expiry_date:
+                          booking.payment_information.expiry_date || undefined,
+                      account_holder:
+                          booking.payment_information.account_holder ||
+                          undefined,
+                  }
+                : undefined,
         };
     }
 
     /**
      * Update contact information for current booking
      */
-    async updateBookingContact(userUuid: string, dto: UpdateBookingContactDto): Promise<any> {
+    async updateBookingContact(
+        userUuid: string,
+        dto: UpdateBookingContactDto,
+    ): Promise<{ success: boolean; bookingId: number }> {
         const booking = await this.bookingRepository.findOne({
             where: [
-                { user: { uuid: userUuid }, status: BookingStatus.pending_info },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_info,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_payment,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_confirm,
+                },
             ],
-            relations: ['tour_inventory_hold', 'booking_items', 'booking_items.pax_type'],
+            relations: [
+                'tour_inventory_hold',
+                'booking_items',
+                'booking_items.pax_type',
+            ],
             order: { id: 'DESC' },
         });
 
         if (!booking) {
-            throw new NotFoundException('No active booking found for contact update');
+            throw new NotFoundException(
+                'No active booking found for contact update',
+            );
         }
 
         // Check if booking hold has expired
         if (booking.tour_inventory_hold?.expires_at) {
             const expiresAt = new Date(booking.tour_inventory_hold.expires_at);
             if (expiresAt < new Date()) {
-                throw new BadRequestException('Your booking hold has expired. Please start a new booking.');
+                throw new BadRequestException(
+                    'Your booking hold has expired. Please start a new booking.',
+                );
             }
         }
 
@@ -230,16 +288,19 @@ export class UserBookingService {
         // Update passengers if provided
         if (dto.passengers && dto.passengers.length > 0) {
             // Validate total passengers
-            const totalPassengers = booking.booking_items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalPassengers = booking.booking_items.reduce(
+                (sum, item) => sum + item.quantity,
+                0,
+            );
             if (dto.passengers.length !== totalPassengers) {
-                // If mismatch, we might want to throw error or just take what matches. 
+                // If mismatch, we might want to throw error or just take what matches.
                 // For now, let's allow partial or require exact match.
                 // Given the requirement, let's try to map as much as possible.
                 // But robust implementation should validate.
             }
 
             // Remove existing passengers for these items to replace with new ones
-            const bookingItemIds = booking.booking_items.map(item => item.id);
+            const bookingItemIds = booking.booking_items.map((item) => item.id);
             if (bookingItemIds.length > 0) {
                 // Using QueryBuilder to delete passengers related to these items
                 // Note: TypeORM doesn't support easy delete by relation ID in repository.delete w/o cascade config sometimes
@@ -247,7 +308,9 @@ export class UserBookingService {
                 await this.bookingPassengerRepository
                     .createQueryBuilder()
                     .delete()
-                    .where("booking_item_id IN (:...ids)", { ids: bookingItemIds })
+                    .where('booking_item_id IN (:...ids)', {
+                        ids: bookingItemIds,
+                    })
                     .execute();
             }
 
@@ -256,18 +319,21 @@ export class UserBookingService {
             let passengerIndex = 0;
 
             // Sort items to ensure stable mapping order (e.g. by ID)
-            const sortedItems = booking.booking_items.sort((a, b) => a.id - b.id);
+            const sortedItems = booking.booking_items.sort(
+                (a, b) => a.id - b.id,
+            );
 
             for (const item of sortedItems) {
                 for (let i = 0; i < item.quantity; i++) {
                     if (passengerIndex < dto.passengers.length) {
                         const pDto = dto.passengers[passengerIndex++];
-                        const passenger = this.bookingPassengerRepository.create({
-                            full_name: pDto.full_name,
-                            phone_number: pDto.phone_number,
-                            booking_item: item,
-                            pax_type: item.pax_type,
-                        });
+                        const passenger =
+                            this.bookingPassengerRepository.create({
+                                full_name: pDto.full_name,
+                                phone_number: pDto.phone_number,
+                                booking_item: item,
+                                pax_type: item.pax_type,
+                            });
                         newPassengers.push(passenger);
                     }
                 }
@@ -286,7 +352,7 @@ export class UserBookingService {
                 contact_email: dto.contact_email,
                 contact_phone: dto.contact_phone,
                 status: BookingStatus.pending_payment,
-            }
+            },
         );
 
         return { success: true, bookingId: booking.id };
@@ -295,26 +361,42 @@ export class UserBookingService {
     /**
      * Update payment method for current booking
      */
-    async updateBookingPayment(userUuid: string, dto: UpdateBookingPaymentDto): Promise<any> {
+    async updateBookingPayment(
+        userUuid: string,
+        dto: UpdateBookingPaymentDto,
+    ): Promise<{ success: boolean; bookingId: number }> {
         const booking = await this.bookingRepository.findOne({
             where: [
-                { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_info },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_payment,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_confirm,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_info,
+                },
             ],
             relations: ['tour_inventory_hold'],
             order: { id: 'DESC' },
         });
 
         if (!booking) {
-            throw new NotFoundException('No active booking found for payment update');
+            throw new NotFoundException(
+                'No active booking found for payment update',
+            );
         }
 
         // Check if booking hold has expired
         if (booking.tour_inventory_hold?.expires_at) {
             const expiresAt = new Date(booking.tour_inventory_hold.expires_at);
             if (expiresAt < new Date()) {
-                throw new BadRequestException('Your booking hold has expired. Please start a new booking.');
+                throw new BadRequestException(
+                    'Your booking hold has expired. Please start a new booking.',
+                );
             }
         }
 
@@ -334,33 +416,31 @@ export class UserBookingService {
 
         if (totalAmount < ruleMin || totalAmount > ruleMax) {
             throw new BadRequestException(
-                `This payment method requires order amount between ${ruleMin} and ${ruleMax}`
+                `This payment method requires order amount between ${ruleMin} and ${ruleMax}`,
             );
         }
 
         if (dto.payment_information_id) {
-            const paymentInfo = await this.bookingRepository.manager.getRepository(PaymentInfomationEntity).findOne({
-                where: { id: dto.payment_information_id }
-            });
+            const paymentInfo = await this.bookingRepository.manager
+                .getRepository(PaymentInfomationEntity)
+                .findOne({
+                    where: { id: dto.payment_information_id },
+                });
             if (paymentInfo) {
                 booking.payment_information = paymentInfo;
             }
         }
 
-        // Update booking with payment method
-        const updateData: any = {
+        const updateData: Partial<BookingEntity> = {
             status: BookingStatus.pending_confirm,
-            booking_payment: { id: paymentMethod.id } as any,
+            booking_payment: { id: paymentMethod.id } as BookingPaymentEntity,
         };
-
         if (dto.payment_information_id) {
-            updateData.payment_information = { id: dto.payment_information_id } as any;
+            updateData.payment_information = {
+                id: dto.payment_information_id,
+            } as PaymentInfomationEntity;
         }
-
-        await this.bookingRepository.update(
-            { id: booking.id },
-            updateData
-        );
+        await this.bookingRepository.update({ id: booking.id }, updateData);
 
         return { success: true, bookingId: booking.id };
     }
@@ -368,10 +448,20 @@ export class UserBookingService {
     /**
      * Confirm current booking
      */
-    async confirmCurrentBooking(userUuid: string): Promise<any> {
+    async confirmCurrentBooking(
+        userUuid: string,
+    ): Promise<{ success: boolean; bookingId: number }> {
         const booking = await this.bookingRepository.findOne({
-            where: { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
-            relations: ['tour_inventory_hold', 'booking_payment', 'payment_information', 'currency'],
+            where: {
+                user: { uuid: userUuid },
+                status: BookingStatus.pending_confirm,
+            },
+            relations: [
+                'tour_inventory_hold',
+                'booking_payment',
+                'payment_information',
+                'currency',
+            ],
             order: { id: 'DESC' },
         });
 
@@ -383,15 +473,21 @@ export class UserBookingService {
         if (booking.tour_inventory_hold?.expires_at) {
             const expiresAt = new Date(booking.tour_inventory_hold.expires_at);
             if (expiresAt < new Date()) {
-                throw new BadRequestException('Your booking hold has expired. Please start a new booking.');
+                throw new BadRequestException(
+                    'Your booking hold has expired. Please start a new booking.',
+                );
             }
         }
         // Check if payment method is Credit Card and process Stripe charge
-        const isCreditCard = booking.booking_payment?.id === PaymentCardID.CREDIT_CARD;
+        const isCreditCard =
+            (booking.booking_payment?.id as unknown as PaymentCardID) ===
+            PaymentCardID.CREDIT_CARD;
 
         if (isCreditCard) {
             if (!booking.payment_information?.customer_id) {
-                throw new BadRequestException('No card information found for this booking. Please add a card.');
+                throw new BadRequestException(
+                    'No card information found for this booking. Please add a card.',
+                );
             }
 
             // Charge the customer via Stripe
@@ -399,7 +495,11 @@ export class UserBookingService {
             const amount = Number(booking.total_amount);
             const currency = booking.currency.symbol.toLowerCase();
 
-            await this.userPaymentService.chargeCustomer(customerId, amount, currency);
+            await this.userPaymentService.chargeCustomer(
+                customerId,
+                amount,
+                currency,
+            );
         }
 
         // Update booking status
@@ -408,8 +508,10 @@ export class UserBookingService {
 
         // Clear expiry to prevent frontend alert
         if (booking.tour_inventory_hold) {
-            booking.tour_inventory_hold.expires_at = null as any;
-            await this.inventoryHoldRepository.save(booking.tour_inventory_hold);
+            booking.tour_inventory_hold.expires_at = null;
+            await this.inventoryHoldRepository.save(
+                booking.tour_inventory_hold,
+            );
         }
 
         await this.bookingRepository.save(booking);
@@ -417,7 +519,7 @@ export class UserBookingService {
         return { success: true, bookingId: booking.id };
     }
 
-    async confirmBooking(dto: ConfirmBookingDTO): Promise<any> {
+    async confirmBooking(dto: ConfirmBookingDTO): Promise<BookingEntity> {
         const booking = await this.bookingRepository.findOne({
             where: { id: dto.booking_id },
         });
@@ -440,7 +542,7 @@ export class UserBookingService {
     /**
      * Get active payment methods, optionally filtered by booking eligibility
      */
-    async getPaymentMethods(userUuid?: string) {
+    async getPaymentMethods(userUuid?: string): Promise<any[]> {
         let paymentMethods = await this.bookingPaymentRepository.find({
             where: { status: 'active' },
             relations: ['currency'],
@@ -450,16 +552,25 @@ export class UserBookingService {
         if (userUuid) {
             const booking = await this.bookingRepository.findOne({
                 where: [
-                    { user: { uuid: userUuid }, status: BookingStatus.pending_info },
-                    { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
-                    { user: { uuid: userUuid }, status: BookingStatus.pending_confirm }
+                    {
+                        user: { uuid: userUuid },
+                        status: BookingStatus.pending_info,
+                    },
+                    {
+                        user: { uuid: userUuid },
+                        status: BookingStatus.pending_payment,
+                    },
+                    {
+                        user: { uuid: userUuid },
+                        status: BookingStatus.pending_confirm,
+                    },
                 ],
-                order: { id: 'DESC' }
+                order: { id: 'DESC' },
             });
 
             if (booking) {
                 const totalAmount = Number(booking.total_amount);
-                paymentMethods = paymentMethods.filter(method => {
+                paymentMethods = paymentMethods.filter((method) => {
                     const ruleMin = Number(method.rule_min) || 0;
                     const ruleMax = Number(method.rule_max) || 0;
 
@@ -483,16 +594,31 @@ export class UserBookingService {
     /**
      * Cancel current pending booking and release inventory hold
      */
-    async cancelCurrentBooking(userUuid: string): Promise<{ success: boolean; message: string }> {
+    async cancelCurrentBooking(
+        userUuid: string,
+    ): Promise<{ success: boolean; message: string }> {
         // Find any pending booking
         const booking = await this.bookingRepository.findOne({
             where: [
                 { user: { uuid: userUuid }, status: BookingStatus.pending },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_info },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_payment },
-                { user: { uuid: userUuid }, status: BookingStatus.pending_confirm },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_info,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_payment,
+                },
+                {
+                    user: { uuid: userUuid },
+                    status: BookingStatus.pending_confirm,
+                },
             ],
-            relations: ['tour_inventory_hold', 'booking_items', 'booking_items.booking_passengers'],
+            relations: [
+                'tour_inventory_hold',
+                'booking_items',
+                'booking_items.booking_passengers',
+            ],
             order: { id: 'DESC' },
         });
 
@@ -504,14 +630,14 @@ export class UserBookingService {
         if (booking.tour_inventory_hold) {
             await this.inventoryHoldRepository.update(
                 { id: booking.tour_inventory_hold.id },
-                { expires_at: new Date(0) }
+                { expires_at: new Date(0) },
             );
         }
 
         // Soft Delete passengers
         for (const item of booking.booking_items || []) {
             if (item.booking_passengers?.length) {
-                const pIds = item.booking_passengers.map(p => p.id);
+                const pIds = item.booking_passengers.map((p) => p.id);
                 if (pIds.length > 0) {
                     await this.bookingPassengerRepository.softDelete(pIds);
                 }
@@ -521,58 +647,94 @@ export class UserBookingService {
         // Update booking status to cancelled
         await this.bookingRepository.update(
             { id: booking.id },
-            { status: BookingStatus.cancelled }
+            { status: BookingStatus.cancelled },
         );
 
         return { success: true, message: 'Booking cancelled successfully' };
     }
 
-    async downloadReceipt(id: number, user: UserEntity, res: express.Response) {
+    async downloadReceipt(
+        id: number,
+        user: UserEntity,
+        res: express.Response,
+    ): Promise<void> {
         const booking = await this.bookingRepository.findOne({
             where: { id },
-            relations: ['user', 'booking_payment', 'payment_information', 'currency'],
+            relations: [
+                'user',
+                'booking_payment',
+                'payment_information',
+                'currency',
+            ],
         });
 
         if (!booking) throw new NotFoundException('Booking not found');
-        if (booking.user.uuid !== user.uuid) throw new ForbiddenException('You do not have permission to access this receipt');
-        if (booking.status !== BookingStatus.confirmed) throw new BadRequestException('Receipt is only available for confirmed bookings');
+        if (booking.user.uuid !== user.uuid)
+            throw new ForbiddenException(
+                'You do not have permission to access this receipt',
+            );
+        if (booking.status !== BookingStatus.confirmed)
+            throw new BadRequestException(
+                'Receipt is only available for confirmed bookings',
+            );
 
         const doc = new PDFDocument();
-        const fontPath = path.join(__dirname, '../../../assets/fonts/RobotoFlex-VariableFont.ttf');
+        const fontPath = path.join(
+            __dirname,
+            '../../../assets/fonts/RobotoFlex-VariableFont.ttf',
+        );
         doc.registerFont('vn', fontPath);
         doc.font('vn');
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=receipt-${booking.id}.pdf`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=receipt-${booking.id}.pdf`,
+        );
         doc.pipe(res);
 
-
         // Header
-        doc.fillColor('#1a365d').fontSize(25).text('BOOKING RECEIPT', { align: 'center' });
+        doc.fillColor('#1a365d')
+            .fontSize(25)
+            .text('BOOKING RECEIPT', { align: 'center' });
         doc.moveDown();
-        doc.fillColor('#4a5568').fontSize(12).text(`Receipt No: REC-${booking.id}`, { align: 'right' });
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+        doc.fillColor('#4a5568')
+            .fontSize(12)
+            .text(`Receipt No: REC-${booking.id}`, { align: 'right' });
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, {
+            align: 'right',
+        });
         doc.moveDown();
 
         // Brand
         doc.fillColor('#3182ce').fontSize(20).text('TripConnect', 50, 100);
-        doc.fillColor('#718096').fontSize(10).text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
+        doc.fillColor('#718096')
+            .fontSize(10)
+            .text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
         doc.text('support@tripconnect.com | +84 123 456 789', 50, 140);
 
         doc.moveTo(50, 160).lineTo(550, 160).strokeColor('#e2e8f0').stroke();
         doc.moveDown(2);
 
         // Payment Info
-        doc.fillColor('#2d3748').fontSize(14).text('Payment Information', 50, 180);
+        doc.fillColor('#2d3748')
+            .fontSize(14)
+            .text('Payment Information', 50, 180);
         doc.moveDown();
         doc.fillColor('#4a5568').fontSize(11);
         doc.text(`Customer Name: ${booking.contact_name}`);
         doc.text(`Customer Email: ${booking.contact_email}`);
-        doc.text(`Payment Method: ${booking.booking_payment?.payment_method_name || 'N/A'}`);
+        doc.text(
+            `Payment Method: ${booking.booking_payment?.payment_method_name || 'N/A'}`,
+        );
         if (booking.payment_information) {
-            doc.text(`Card: ${booking.payment_information.brand} **** ${booking.payment_information.last4}`);
+            doc.text(
+                `Card: ${booking.payment_information.brand} **** ${booking.payment_information.last4}`,
+            );
         }
-        doc.text(`Status: PAID`, { continued: true }).fillColor('#38a169').text(' (Confirmed)');
+        doc.text(`Status: PAID`, { continued: true })
+            .fillColor('#38a169')
+            .text(' (Confirmed)');
 
         doc.moveDown(2);
 
@@ -580,46 +742,81 @@ export class UserBookingService {
         doc.rect(50, 300, 500, 50).fill('#f7fafc');
         doc.fillColor('#2d3748').fontSize(16).text('Total Paid', 70, 315);
         const amountStr = `${Number(booking.total_amount).toLocaleString()} ${booking.currency?.symbol || 'VND'}`;
-        doc.fillColor('#3182ce').fontSize(20).text(amountStr, 350, 312, { align: 'right', width: 180 });
+        doc.fillColor('#3182ce')
+            .fontSize(20)
+            .text(amountStr, 350, 312, { align: 'right', width: 180 });
 
         // Footer
-        doc.fillColor('#a0aec0').fontSize(10).text('Thank you for choosing TripConnect!', 50, 700, { align: 'center' });
+        doc.fillColor('#a0aec0')
+            .fontSize(10)
+            .text('Thank you for choosing TripConnect!', 50, 700, {
+                align: 'center',
+            });
 
         doc.end();
     }
 
-    async downloadInvoice(id: number, user: UserEntity, res: express.Response) {
+    async downloadInvoice(
+        id: number,
+        user: UserEntity,
+        res: express.Response,
+    ): Promise<void> {
         const booking = await this.bookingRepository.findOne({
             where: { id },
             relations: [
-                'user', 'booking_items', 'booking_items.variant', 'booking_items.variant.tour',
-                'booking_items.pax_type', 'currency', 'booking_payment'
+                'user',
+                'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour',
+                'booking_items.pax_type',
+                'currency',
+                'booking_payment',
             ],
         });
 
         if (!booking) throw new NotFoundException('Booking not found');
-        if (booking.user.uuid !== user.uuid) throw new ForbiddenException('You do not have permission to access this invoice');
-        if (booking.status !== BookingStatus.confirmed) throw new BadRequestException('Invoice is only available for confirmed bookings');
+        if (booking.user.uuid !== user.uuid)
+            throw new ForbiddenException(
+                'You do not have permission to access this invoice',
+            );
+        if (booking.status !== BookingStatus.confirmed)
+            throw new BadRequestException(
+                'Invoice is only available for confirmed bookings',
+            );
 
         const doc = new PDFDocument();
-        const fontPath = path.join(__dirname, '../../../assets/fonts/RobotoFlex-VariableFont.ttf');
+        const fontPath = path.join(
+            __dirname,
+            '../../../assets/fonts/RobotoFlex-VariableFont.ttf',
+        );
         doc.registerFont('vn', fontPath);
         doc.font('vn');
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=invoice-${booking.id}.pdf`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=invoice-${booking.id}.pdf`,
+        );
         doc.pipe(res);
 
         // Header
-        doc.fillColor('#1a365d').fontSize(25).text('INVOICE', { align: 'center' });
+        doc.fillColor('#1a365d')
+            .fontSize(25)
+            .text('INVOICE', { align: 'center' });
         doc.moveDown();
-        doc.fillColor('#4a5568').fontSize(12).text(`Invoice No: INV-${booking.id}`, { align: 'right' });
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+        doc.fillColor('#4a5568')
+            .fontSize(12)
+            .text(`Invoice No: INV-${booking.id}`, { align: 'right' });
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, {
+            align: 'right',
+        });
         doc.moveDown();
 
         // Brand
         doc.fillColor('#3182ce').fontSize(20).text('TripConnect', 50, 100);
-        doc.fillColor('#718096').fontSize(10).text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
+        doc.fillColor('#718096')
+            .fontSize(10)
+            .text('123 Innovation Plaza, Saigon High Tech Park', 50, 125);
         doc.moveDown(2);
 
         // Bill To
@@ -637,29 +834,57 @@ export class UserBookingService {
         doc.text('Unit Price', 350, tableTop, { width: 90, align: 'right' });
         doc.text('Total', 450, tableTop, { width: 100, align: 'right' });
 
-        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor('#cbd5e1').stroke();
+        doc.moveTo(50, tableTop + 15)
+            .lineTo(550, tableTop + 15)
+            .strokeColor('#cbd5e1')
+            .stroke();
 
         // Table Rows
         let y = tableTop + 30;
         booking.booking_items.forEach((item) => {
             doc.fillColor('#4b5563').fontSize(10);
-            doc.text(`${item.variant.tour.title} (${item.pax_type.name})`, 50, y, { width: 240 });
+            doc.text(
+                `${item.variant.tour.title} (${item.pax_type.name})`,
+                50,
+                y,
+                { width: 240 },
+            );
             doc.text(item.quantity.toString(), 300, y);
-            doc.text(`${Number(item.unit_price).toLocaleString()}`, 350, y, { width: 90, align: 'right' });
-            doc.text(`${Number(item.total_amount).toLocaleString()}`, 450, y, { width: 100, align: 'right' });
+            doc.text(`${Number(item.unit_price).toLocaleString()}`, 350, y, {
+                width: 90,
+                align: 'right',
+            });
+            doc.text(`${Number(item.total_amount).toLocaleString()}`, 450, y, {
+                width: 100,
+                align: 'right',
+            });
             y += 20;
         });
 
-        doc.moveTo(50, y + 10).lineTo(550, y + 10).strokeColor('#cbd5e1').stroke();
+        doc.moveTo(50, y + 10)
+            .lineTo(550, y + 10)
+            .strokeColor('#cbd5e1')
+            .stroke();
 
         // Summary
         y += 30;
         doc.fillColor('#1e293b').fontSize(12).text('Total Amount:', 350, y);
         const amountStr = `${Number(booking.total_amount).toLocaleString()} ${booking.currency?.symbol || 'VND'}`;
-        doc.fillColor('#2563eb').fontSize(14).text(amountStr, 450, y, { width: 100, align: 'right' });
+        doc.fillColor('#2563eb')
+            .fontSize(14)
+            .text(amountStr, 450, y, { width: 100, align: 'right' });
 
         // Footer
-        doc.fillColor('#94a3b8').fontSize(9).text('Payment was received via ' + (booking.booking_payment?.payment_method_name || 'Credit Card'), 50, 700, { align: 'center' });
+        doc.fillColor('#94a3b8')
+            .fontSize(9)
+            .text(
+                'Payment was received via ' +
+                    (booking.booking_payment?.payment_method_name ||
+                        'Credit Card'),
+                50,
+                700,
+                { align: 'center' },
+            );
 
         doc.end();
     }

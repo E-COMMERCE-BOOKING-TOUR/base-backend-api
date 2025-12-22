@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, MoreThanOrEqual, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { BookingEntity } from '../../booking/entity/booking.entity';
 import { TourEntity } from '../../tour/entity/tour.entity';
 import { UserEntity } from '../../user/entity/user.entity';
 import { BookingItemEntity } from '../../booking/entity/bookingItem.entity';
+import { BookingStatus, PaymentStatus } from '../../booking/dto/booking.dto';
+import { TourStatus } from '../../tour/dto/tour.dto';
 
 @Injectable()
 export class DashboardService {
@@ -17,32 +19,38 @@ export class DashboardService {
         private readonly userRepository: Repository<UserEntity>,
         @InjectRepository(BookingItemEntity)
         private readonly bookingItemRepository: Repository<BookingItemEntity>,
-    ) { }
+    ) {}
 
     async getStats() {
         const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfDay = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+        );
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         // Basic Counts
         const totalBookings = await this.bookingRepository.count();
-        const activeToursCount = await this.tourRepository.count({ where: { status: 'active' } });
+        const activeToursCount = await this.tourRepository.count({
+            where: { status: TourStatus.active },
+        });
         const totalUsers = await this.userRepository.count();
 
         // Revenue Calculations
         const confirmedBookings = await this.bookingRepository.find({
             where: [
-                { status: 'confirmed' },
-                { payment_status: 'paid' }
+                { status: BookingStatus.confirmed },
+                { payment_status: PaymentStatus.paid },
             ],
-            select: ['total_amount', 'created_at']
+            select: ['total_amount', 'created_at'],
         });
 
         let totalRevenue = 0;
         let todayRevenue = 0;
         let monthlyRevenue = 0;
 
-        confirmedBookings.forEach(b => {
+        confirmedBookings.forEach((b) => {
             const amount = Number(b.total_amount) || 0;
             totalRevenue += amount;
             if (b.created_at >= startOfDay) todayRevenue += amount;
@@ -57,7 +65,7 @@ export class DashboardService {
             const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1);
 
             const monthRevenue = confirmedBookings
-                .filter(b => b.created_at >= d && b.created_at < nextMonth)
+                .filter((b) => b.created_at >= d && b.created_at < nextMonth)
                 .reduce((acc, cur) => acc + (Number(cur.total_amount) || 0), 0);
 
             chartData.push({ name: monthName, value: monthRevenue });
@@ -68,14 +76,17 @@ export class DashboardService {
             relations: ['variant', 'variant.tour', 'booking'],
             where: {
                 booking: [
-                    { status: 'confirmed' },
-                    { payment_status: 'paid' }
-                ]
-            }
+                    { status: BookingStatus.confirmed },
+                    { payment_status: PaymentStatus.paid },
+                ],
+            },
         });
 
-        const tourMap: Record<number, { title: string; count: number; revenue: number }> = {};
-        items.forEach(item => {
+        const tourMap: Record<
+            number,
+            { title: string; count: number; revenue: number }
+        > = {};
+        items.forEach((item) => {
             const tour = item.variant?.tour;
             if (!tour) return;
             if (!tourMap[tour.id]) {
@@ -93,7 +104,14 @@ export class DashboardService {
         const recentBookings = await this.bookingRepository.find({
             order: { created_at: 'DESC' },
             take: 10,
-            select: ['id', 'contact_name', 'contact_email', 'status', 'total_amount', 'created_at']
+            select: [
+                'id',
+                'contact_name',
+                'contact_email',
+                'status',
+                'total_amount',
+                'created_at',
+            ],
         });
 
         return {
@@ -107,7 +125,7 @@ export class DashboardService {
             },
             chartData,
             trendingTours,
-            recentBookings
+            recentBookings,
         };
     }
 }

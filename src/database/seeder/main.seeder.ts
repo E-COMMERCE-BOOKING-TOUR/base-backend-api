@@ -21,13 +21,10 @@ import TourCategoryRelationSeeder from './18-tour-category-relation.seeder';
 import ReviewSeeder from './22-review.seeder';
 import ReviewImageSeeder from './23-review-image.seeder';
 import BookingPaymentSeeder from './24-booking-payment.seeder';
-import BookingSeeder from './25-booking.seeder';
 import NotificationSeeder from './26-notification.seeder';
 
 export default class MainSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
-        const startTime = Date.now();
-
         try {
             await runSeeders(dataSource, {
                 seeds: [

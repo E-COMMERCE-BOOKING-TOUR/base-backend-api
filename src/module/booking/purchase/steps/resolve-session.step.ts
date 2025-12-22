@@ -11,28 +11,39 @@ export class ResolveSessionStep implements PurchaseStep {
     constructor(
         @InjectRepository(TourSessionEntity)
         private readonly sessionRepository: Repository<TourSessionEntity>,
-    ) { }
+    ) {}
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         if (!ctx.variant) {
-            throw new Error('Variant must be resolved before resolving session');
+            throw new Error(
+                'Variant must be resolved before resolving session',
+            );
         }
 
         let session: TourSessionEntity | undefined;
 
         if (ctx.tourSessionId) {
             // If explicit session ID provided (e.g. for specific time slot)
-            const foundSession = ctx.variant.tour_sessions?.find(s => s.id === ctx.tourSessionId);
+            const foundSession = ctx.variant.tour_sessions?.find(
+                (s) => s.id === ctx.tourSessionId,
+            );
             if (!foundSession) {
                 // Try fetching if not in relation (though relations should be loaded)
-                const dbSession = await this.sessionRepository.findOne({ where: { id: ctx.tourSessionId }, relations: ['tour_variant'] });
+                const dbSession = await this.sessionRepository.findOne({
+                    where: { id: ctx.tourSessionId },
+                    relations: ['tour_variant'],
+                });
                 if (!dbSession) {
-                    throw new Error(`Tour session with ID ${ctx.tourSessionId} not found`);
+                    throw new Error(
+                        `Tour session with ID ${ctx.tourSessionId} not found`,
+                    );
                 }
                 session = dbSession;
                 // Validate it belongs to variant
                 if (session.tour_variant?.id !== ctx.variant.id) {
-                    throw new Error('Session does not belong to the selected variant');
+                    throw new Error(
+                        'Session does not belong to the selected variant',
+                    );
                 }
             } else {
                 session = foundSession;
@@ -51,7 +62,9 @@ export class ResolveSessionStep implements PurchaseStep {
             // Only create if we are looking by date. If by ID, we threw error.
             if (ctx.tourSessionId) {
                 // Should have been caught above, but safety check
-                throw new Error(`Tour session with ID ${ctx.tourSessionId} not found`);
+                throw new Error(
+                    `Tour session with ID ${ctx.tourSessionId} not found`,
+                );
             }
 
             session = this.sessionRepository.create({
@@ -69,4 +82,3 @@ export class ResolveSessionStep implements PurchaseStep {
         };
     }
 }
-

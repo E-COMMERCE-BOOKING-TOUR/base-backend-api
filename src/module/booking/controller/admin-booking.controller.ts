@@ -1,6 +1,20 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    UseGuards,
+} from '@nestjs/common';
 import { BookingService } from '../service/booking.service';
-import { ApiBody, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+    ApiBody,
+    ApiParam,
+    ApiResponse,
+    ApiTags,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import {
     BookingDetailDTO,
     BookingSummaryDTO,
@@ -20,7 +34,7 @@ import { Roles } from '@/module/user/decorator/roles.decorator';
 @Roles('admin')
 @Controller('admin/booking')
 export class AdminBookingController {
-    constructor(private readonly bookingService: BookingService) { }
+    constructor(private readonly bookingService: BookingService) {}
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [BookingSummaryDTO] })

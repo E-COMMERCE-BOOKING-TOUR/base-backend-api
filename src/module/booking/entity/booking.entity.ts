@@ -15,6 +15,7 @@ import {
 } from 'typeorm';
 import { BookingItemEntity } from './bookingItem.entity';
 import { BookingPaymentEntity } from './bookingPayment.entity';
+import { BookingStatus, PaymentStatus } from '../dto/booking.dto';
 
 @Entity({ name: 'bookings' })
 export class BookingEntity extends BaseEntityTimestamp {
@@ -53,19 +54,19 @@ export class BookingEntity extends BaseEntityTimestamp {
 
     @Column({
         type: 'enum',
-        enum: ['pending_info', 'pending_payment', 'pending_confirm', 'pending', 'confirmed', 'cancelled', 'expired'],
-        default: 'pending',
+        enum: BookingStatus,
+        default: BookingStatus.pending,
     })
-    @ApiProperty({ description: 'Trạng thái đặt tour' })
-    status: string;
+    @ApiProperty({ description: 'Trạng thái đặt tour', enum: BookingStatus })
+    status: BookingStatus;
 
     @Column({
         type: 'enum',
-        enum: ['unpaid', 'paid', 'refunded', 'partial'],
-        default: 'unpaid',
+        enum: PaymentStatus,
+        default: PaymentStatus.unpaid,
     })
-    @ApiProperty({ description: 'Trạng thái thanh toán' })
-    payment_status: string;
+    @ApiProperty({ description: 'Trạng thái thanh toán', enum: PaymentStatus })
+    payment_status: PaymentStatus;
 
     @ManyToOne(() => UserEntity, (user) => user.bookings, { nullable: false })
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })

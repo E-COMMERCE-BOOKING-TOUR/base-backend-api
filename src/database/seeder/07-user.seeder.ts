@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DeepPartial } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import { RoleEntity } from '@/module/user/entity/role.entity';
@@ -42,7 +42,7 @@ export default class UserSeeder implements Seeder {
 
         const hashedPassword = await hashPassword('password123');
 
-        const users = [
+        const users: DeepPartial<UserEntity>[] = [
             // Admin users
             {
                 uuid: uuidv4(),
@@ -53,9 +53,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0901234567',
                 status: 1,
                 login_type: 0,
-                role: adminRole,
-                country: vietnam,
-                supplier: null,
+                role: adminRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -66,9 +66,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0901234568',
                 status: 1,
                 login_type: 0,
-                role: adminRole,
-                country: vietnam,
-                supplier: null,
+                role: adminRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             // Content managers
             {
@@ -80,9 +80,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0902345678',
                 status: 1,
                 login_type: 0,
-                role: contentRole,
-                country: vietnam,
-                supplier: null,
+                role: contentRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             // Moderators
             {
@@ -94,9 +94,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0903456789',
                 status: 1,
                 login_type: 0,
-                role: moderatorRole,
-                country: vietnam,
-                supplier: null,
+                role: moderatorRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             // Supplier users
             {
@@ -108,9 +108,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0904567890',
                 status: 1,
                 login_type: 0,
-                role: supplierRole,
-                country: vietnam,
-                supplier: suppliers[0] || null,
+                role: supplierRole || undefined,
+                country: vietnam || undefined,
+                supplier: suppliers[0] || undefined,
             },
             {
                 uuid: uuidv4(),
@@ -121,9 +121,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0905678901',
                 status: 1,
                 login_type: 0,
-                role: supplierRole,
-                country: vietnam,
-                supplier: suppliers[1] || null,
+                role: supplierRole || undefined,
+                country: vietnam || undefined,
+                supplier: suppliers[1] || undefined,
             },
             {
                 uuid: uuidv4(),
@@ -134,9 +134,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0906789012',
                 status: 1,
                 login_type: 0,
-                role: supplierRole,
-                country: vietnam,
-                supplier: suppliers[2] || null,
+                role: supplierRole || undefined,
+                country: vietnam || undefined,
+                supplier: suppliers[2] || undefined,
             },
             // Customer users
             {
@@ -148,9 +148,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0907890123',
                 status: 1,
                 login_type: 0,
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -161,9 +161,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0908901234',
                 status: 1,
                 login_type: 0,
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -174,9 +174,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0909012345',
                 status: 1,
                 login_type: 0,
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -187,9 +187,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0910123456',
                 status: 1,
                 login_type: 0,
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -200,9 +200,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0911234567',
                 status: 1,
                 login_type: 0,
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -213,9 +213,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0912345678',
                 status: 1,
                 login_type: 2, // Google login
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -226,9 +226,9 @@ export default class UserSeeder implements Seeder {
                 phone: '0913456789',
                 status: 1,
                 login_type: 1, // Facebook login
-                role: customerRole,
-                country: vietnam,
-                supplier: null,
+                role: customerRole || undefined,
+                country: vietnam || undefined,
+                supplier: undefined,
             },
             {
                 uuid: uuidv4(),
@@ -239,9 +239,9 @@ export default class UserSeeder implements Seeder {
                 phone: '+15551234567',
                 status: 1,
                 login_type: 0,
-                role: customerRole,
-                country: usa,
-                supplier: null,
+                role: customerRole || undefined,
+                country: usa || undefined,
+                supplier: undefined,
             },
         ];
 
@@ -250,7 +250,7 @@ export default class UserSeeder implements Seeder {
                 where: { username: user.username },
             });
             if (!exists) {
-                await userRepository.save(userRepository.create(user as any));
+                await userRepository.save(userRepository.create(user));
             }
         }
 

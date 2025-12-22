@@ -313,8 +313,6 @@ export class BookingDetailDTO extends BookingSummaryDTO {
     }
 }
 
-
-
 export class UserBookingDetailDTO {
     @ApiProperty()
     id: number;
@@ -365,7 +363,7 @@ export class UserBookingDetailDTO {
     session_end_time?: string;
 
     @ApiProperty()
-    hold_expires_at: Date;
+    hold_expires_at: Date | null;
 
     @ApiProperty({ type: [BookingItemDTO] })
     items: BookingItemDTO[];

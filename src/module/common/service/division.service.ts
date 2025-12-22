@@ -4,6 +4,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserDivisionTrendingDTO } from '../dto/division.dto';
 
+interface RawTrendingDivision {
+    id: number;
+    name: string;
+    countryCode: string;
+    toursCount: string;
+}
+
 @Injectable()
 export class DivisionService {
     constructor(
@@ -37,22 +44,24 @@ export class DivisionService {
             .orderBy('toursCount', 'DESC')
             .addOrderBy('division.name', 'ASC')
             .limit(limit)
-            .getRawMany();
+            .getRawMany<RawTrendingDivision>();
 
-        return divisions.map((division): UserDivisionTrendingDTO => {
-            const flag: string = this.getCountryFlag(division.countryCode);
-            const title: string = division.name.toUpperCase();
-            const toursCount: number = parseInt(division.toursCount) || 0;
-            const image: string = `/assets/images/${division.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+        return divisions.map(
+            (division: RawTrendingDivision): UserDivisionTrendingDTO => {
+                const flag: string = this.getCountryFlag(division.countryCode);
+                const title: string = division.name.toUpperCase();
+                const toursCount: number = parseInt(division.toursCount) || 0;
+                const image: string = `/assets/images/${division.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
 
-            return new UserDivisionTrendingDTO({
-                id: division.id,
-                title,
-                image,
-                toursCount,
-                flag,
-            });
-        });
+                return new UserDivisionTrendingDTO({
+                    id: division.id,
+                    title,
+                    image,
+                    toursCount,
+                    flag,
+                });
+            },
+        );
     }
 
     private getCountryFlag(countryCode: string): string {

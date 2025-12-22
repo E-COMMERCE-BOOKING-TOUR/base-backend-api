@@ -10,9 +10,7 @@ import { PriceStep } from './types/index.interface';
  */
 @Module({})
 export class PricingModule {
-    static forRoot(
-        extraSteps: Type[] = [],
-    ): DynamicModule {
+    static forRoot(extraSteps: Type[] = []): DynamicModule {
         const defaultSteps = [BasePriceStep, TaxStep];
         const stepProviders = [...defaultSteps, ...extraSteps];
         const injectTokens = stepProviders;
@@ -25,8 +23,7 @@ export class PricingModule {
                     provide: 'PRICE_STEPS',
                     useFactory: (...steps: PriceStep[]) =>
                         steps.sort(
-                            (a, b) =>
-                                (a.priority ?? 100) - (b.priority ?? 100),
+                            (a, b) => (a.priority ?? 100) - (b.priority ?? 100),
                         ),
                     inject: injectTokens,
                 },
@@ -36,4 +33,3 @@ export class PricingModule {
         };
     }
 }
-

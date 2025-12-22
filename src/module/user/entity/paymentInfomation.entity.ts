@@ -54,7 +54,9 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
         length: 20,
         nullable: true,
     })
-    @ApiProperty({ description: 'Trạng thái kiểm tra CVC (pass, fail, unchecked)' })
+    @ApiProperty({
+        description: 'Trạng thái kiểm tra CVC (pass, fail, unchecked)',
+    })
     cvc_check: string | null;
 
     @Exclude()

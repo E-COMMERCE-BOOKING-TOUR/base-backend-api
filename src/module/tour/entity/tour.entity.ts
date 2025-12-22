@@ -20,6 +20,7 @@ import { TourCategoryEntity } from './tourCategory.entity';
 import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { TourImageEntity } from './tourImage.entity';
 import { TourVariantEntity } from './tourVariant.entity';
+import { TourStatus } from '../dto/tour.dto';
 
 @Entity('tours')
 export class TourEntity extends BaseEntityTimestamp {
@@ -103,11 +104,11 @@ export class TourEntity extends BaseEntityTimestamp {
     @Index()
     @Column({
         type: 'enum',
-        enum: ['draft', 'active', 'inactive'],
-        default: 'inactive',
+        enum: TourStatus,
+        default: TourStatus.inactive,
     })
-    @ApiProperty({ description: 'Trạng thái tour' })
-    status: string;
+    @ApiProperty({ description: 'Trạng thái tour', enum: TourStatus })
+    status: TourStatus;
 
     @Column({
         type: 'smallint',

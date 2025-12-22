@@ -18,6 +18,9 @@ export class UpdateBookingPaymentDto {
     })
     booking_payment_id: number;
 
-    @ApiProperty({ required: false, description: 'ID thông tin thẻ thanh toán (nếu có)' })
+    @ApiProperty({
+        required: false,
+        description: 'ID thông tin thẻ thanh toán (nếu có)',
+    })
     payment_information_id?: number;
 }

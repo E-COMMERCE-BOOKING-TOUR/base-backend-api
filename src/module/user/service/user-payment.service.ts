@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+    Injectable,
+    BadRequestException,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { PaymentInfomationEntity } from '../entity/paymentInfomation.entity';
@@ -21,7 +25,7 @@ export class UserPaymentService {
     }
 
     async addPaymentCard(user: UserEntity, token: string) {
-        console.log(user, token)
+        console.log(user, token);
         try {
             // Create a Customer in Stripe to save the card
             // Note: In a real system, we should check if user already has a stripe_customer_id in DB
@@ -32,7 +36,10 @@ export class UserPaymentService {
 
             // Retrieve the card details from the customer's default source
             const sourceId = customer.default_source as string;
-            const source = await this.stripe.customers.retrieveSource(customer.id, sourceId);
+            const source = await this.stripe.customers.retrieveSource(
+                customer.id,
+                sourceId,
+            );
 
             if (source.object !== 'card') {
                 throw new BadRequestException('Provided token is not a card');
@@ -76,8 +83,10 @@ export class UserPaymentService {
             await this.bookingRepository.save(booking);
 
             return { success: true };
-        } catch (e: any) {
-            throw new BadRequestException(e.message || 'Failed to add payment card');
+        } catch (e) {
+            throw new BadRequestException(
+                e instanceof Error ? e.message : 'Failed to add payment card',
+            );
         }
     }
 
@@ -87,7 +96,11 @@ export class UserPaymentService {
      * @param amount - Amount in smallest currency unit (e.g., cents for USD, đồng for VND)
      * @param currency - Currency code (e.g., 'vnd', 'usd')
      */
-    async chargeCustomer(customerId: string, amount: number, currency: string): Promise<Stripe.Charge> {
+    async chargeCustomer(
+        customerId: string,
+        amount: number,
+        currency: string,
+    ): Promise<Stripe.Charge> {
         try {
             const currencyCode = currency.toLowerCase();
             const zeroDecimalCurrencies = ['jpy', 'vnd', 'krw'];
@@ -102,8 +115,10 @@ export class UserPaymentService {
                 description: 'Tour Booking Payment',
             });
             return charge;
-        } catch (e: any) {
-            throw new BadRequestException(e.message || 'Failed to process payment');
+        } catch (e) {
+            throw new BadRequestException(
+                e instanceof Error ? e.message : 'Failed to process payment',
+            );
         }
     }
 }

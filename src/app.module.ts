@@ -35,4 +35,4 @@ import { DashboardModule } from './module/dashboard/dashboard.module';
     controllers: [AppController],
     providers: [],
 })
-export class AppModule { }
+export class AppModule {}
