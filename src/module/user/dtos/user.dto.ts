@@ -107,10 +107,6 @@ export class UserDTO {
 }
 
 export class UpdateUserDTO {
-    @IsOptional()
-    @IsString()
-    @ApiProperty({ description: 'Tên tài khoản', required: false })
-    username?: string;
 
     @IsOptional()
     @MinLength(8)
@@ -175,6 +171,36 @@ export class UpdateUserDTO {
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày cập nhật', required: false })
     updated_at?: Date;
+}
+
+export class UpdateProfileDTO {
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Tên người dùng', required: false })
+    full_name?: string;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Số điện thoại người dùng', required: false })
+    phone?: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Mật khẩu cũ để xác nhận' })
+    oldPassword: string;
+}
+
+export class ChangePasswordDTO {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Mật khẩu cũ' })
+    oldPassword: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(8)
+    @ApiProperty({ description: 'Mật khẩu mới' })
+    newPassword: string;
 }
 
 export class UserSummaryDTO {

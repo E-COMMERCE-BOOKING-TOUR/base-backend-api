@@ -11,7 +11,8 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { JwtRefreshStrategy } from './strategy/jwt-refresh.strategy';
 import { AdminUserController } from './controller/admin-user.controller';
 import { UserController } from './controller/user.controller';
-import { NotificationController } from './controller/notification.controller';
+import { NotificationController } from './controller/user-notification.controller';
+import { AdminNotificationController } from './controller/admin-notification.controller';
 import { UserService } from './service/user.service';
 import { NotificationEntity } from './entity/notification.entity';
 import { NotificationService } from './service/notification.service';
@@ -38,6 +39,7 @@ import { BookingEntity } from '../booking/entity/booking.entity';
         AdminUserController,
         UserController,
         NotificationController,
+        AdminNotificationController,
         UserPaymentController,
     ],
     providers: [
@@ -58,4 +60,4 @@ import { BookingEntity } from '../booking/entity/booking.entity';
         UserPaymentService,
     ],
 })
-export class UserModule {}
+export class UserModule { }

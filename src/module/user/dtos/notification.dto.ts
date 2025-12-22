@@ -112,6 +112,9 @@ export class NotificationSummaryDTO {
     @ApiProperty()
     is_user: boolean;
 
+    @ApiProperty()
+    description: string;
+
     @ApiProperty({ type: [Number] })
     user_ids: number[];
 
@@ -139,9 +142,6 @@ export class NotificationSummaryDTO {
 }
 
 export class NotificationDetailDTO extends NotificationSummaryDTO {
-    @ApiProperty()
-    description: string;
-
     constructor(partial: Partial<NotificationDetailDTO>) {
         super(partial);
         Object.assign(this, partial);

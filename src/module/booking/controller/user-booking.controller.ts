@@ -7,6 +7,7 @@ import {
     UseFilters,
     UseGuards,
     Res,
+    Query,
 } from '@nestjs/common';
 import * as express from 'express';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -25,7 +26,7 @@ import { BookingEntity } from '../entity/booking.entity';
 @ApiTags('User Booking')
 @Controller('user/booking')
 export class UserBookingController {
-    constructor(private readonly userBookingService: UserBookingService) {}
+    constructor(private readonly userBookingService: UserBookingService) { }
 
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
@@ -110,6 +111,23 @@ export class UserBookingController {
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
     @UseGuards(AuthGuard('jwt'))
+    @Get('history')
+    @ApiResponse({ status: 200, description: 'Get user booking history' })
+    async getBookingHistory(
+        @User() user: UserEntity,
+        @Query('page') page: string = '1',
+        @Query('limit') limit: string = '10',
+    ): Promise<any> {
+        return await this.userBookingService.getAllBookingsByUser(
+            user.uuid,
+            parseInt(page),
+            parseInt(limit),
+        );
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
     @Get(':id')
     @ApiResponse({ status: 200, description: 'Get booking detail' })
     async getBookingDetail(
@@ -170,4 +188,5 @@ export class UserBookingController {
     ) {
         return await this.userBookingService.downloadInvoice(id, user, res);
     }
+
 }
