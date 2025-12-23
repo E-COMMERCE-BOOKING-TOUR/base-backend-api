@@ -38,6 +38,6 @@ export class TourImageEntity extends BaseEntityTimestamp {
 
     @ManyToOne(() => TourEntity, (tour) => tour.images, { nullable: false })
     @JoinColumn({ name: 'tour_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tour' })
+    @ApiProperty({ description: 'Tour', type: () => TourEntity })
     tour: TourEntity;
 }

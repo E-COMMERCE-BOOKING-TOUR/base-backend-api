@@ -24,6 +24,6 @@ export class TourCategoryEntity extends BaseEntityTimestamp {
     sort_no: number;
 
     @ManyToMany(() => TourEntity, (tour) => tour.tour_categories)
-    @ApiProperty({ description: 'Danh sách các tour thuộc danh mục này' })
+    @ApiProperty({ description: 'Danh sách các tour thuộc danh mục này', type: () => [TourEntity] })
     tours: TourEntity[];
 }

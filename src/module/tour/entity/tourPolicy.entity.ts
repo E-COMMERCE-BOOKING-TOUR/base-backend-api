@@ -27,7 +27,7 @@ export class TourPolicyEntity extends BaseEntityTimestamp {
         () => TourPolicyRuleEntity,
         (tour_policy_rule) => tour_policy_rule.tour_policy,
     )
-    @ApiProperty({ description: 'Danh sách các bậc phí hủy theo mốc giờ' })
+    @ApiProperty({ description: 'Danh sách các bậc phí hủy theo mốc giờ', type: () => [TourPolicyRuleEntity] })
     tour_policy_rules: TourPolicyRuleEntity[];
 
     @ManyToOne(
@@ -36,6 +36,6 @@ export class TourPolicyEntity extends BaseEntityTimestamp {
         { nullable: false, onDelete: 'CASCADE' },
     )
     @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Biến thể tour' })
+    @ApiProperty({ description: 'Biến thể tour', type: () => TourVariantEntity })
     tour_variant: TourVariantEntity;
 }

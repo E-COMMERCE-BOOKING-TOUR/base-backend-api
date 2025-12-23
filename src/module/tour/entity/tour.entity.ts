@@ -144,18 +144,18 @@ export class TourEntity extends BaseEntityTimestamp {
     @Index()
     @ManyToOne(() => CountryEntity, (country) => country.tours)
     @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Quốc gia' })
+    @ApiProperty({ description: 'Quốc gia', type: () => CountryEntity })
     country: CountryEntity;
 
     @Index()
     @ManyToOne(() => DivisionEntity, (division) => division.tours)
     @JoinColumn({ name: 'division_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Phân cấp' })
+    @ApiProperty({ description: 'Phân cấp', type: () => DivisionEntity })
     division: DivisionEntity;
 
     @ManyToOne(() => CurrencyEntity, (currency) => currency.tours)
     @JoinColumn({ name: 'currency_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tiền tệ' })
+    @ApiProperty({ description: 'Tiền tệ', type: () => CurrencyEntity })
     currency: CurrencyEntity;
 
     @ManyToMany(() => UserEntity)
@@ -171,7 +171,7 @@ export class TourEntity extends BaseEntityTimestamp {
     users_favorites: UserEntity[];
 
     @OneToMany(() => ReviewEntity, (review) => review.tour)
-    @ApiProperty({ description: 'Danh sách các đánh giá' })
+    @ApiProperty({ description: 'Danh sách các đánh giá', type: () => [ReviewEntity] })
     reviews: ReviewEntity[];
 
     @ManyToMany(() => TourCategoryEntity)
@@ -194,14 +194,73 @@ export class TourEntity extends BaseEntityTimestamp {
         nullable: false,
     })
     @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Nhà cung cấp' })
+    @ApiProperty({ description: 'Nhà cung cấp', type: () => SupplierEntity })
     supplier: SupplierEntity;
 
     @OneToMany(() => TourImageEntity, (image) => image.tour)
-    @ApiProperty({ description: 'Danh sách các ảnh tour' })
+    @ApiProperty({ description: 'Danh sách các ảnh tour', type: () => [TourImageEntity] })
     images: TourImageEntity[];
 
     @OneToMany(() => TourVariantEntity, (variant) => variant.tour)
-    @ApiProperty({ description: 'Danh sách các biến thể tour' })
+    @ApiProperty({ description: 'Danh sách các biến thể tour', type: () => [TourVariantEntity] })
     variants: TourVariantEntity[];
+
+    @Column({
+        type: 'varchar',
+        length: 1000,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Điểm hẹn' })
+    meeting_point: string;
+
+    @Column({
+        type: 'simple-json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Bao gồm (mảng chuỗi)' })
+    included: string[];
+
+    @Column({
+        type: 'simple-json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Không bao gồm (mảng chuỗi)' })
+    not_included: string[];
+
+    @Column({
+        type: 'simple-json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Điểm nổi bật (highlights/activity)', example: { title: 'Highlights', items: ['...'] } })
+    highlights: { title: string; items: string[] };
+
+    @Column({
+        type: 'simple-json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Ngông ngữ hỗ trợ' })
+    languages: string[];
+
+    @Column({
+        type: 'float',
+        nullable: true,
+        default: 0,
+    })
+    @ApiProperty({ description: 'Điểm đánh giá nhân viên' })
+    staff_score: number;
+
+    @Column({
+        type: 'simple-json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Nhận xét tiêu biểu (testimonial)', example: { name: '...', country: '...', text: '...' } })
+    testimonial: { name: string; country: string; text: string };
+
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Ảnh xem trước bản đồ' })
+    map_preview: string;
 }

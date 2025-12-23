@@ -29,7 +29,7 @@ export class TourRulePaxTypePriceEntity {
         },
     )
     @JoinColumn({ name: 'tour_price_rule_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Quy tắc giá theo mùa/ngày trong tuần' })
+    @ApiProperty({ description: 'Quy tắc giá theo mùa/ngày trong tuần', type: () => TourPriceRuleEntity })
     tour_price_rule: TourPriceRuleEntity;
 
     @ManyToOne(
@@ -41,6 +41,6 @@ export class TourRulePaxTypePriceEntity {
         },
     )
     @JoinColumn({ name: 'pax_type_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Loại khách' })
+    @ApiProperty({ description: 'Loại khách', type: () => TourPaxTypeEntity })
     pax_type: TourPaxTypeEntity;
 }

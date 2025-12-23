@@ -33,7 +33,7 @@ export class UserTourService {
         @InjectRepository(TourSessionEntity)
         private readonly sessionRepository: Repository<TourSessionEntity>,
         private readonly pricingService: PricingService,
-    ) {}
+    ) { }
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
         return this.tourRepository
@@ -405,11 +405,17 @@ export class UserTourService {
         const maxPax: number = tour.max_pax || minPax + 2;
         const capacity: string = `${maxPax} People`;
 
-        const included: string[] = [];
-        const notIncluded: string[] = [];
+        const included: string[] = tour.included || [];
+        const notIncluded: string[] = tour.not_included || [];
 
         let testimonial: TourTestimonialDTO | undefined;
-        if (tour.reviews && tour.reviews.length > 0) {
+        if (tour.testimonial && tour.testimonial.name) {
+            testimonial = new TourTestimonialDTO({
+                name: tour.testimonial.name,
+                country: tour.testimonial.country,
+                text: tour.testimonial.text,
+            });
+        } else if (tour.reviews && tour.reviews.length > 0) {
             const latestReview = tour.reviews[0];
             const userName =
                 latestReview.user?.full_name ||
@@ -428,17 +434,24 @@ export class UserTourService {
         }
 
         const details = new TourDetailsInfoDTO({
-            language: ['English', 'Vietnamese'],
+            language: tour.languages?.length
+                ? tour.languages
+                : ['English', 'Vietnamese'],
             duration: durationStr,
             capacity: capacity,
         });
 
-        const activity: TourActivityDTO | undefined = tour.summary
+        const activity: TourActivityDTO | undefined = tour.highlights
             ? new TourActivityDTO({
-                  title: 'What You Will Do',
-                  items: [tour.summary],
-              })
-            : undefined;
+                title: tour.highlights.title,
+                items: tour.highlights.items,
+            })
+            : tour.summary
+                ? new TourActivityDTO({
+                    title: 'What You Will Do',
+                    items: [tour.summary],
+                })
+                : undefined;
 
         return new UserTourDetailDTO({
             id: tour.id,
@@ -452,19 +465,20 @@ export class UserTourService {
             reviewCount: reviewsCount,
             score: avgRating,
             scoreLabel,
-            staffScore: parseFloat(staffScore.toFixed(1)),
+            staffScore: tour.staff_score || parseFloat(staffScore.toFixed(1)),
             images: images.length > 0 ? images : ['/assets/images/travel.jpg'],
             testimonial,
             mapUrl: tour.map_url || '',
             mapPreview:
-                images.length > 0 ? images[0] : '/assets/images/travel.jpg',
+                tour.map_preview ||
+                (images.length > 0 ? images[0] : '/assets/images/travel.jpg'),
             description: tour.description || '',
             summary: tour.summary || '',
             activity,
             included,
             notIncluded,
             details,
-            meetingPoint: '',
+            meetingPoint: tour.meeting_point || '',
             tags,
             variants:
                 tour.variants?.map(
@@ -811,19 +825,19 @@ export class UserTourService {
                 start_time:
                     session.start_time instanceof Date
                         ? session.start_time.toLocaleTimeString('en-GB', {
-                              hour12: false,
-                          })
+                            hour12: false,
+                        })
                         : typeof session.start_time === 'string'
-                          ? session.start_time
-                          : undefined,
+                            ? session.start_time
+                            : undefined,
                 end_time:
                     session.end_time instanceof Date
                         ? session.end_time.toLocaleTimeString('en-GB', {
-                              hour12: false,
-                          })
+                            hour12: false,
+                        })
                         : typeof session.end_time === 'string'
-                          ? session.end_time
-                          : undefined,
+                            ? session.end_time
+                            : undefined,
                 status,
                 capacity_available: available,
                 price: minPrice, // In future, apply date-specific pricing rules here

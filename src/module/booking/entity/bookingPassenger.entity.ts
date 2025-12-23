@@ -45,7 +45,7 @@ export class BookingPassengerEntity extends BaseEntityTimestamp {
         { nullable: false },
     )
     @JoinColumn({ name: 'booking_item_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Mục đặt tour có hành khách này' })
+    @ApiProperty({ description: 'Mục đặt tour có hành khách này', type: () => BookingItemEntity })
     booking_item: BookingItemEntity;
 
     @ManyToOne(
@@ -54,6 +54,6 @@ export class BookingPassengerEntity extends BaseEntityTimestamp {
         { nullable: false },
     )
     @JoinColumn({ name: 'pax_type_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Loại khách của hành khách này' })
+    @ApiProperty({ description: 'Loại khách của hành khách này', type: () => TourPaxTypeEntity })
     pax_type: TourPaxTypeEntity;
 }

@@ -68,6 +68,35 @@ export class TourImageDTO {
     }
 }
 
+export class TestimonialDTO {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Tên người phát biểu' })
+    name: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Quốc gia' })
+    country: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Nội dung nhận xét' })
+    text: string;
+}
+
+export class HighlightsDTO {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Tiêu đề highlights' })
+    title: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Danh sách các điểm nổi bật', type: [String] })
+    items: string[];
+}
+
 export class TourVariantPaxTypePriceDTO {
     @IsOptional()
     @IsInt()
@@ -408,6 +437,53 @@ export class TourDTO {
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Điểm hẹn', required: false })
+    meeting_point?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Bao gồm', required: false, type: [String] })
+    included?: string[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Không bao gồm', required: false, type: [String] })
+    not_included?: string[];
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => HighlightsDTO)
+    @ApiProperty({ description: 'Điểm nổi bật', required: false, type: HighlightsDTO })
+    highlights?: HighlightsDTO;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Ngông ngữ', required: false, type: [String] })
+    languages?: string[];
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(10)
+    @ApiProperty({ description: 'Điểm nhân viên', required: false })
+    staff_score?: number;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => TestimonialDTO)
+    @ApiProperty({ description: 'Nhận xét tiêu biểu', required: false, type: TestimonialDTO })
+    testimonial?: TestimonialDTO;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Ảnh xem trước bản đồ', required: false })
+    map_preview?: string;
 
     constructor(partial: Partial<TourDTO>) {
         Object.assign(this, partial);

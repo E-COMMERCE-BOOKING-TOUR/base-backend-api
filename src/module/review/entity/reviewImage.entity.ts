@@ -35,6 +35,6 @@ export class ReviewImageEntity extends BaseEntityTimestamp {
         nullable: false,
     })
     @JoinColumn({ name: 'review_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Đánh giá' })
+    @ApiProperty({ description: 'Đánh giá', type: () => ReviewEntity })
     review: ReviewEntity;
 }
