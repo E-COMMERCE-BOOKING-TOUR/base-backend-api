@@ -14,7 +14,7 @@ export class JwtExceptionFilter implements ExceptionFilter {
         const request = ctx.getRequest<Request>();
         let status = exception.getStatus();
 
-        let message = 'Token không hợp lệ';
+        let message = exception.message;
         // TokenExpired
         if (exception.message.includes('TokenExpiredError')) {
             message = 'Token đã hết hạn';

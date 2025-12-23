@@ -6,7 +6,6 @@ import {
     Entity,
     JoinTable,
     ManyToMany,
-    OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -48,6 +47,14 @@ export class NotificationEntity extends BaseEntityTimestamp {
     })
     @ApiProperty({ description: 'Thông báo có liên quan đến người dùng' })
     is_user: boolean;
+
+    @Column({
+        type: 'enum',
+        enum: ['all', 'admin', 'supplier', 'specific'],
+        default: 'specific',
+    })
+    @ApiProperty({ description: 'Đối tượng nhận thông báo' })
+    target_group: string;
 
     @ManyToMany(() => UserEntity)
     @JoinTable({

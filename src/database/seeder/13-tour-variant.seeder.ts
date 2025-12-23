@@ -3,6 +3,7 @@ import { Seeder } from 'typeorm-extension';
 import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
+import { TourStatus } from '@/module/tour/dto/tour.dto';
 
 export default class TourVariantSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -26,7 +27,8 @@ export default class TourVariantSeeder implements Seeder {
         }
 
         for (const tour of tours) {
-            if (tour.status === 'draft') continue;
+            if ((tour.status as unknown as TourStatus) === TourStatus.draft)
+                continue;
 
             // Standard variant for most tours
             const standardExists = await variantRepository.findOne({

@@ -11,6 +11,7 @@ import { UserEntity } from '@/module/user/entity/user.entity';
 import { PaymentInfomationEntity } from '@/module/user/entity/paymentInfomation.entity';
 import { BookingPaymentEntity } from '@/module/booking/entity/bookingPayment.entity';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
+import { BookingStatus, PaymentStatus } from '@/module/booking/dto/booking.dto';
 
 export default class BookingSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -105,25 +106,21 @@ export default class BookingSeeder implements Seeder {
             // Payment info is optional - booking can proceed without saved card
 
             // Determine booking status
-            let bookingStatus:
-                | 'pending'
-                | 'confirmed'
-                | 'cancelled'
-                | 'expired';
-            let paymentStatus: 'unpaid' | 'paid' | 'refunded' | 'partial';
+            let bookingStatus: BookingStatus;
+            let paymentStatus: PaymentStatus;
 
             if (i < 8) {
-                bookingStatus = 'confirmed';
-                paymentStatus = 'paid';
+                bookingStatus = BookingStatus.confirmed;
+                paymentStatus = PaymentStatus.paid;
             } else if (i < 11) {
-                bookingStatus = 'pending';
-                paymentStatus = 'unpaid';
+                bookingStatus = BookingStatus.pending;
+                paymentStatus = PaymentStatus.unpaid;
             } else if (i < 13) {
-                bookingStatus = 'cancelled';
-                paymentStatus = 'refunded';
+                bookingStatus = BookingStatus.cancelled;
+                paymentStatus = PaymentStatus.refunded;
             } else {
-                bookingStatus = 'expired';
-                paymentStatus = 'unpaid';
+                bookingStatus = BookingStatus.expired;
+                paymentStatus = PaymentStatus.unpaid;
             }
 
             // Calculate booking details
@@ -161,7 +158,9 @@ export default class BookingSeeder implements Seeder {
                 inventoryHoldRepository.create({
                     quantity: totalPax,
                     expires_at:
-                        bookingStatus === 'expired' ? new Date() : expiresAt,
+                        bookingStatus === BookingStatus.expired
+                            ? new Date()
+                            : expiresAt,
                     tour_session: session,
                 }),
             );
@@ -181,7 +180,7 @@ export default class BookingSeeder implements Seeder {
                     tour_inventory_hold: inventoryHold,
                     booking_payment:
                         paymentMethods[
-                        Math.floor(Math.random() * paymentMethods.length)
+                            Math.floor(Math.random() * paymentMethods.length)
                         ],
                 }),
             );
@@ -239,7 +238,7 @@ export default class BookingSeeder implements Seeder {
             }
 
             // Create passengers for confirmed bookings
-            if (bookingStatus === 'confirmed') {
+            if (bookingStatus === BookingStatus.confirmed) {
                 const passengerNames = [
                     'Nguyễn Văn A',
                     'Trần Thị B',
@@ -259,8 +258,8 @@ export default class BookingSeeder implements Seeder {
                             item.pax_type.name === 'Adult'
                                 ? Math.floor(Math.random() * 40) + 25
                                 : item.pax_type.name === 'Youth'
-                                    ? Math.floor(Math.random() * 6) + 12
-                                    : Math.floor(Math.random() * 8) + 3;
+                                  ? Math.floor(Math.random() * 6) + 12
+                                  : Math.floor(Math.random() * 8) + 3;
 
                         const birthdate = new Date();
                         birthdate.setFullYear(
@@ -271,13 +270,14 @@ export default class BookingSeeder implements Seeder {
                             passengerRepository.create({
                                 full_name:
                                     passengerNames[
-                                    passengerIndex % passengerNames.length
+                                        passengerIndex % passengerNames.length
                                     ],
                                 birthdate: birthdate,
-                                phone_number: p === 0 ? customer.phone : null,
+                                phone_number:
+                                    p === 0 ? customer.phone : undefined,
                                 booking_item: item,
                                 pax_type: item.pax_type,
-                            } as any),
+                            }),
                         );
                         passengerIndex++;
                     }

@@ -34,7 +34,7 @@ export default class TourVariantPaxPriceSeeder implements Seeder {
         const senior = paxTypes.find((p) => p.name === 'Senior');
 
         for (const variant of variants) {
-            const isVND = variant.currency.symbol === 'VND';
+            // const isVND = variant.currency.symbol === 'VND';
             const isUSD = variant.currency.symbol === 'USD';
 
             // Base prices depending on tour type

@@ -9,6 +9,7 @@ import { ArticleModule } from './module/article/article.module';
 import { TourModule } from './module/tour/tour.module';
 import { ReviewModule } from './module/review/review.module';
 import { CommonModule } from './module/common/common.module';
+import { DashboardModule } from './module/dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -29,8 +30,9 @@ import { CommonModule } from './module/common/common.module';
         TourModule,
         ReviewModule,
         CommonModule,
+        DashboardModule,
     ],
     controllers: [AppController],
     providers: [],
 })
-export class AppModule { }
+export class AppModule {}

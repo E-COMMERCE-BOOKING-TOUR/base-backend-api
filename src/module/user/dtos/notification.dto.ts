@@ -28,6 +28,13 @@ export enum NotificationType {
     policy = 'policy',
 }
 
+export enum TargetGroup {
+    all = 'all',
+    admin = 'admin',
+    supplier = 'supplier',
+    specific = 'specific',
+}
+
 @ApiSchema({ name: 'CreateNotificationRequest' })
 export class NotificationDTO {
     @IsString()
@@ -78,6 +85,16 @@ export class NotificationDTO {
     user_ids?: number[];
 
     @IsOptional()
+    @IsString()
+    @ApiProperty({
+        description: 'Đối tượng nhận thông báo',
+        required: false,
+        enum: TargetGroup,
+        default: TargetGroup.specific,
+    })
+    target_group?: TargetGroup;
+
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày tạo', required: false })
@@ -112,8 +129,14 @@ export class NotificationSummaryDTO {
     @ApiProperty()
     is_user: boolean;
 
+    @ApiProperty()
+    description: string;
+
     @ApiProperty({ type: [Number] })
     user_ids: number[];
+
+    @ApiProperty({ enum: TargetGroup })
+    target_group: TargetGroup;
 
     @IsOptional()
     @IsDate()
@@ -139,9 +162,6 @@ export class NotificationSummaryDTO {
 }
 
 export class NotificationDetailDTO extends NotificationSummaryDTO {
-    @ApiProperty()
-    description: string;
-
     constructor(partial: Partial<NotificationDetailDTO>) {
         super(partial);
         Object.assign(this, partial);

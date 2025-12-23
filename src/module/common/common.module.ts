@@ -10,4 +10,4 @@ import { DivisionService } from './service/division.service';
     providers: [DivisionService],
     exports: [DivisionService],
 })
-export class CommonModule { }
+export class CommonModule {}

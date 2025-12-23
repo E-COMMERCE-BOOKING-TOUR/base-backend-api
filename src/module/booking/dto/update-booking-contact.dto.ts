@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import {
+    IsArray,
+    IsEmail,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    MaxLength,
+    MinLength,
+    ValidateNested,
+} from 'class-validator';
 
 export class PassengerDto {
     @IsString()
@@ -23,7 +32,10 @@ export class UpdateBookingContactDto {
 
     @IsEmail()
     @IsNotEmpty()
-    @ApiProperty({ description: 'Email người liên hệ', example: 'example@email.com' })
+    @ApiProperty({
+        description: 'Email người liên hệ',
+        example: 'example@email.com',
+    })
     contact_email: string;
 
     @IsString()

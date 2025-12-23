@@ -15,13 +15,12 @@ export class CreateInventoryHoldStep implements PurchaseStep {
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         if (!ctx.session) {
-            throw new Error('Session must be resolved before creating inventory hold');
+            throw new Error(
+                'Session must be resolved before creating inventory hold',
+            );
         }
 
-        const totalQuantity = ctx.pax.reduce(
-            (sum, p) => sum + p.quantity,
-            0,
-        );
+        const totalQuantity = ctx.pax.reduce((sum, p) => sum + p.quantity, 0);
 
         const hold = this.inventoryHoldRepository.create({
             tour_session: ctx.session,
@@ -37,4 +36,3 @@ export class CreateInventoryHoldStep implements PurchaseStep {
         };
     }
 }
-

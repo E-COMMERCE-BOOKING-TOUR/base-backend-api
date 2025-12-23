@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { PriceContext, PriceStep } from "../types/index.interface";
+import { Injectable } from '@nestjs/common';
+import { PriceContext, PriceStep } from '../types/index.interface';
 
 @Injectable()
 export class TaxStep implements PriceStep {

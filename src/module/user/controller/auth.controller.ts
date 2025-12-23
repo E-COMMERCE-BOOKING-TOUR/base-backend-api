@@ -27,7 +27,7 @@ import { JWT } from '../decorator/jwt.decorator';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(private readonly authService: AuthService) {}
 
     @Post('register')
     @UseFilters(AuthExceptionFilter)
@@ -70,7 +70,7 @@ export class AuthController {
         type: UnauthorizedResponseDto,
     })
     async me(@User() user: UserEntity) {
-        return user;
+        return Promise.resolve(user);
     }
 
     @ApiBearerAuth('refresh-token')

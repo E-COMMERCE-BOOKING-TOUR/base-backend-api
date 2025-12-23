@@ -49,11 +49,11 @@ export class DivisionEntity {
         nullable: false,
     })
     @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Quốc gia' })
+    @ApiProperty({ description: 'Quốc gia', type: () => CountryEntity })
     country: CountryEntity;
 
     @OneToMany(() => TourEntity, (tour) => tour.division)
-    @ApiProperty({ description: 'Danh sách các tour' })
+    @ApiProperty({ description: 'Danh sách các tour', type: () => [TourEntity] })
     tours: TourEntity[];
 
     @Index()
@@ -66,10 +66,10 @@ export class DivisionEntity {
         nullable: true,
     })
     @JoinColumn({ name: 'parent_id' })
-    @ApiProperty({ description: 'Phân cấp cha' })
+    @ApiProperty({ description: 'Phân cấp cha', type: () => DivisionEntity })
     parent?: DivisionEntity | null;
 
     @OneToMany(() => DivisionEntity, (c) => c.parent)
-    @ApiProperty({ description: 'Phân cấp con' })
+    @ApiProperty({ description: 'Phân cấp con', type: () => [DivisionEntity] })
     children: DivisionEntity[];
 }

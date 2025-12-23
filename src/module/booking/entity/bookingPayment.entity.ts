@@ -60,6 +60,7 @@ export class BookingPaymentEntity extends BaseEntityTimestamp {
     @ApiProperty({
         description:
             'Danh sách các đơn đặt tour đã thanh toán bằng phương thức này',
+        type: () => [BookingEntity]
     })
     bookings: BookingEntity[];
 
@@ -67,6 +68,6 @@ export class BookingPaymentEntity extends BaseEntityTimestamp {
         nullable: false,
     })
     @JoinColumn({ name: 'currency_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tiền tệ của phương thức thanh toán' })
+    @ApiProperty({ description: 'Tiền tệ của phương thức thanh toán', type: () => CurrencyEntity })
     currency: CurrencyEntity;
 }

@@ -75,25 +75,25 @@ export class TourVariantEntity extends BaseEntityTimestamp {
 
     @ManyToOne(() => TourEntity, (tour) => tour.variants, { nullable: false })
     @JoinColumn({ name: 'tour_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tour' })
+    @ApiProperty({ description: 'Tour', type: () => TourEntity })
     tour: TourEntity;
 
     @ManyToOne(() => CurrencyEntity, (currency) => currency.tour_variants, {
         nullable: false,
     })
     @JoinColumn({ name: 'currency_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tiền tệ biến thể tour' })
+    @ApiProperty({ description: 'Tiền tệ biến thể tour', type: () => CurrencyEntity })
     currency: CurrencyEntity;
 
     @OneToMany(() => TourSessionEntity, (session) => session.tour_variant)
-    @ApiProperty({ description: 'Danh sách các lịch chạy của biến thể tour' })
+    @ApiProperty({ description: 'Danh sách các lịch chạy của biến thể tour', type: () => [TourSessionEntity] })
     tour_sessions: TourSessionEntity[];
 
     @OneToMany(
         () => TourPolicyEntity,
         (tour_policy) => tour_policy.tour_variant,
     )
-    @ApiProperty({ description: 'Chính sách hủy/fee của biến thể tour' })
+    @ApiProperty({ description: 'Chính sách hủy/fee của biến thể tour', type: () => TourPolicyEntity })
     tour_policy: TourPolicyEntity;
 
     @OneToMany(
@@ -101,19 +101,20 @@ export class TourVariantEntity extends BaseEntityTimestamp {
         (tour_variant_pax_type_price) =>
             tour_variant_pax_type_price.tour_variant,
     )
-    @ApiProperty({ description: 'Giá áp theo rule cho loại khách' })
+    @ApiProperty({ description: 'Giá áp theo rule cho loại khách', type: () => [TourVariantPaxTypePriceEntity] })
     tour_variant_pax_type_prices: TourVariantPaxTypePriceEntity[];
 
     @OneToMany(
         () => TourPriceRuleEntity,
         (tour_price_rule) => tour_price_rule.tour_variant,
     )
-    @ApiProperty({ description: 'Quy tắc giá theo mùa/ngày trong tuần' })
+    @ApiProperty({ description: 'Quy tắc giá theo mùa/ngày trong tuần', type: () => [TourPriceRuleEntity] })
     tour_price_rules: TourPriceRuleEntity[];
 
     @OneToMany(() => BookingItemEntity, (booking_item) => booking_item.variant)
     @ApiProperty({
         description: 'Danh sách các mục đặt tour có biến thể tour này',
+        type: () => [BookingItemEntity]
     })
     booking_items: BookingItemEntity[];
 }

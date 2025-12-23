@@ -6,7 +6,7 @@ import { UserDivisionTrendingDTO } from '../dto/division.dto';
 @ApiTags('User Division')
 @Controller('user/division')
 export class UserDivisionController {
-    constructor(private readonly divisionService: DivisionService) { }
+    constructor(private readonly divisionService: DivisionService) {}
 
     @Get('trending')
     @ApiOperation({ summary: 'Get trending destinations' })

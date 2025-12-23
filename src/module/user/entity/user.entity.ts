@@ -71,7 +71,7 @@ export class UserEntity extends BaseEntityTimestamp {
     auth_sessions: UserAuthSessionEntity[];
 
     @Exclude()
-    @ApiProperty({ description: 'Role' })
+    @ApiProperty({ description: 'Role', type: () => RoleEntity })
     @ManyToOne(() => RoleEntity, (role) => role.users, { eager: true })
     @JoinColumn({ name: 'role_id', referencedColumnName: 'id' })
     role: RoleEntity;
@@ -80,31 +80,31 @@ export class UserEntity extends BaseEntityTimestamp {
         () => PaymentInfomationEntity,
         (payment_information) => payment_information.user,
     )
-    @ApiProperty({ description: 'Thông tin thanh toán' })
+    @ApiProperty({ description: 'Thông tin thanh toán', type: () => [PaymentInfomationEntity] })
     payment_informations: PaymentInfomationEntity[];
 
     @OneToMany(() => ReviewEntity, (review) => review.user)
-    @ApiProperty({ description: 'Đánh giá' })
+    @ApiProperty({ description: 'Đánh giá', type: () => [ReviewEntity] })
     reviews: ReviewEntity[];
 
     @ManyToOne(() => CountryEntity, (country) => country.users)
     @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Quốc gia' })
+    @ApiProperty({ description: 'Quốc gia', type: () => CountryEntity })
     country: CountryEntity;
 
     @ManyToMany(() => TourEntity, (tour) => tour.users_favorites)
-    @ApiProperty({ description: 'Danh sách các tour yêu thích' })
+    @ApiProperty({ description: 'Danh sách các tour yêu thích', type: () => [TourEntity] })
     tours_favorites: TourEntity[];
 
     @ManyToOne(() => SupplierEntity, (supplier) => supplier.users, {
         nullable: true,
     })
     @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Nhà cung cấp' })
+    @ApiProperty({ description: 'Nhà cung cấp', type: () => SupplierEntity })
     supplier: SupplierEntity | null;
 
     @OneToMany(() => BookingEntity, (booking) => booking.user)
-    @ApiProperty({ description: 'Danh sách các đơn đặt tour' })
+    @ApiProperty({ description: 'Danh sách các đơn đặt tour', type: () => [BookingEntity] })
     bookings: BookingEntity[];
 
     toJSON() {
@@ -114,6 +114,7 @@ export class UserEntity extends BaseEntityTimestamp {
             username: this.username,
             full_name: this.full_name,
             email: this.email,
+            phone: this.phone,
             role: this.role,
         };
     }

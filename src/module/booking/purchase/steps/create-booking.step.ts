@@ -5,6 +5,7 @@ import { BookingEntity } from '../../entity/booking.entity';
 import { BookingItemEntity } from '../../entity/bookingItem.entity';
 import { TourInventoryHoldEntity } from '@/module/tour/entity/tourInventoryHold.entity';
 import { PurchaseContext, PurchaseStep } from '../types/index.interface';
+import { BookingStatus, PaymentStatus } from '../../dto/booking.dto';
 
 @Injectable()
 export class CreateBookingStep implements PurchaseStep {
@@ -17,7 +18,7 @@ export class CreateBookingStep implements PurchaseStep {
         private readonly bookingItemRepository: Repository<BookingItemEntity>,
         @InjectRepository(TourInventoryHoldEntity)
         private readonly inventoryHoldRepository: Repository<TourInventoryHoldEntity>,
-    ) { }
+    ) {}
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         if (
@@ -38,8 +39,8 @@ export class CreateBookingStep implements PurchaseStep {
             contact_email: ctx.user.email,
             contact_phone: ctx.user.phone || '',
             total_amount: ctx.totalAmount,
-            status: 'pending',
-            payment_status: 'unpaid',
+            status: BookingStatus.pending,
+            payment_status: PaymentStatus.unpaid,
             user: ctx.user,
             currency: ctx.variant.currency,
             payment_information: ctx.paymentInfo || undefined,
@@ -66,4 +67,3 @@ export class CreateBookingStep implements PurchaseStep {
         };
     }
 }
-

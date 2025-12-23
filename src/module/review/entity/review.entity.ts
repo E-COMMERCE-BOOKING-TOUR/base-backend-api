@@ -54,15 +54,15 @@ export class ReviewEntity extends BaseEntityTimestamp {
 
     @ManyToOne(() => UserEntity, (user) => user.reviews, { nullable: false })
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Người dùng' })
+    @ApiProperty({ description: 'Người dùng', type: () => UserEntity })
     user: UserEntity;
 
     @OneToMany(() => ReviewImageEntity, (image) => image.review)
-    @ApiProperty({ description: 'Ảnh đánh giá' })
+    @ApiProperty({ description: 'Ảnh đánh giá', type: () => [ReviewImageEntity] })
     images: ReviewImageEntity[];
 
     @ManyToOne(() => TourEntity, (tour) => tour.reviews, { nullable: false })
     @JoinColumn({ name: 'tour_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tour' })
+    @ApiProperty({ description: 'Tour', type: () => TourEntity })
     tour: TourEntity;
 }

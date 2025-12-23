@@ -10,14 +10,17 @@ import { JwtExceptionFilter } from '@/common/exceptions/jwt.exception';
 @ApiTags('User Payment')
 @Controller('user/payment')
 export class UserPaymentController {
-    constructor(private readonly userPaymentService: UserPaymentService) { }
+    constructor(private readonly userPaymentService: UserPaymentService) {}
 
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
     @UseGuards(AuthGuard('jwt'))
     @Post('card')
     @ApiResponse({ status: 201, description: 'Add payment card success' })
-    async addPaymentCard(@User() user: UserEntity, @Body() dto: AddPaymentInfoDto) {
+    async addPaymentCard(
+        @User() user: UserEntity,
+        @Body() dto: AddPaymentInfoDto,
+    ) {
         return await this.userPaymentService.addPaymentCard(user, dto.token);
     }
 }

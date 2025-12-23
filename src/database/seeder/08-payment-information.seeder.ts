@@ -17,7 +17,9 @@ export default class PaymentInformationSeeder implements Seeder {
         });
 
         if (customers.length === 0) {
-            console.log('No customers found, skipping payment information seeder');
+            console.log(
+                'No customers found, skipping payment information seeder',
+            );
             return;
         }
 

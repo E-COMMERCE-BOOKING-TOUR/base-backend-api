@@ -1,6 +1,6 @@
 import { JwtModuleOptions } from '@nestjs/jwt';
 import { SignOptions } from 'jsonwebtoken';
-import type { StringValue } from "ms";
+import type { StringValue } from 'ms';
 
 export const jwtConfig = (): JwtModuleOptions => {
     const expiresInEnv = process.env.JWT_EXPIRES_IN as StringValue;
@@ -25,8 +25,8 @@ export const jwtRefreshTokenConfig = (): {
     return {
         secret: process.env.JWT_REFRESH_TOKEN_SECRET as string,
         expiresIn: {
-            expiresIn: expiresIn as any,
+            expiresIn: expiresIn,
             algorithm: 'HS256',
-        },
+        } as SignOptions,
     };
 };

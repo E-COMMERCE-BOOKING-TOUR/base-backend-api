@@ -65,4 +65,3 @@ export class CreateBookingItemsStep implements PurchaseStep {
         };
     }
 }
-

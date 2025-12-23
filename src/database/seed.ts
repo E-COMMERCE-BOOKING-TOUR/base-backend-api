@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import * as dotenv from 'dotenv';
 import MainSeeder from './seeder/main.seeder';
 
 // Load environment variables
@@ -43,4 +42,7 @@ async function runSeeders() {
     }
 }
 
-runSeeders();
+runSeeders().catch((err) => {
+    console.error(err);
+    process.exit(1);
+});

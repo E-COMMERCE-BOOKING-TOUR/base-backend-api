@@ -77,7 +77,9 @@ export class AuthService {
         } catch (error) {
             // log error & push error
             // throw error
-            throw new UnauthorizedException(error.message);
+            throw new UnauthorizedException(
+                error instanceof Error ? error.message : String(error),
+            );
         }
     }
 
@@ -153,10 +155,11 @@ export class AuthService {
     private async getToken(payload: TokenPayload) {
         const accessToken = this.jwtService.sign(payload);
         const refreshPayload: RefreshPayload = { uuid: payload.uuid };
+        const config = jwtRefreshTokenConfig();
         const refreshToken = jwt.sign(
             refreshPayload,
-            jwtRefreshTokenConfig().secret,
-            jwtRefreshTokenConfig().expiresIn,
+            config.secret,
+            config.expiresIn,
         );
 
         // Create a session

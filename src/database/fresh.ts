@@ -54,11 +54,18 @@ async function freshDatabase() {
         console.log('  Supplier: supplier1 / password123');
 
         process.exit(0);
-    } catch (error: any) {
-        console.error('Error:', error.message);
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error('Error:', error.message);
+        } else {
+            console.error('Error:', error);
+        }
         await connection.end();
         process.exit(1);
     }
 }
 
-freshDatabase();
+freshDatabase().catch((err) => {
+    console.error('Unhandled error in freshDatabase:', err);
+    process.exit(1);
+});

@@ -54,7 +54,9 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
         length: 20,
         nullable: true,
     })
-    @ApiProperty({ description: 'Trạng thái kiểm tra CVC (pass, fail, unchecked)' })
+    @ApiProperty({
+        description: 'Trạng thái kiểm tra CVC (pass, fail, unchecked)',
+    })
     cvc_check: string | null;
 
     @Exclude()
@@ -95,12 +97,13 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
         nullable: false,
     })
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Người dùng' })
+    @ApiProperty({ description: 'Người dùng', type: () => UserEntity })
     user: UserEntity;
 
     @OneToMany(() => BookingEntity, (booking) => booking.payment_information)
     @ApiProperty({
         description: 'Danh sách các đơn đặt tour có thông tin thanh toán này',
+        type: () => [BookingEntity]
     })
     bookings: BookingEntity[];
 }

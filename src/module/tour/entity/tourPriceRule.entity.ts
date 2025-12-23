@@ -55,16 +55,16 @@ export class TourPriceRuleEntity extends BaseEntityTimestamp {
     @ManyToOne(
         () => TourVariantEntity,
         (tour_variant) => tour_variant.tour_price_rules,
-        { nullable: false },
+        { nullable: false, onDelete: 'CASCADE' },
     )
     @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Biến thể tour' })
+    @ApiProperty({ description: 'Biến thể tour', type: () => TourVariantEntity })
     tour_variant: TourVariantEntity;
 
     @OneToMany(
         () => TourRulePaxTypePriceEntity,
         (tour_rule_pax_type_price) => tour_rule_pax_type_price.tour_price_rule,
     )
-    @ApiProperty({ description: 'Giá áp theo rule cho loại khách' })
+    @ApiProperty({ description: 'Giá áp theo rule cho loại khách', type: () => [TourRulePaxTypePriceEntity] })
     tour_rule_pax_type_prices: TourRulePaxTypePriceEntity[];
 }

@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { TourSessionEntity } from '@/module/tour/entity/tourSession.entity';
 import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
+import { TourStatus } from '@/module/tour/dto/tour.dto';
 
 export default class TourSessionSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -24,7 +25,11 @@ export default class TourSessionSeeder implements Seeder {
 
         for (const variant of variants) {
             // Skip draft tours
-            if (variant.tour.status === 'draft') continue;
+            if (
+                (variant.tour.status as unknown as TourStatus) ===
+                TourStatus.draft
+            )
+                continue;
 
             // Create sessions based on tour type
             const isDailyTour =
@@ -53,11 +58,11 @@ export default class TourSessionSeeder implements Seeder {
                                 end_time: new Date(
                                     `1970-01-01T${8 + (variant.tour.duration_hours || 8)}:00:00`,
                                 ),
-                                capacity: variant.capacity_per_slot,
-                                status:
-                                    i < 7 ? 'open' : i < 14 ? 'open' : 'open',
+                                capacity:
+                                    variant.capacity_per_slot ?? undefined,
+                                status: 'open',
                                 tour_variant: variant,
-                            } as any),
+                            }),
                         );
                     }
 
@@ -83,10 +88,11 @@ export default class TourSessionSeeder implements Seeder {
                                     end_time: new Date(
                                         `1970-01-01T${14 + (variant.tour.duration_hours || 5)}:00:00`,
                                     ),
-                                    capacity: variant.capacity_per_slot,
+                                    capacity:
+                                        variant.capacity_per_slot ?? undefined,
                                     status: 'open',
                                     tour_variant: variant,
-                                } as any),
+                                }),
                             );
                         }
                     }
@@ -112,11 +118,12 @@ export default class TourSessionSeeder implements Seeder {
                             sessionRepository.create({
                                 session_date: sessionDate,
                                 start_time: new Date('1970-01-01T07:00:00'),
-                                end_time: null,
-                                capacity: variant.capacity_per_slot,
+                                end_time: undefined,
+                                capacity:
+                                    variant.capacity_per_slot ?? undefined,
                                 status: status,
                                 tour_variant: variant,
-                            } as any),
+                            }),
                         );
                     }
                 } else {
@@ -133,10 +140,11 @@ export default class TourSessionSeeder implements Seeder {
                                 session_date: sessionDate,
                                 start_time: new Date('1970-01-01T08:00:00'),
                                 end_time: new Date('1970-01-01T18:00:00'),
-                                capacity: variant.capacity_per_slot,
+                                capacity:
+                                    variant.capacity_per_slot ?? undefined,
                                 status: 'open',
                                 tour_variant: variant,
-                            } as any),
+                            }),
                         );
                     }
                 }

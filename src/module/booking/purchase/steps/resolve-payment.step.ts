@@ -17,20 +17,13 @@ export class ResolvePaymentStep implements PurchaseStep {
         private readonly bookingPaymentRepository: Repository<BookingPaymentEntity>,
         @InjectRepository(CurrencyEntity)
         private readonly currencyRepository: Repository<CurrencyEntity>,
-    ) { }
+    ) {}
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
-        if (!ctx.user) {
-            throw new Error('User must be resolved before resolving payment');
-        }
-
-        // We do NOT automatically assign payment info or booking payment here anymore.
-        // These will be selected/created by the user during the checkout steps.
-
-        return {
+        return Promise.resolve({
             ...ctx,
             paymentInfo: undefined,
             bookingPayment: undefined,
-        };
+        });
     }
 }

@@ -41,10 +41,10 @@ export class SupplierEntity extends BaseEntityTimestamp {
     status: string;
 
     @OneToMany(() => UserEntity, (user) => user.supplier)
-    @ApiProperty({ description: 'Danh sách các người dùng của nhà cung cấp' })
+    @ApiProperty({ description: 'Danh sách các người dùng của nhà cung cấp', type: () => [UserEntity] })
     users: UserEntity[];
 
     @OneToMany(() => TourEntity, (tour) => tour.supplier)
-    @ApiProperty({ description: 'Danh sách các tour của nhà cung cấp' })
+    @ApiProperty({ description: 'Danh sách các tour của nhà cung cấp', type: () => [TourEntity] })
     tours: TourEntity[];
 }

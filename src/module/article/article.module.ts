@@ -8,18 +8,23 @@ import { ArticleServiceProxy } from './service/article.service-proxy';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([
-            UserEntity,
-        ]),
+        TypeOrmModule.forFeature([UserEntity]),
         ClientsModule.registerAsync([
             {
                 imports: [ConfigModule],
                 name: 'ARTICLE_SERVICE',
-                useFactory: async (configService: ConfigService) => ({
+                useFactory: (configService: ConfigService) => ({
                     transport: Transport.TCP,
                     options: {
-                        host: configService.get('ARTICLE_SERVICE_HOST') || 'social-network',
-                        port: Number(configService.get('ARTICLE_SERVICE_PORT')) || 3001,
+                        host:
+                            configService.get<string>('ARTICLE_SERVICE_HOST') ||
+                            'social-network',
+                        port:
+                            Number(
+                                configService.get<string>(
+                                    'ARTICLE_SERVICE_PORT',
+                                ),
+                            ) || 3001,
                     },
                 }),
                 inject: [ConfigService],
@@ -30,4 +35,4 @@ import { ArticleServiceProxy } from './service/article.service-proxy';
     providers: [ArticleServiceProxy],
     exports: [ArticleServiceProxy],
 })
-export class ArticleModule { }
+export class ArticleModule {}

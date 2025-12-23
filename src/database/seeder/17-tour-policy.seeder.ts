@@ -3,6 +3,7 @@ import { Seeder } from 'typeorm-extension';
 import { TourPolicyEntity } from '@/module/tour/entity/tourPolicy.entity';
 import { TourPolicyRuleEntity } from '@/module/tour/entity/tourPolicyRule.entity';
 import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
+import { TourStatus } from '@/module/tour/dto/tour.dto';
 
 export default class TourPolicySeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -22,7 +23,11 @@ export default class TourPolicySeeder implements Seeder {
         }
 
         for (const variant of variants) {
-            if (variant.tour.status === 'draft') continue;
+            if (
+                (variant.tour.status as unknown as TourStatus) ===
+                TourStatus.draft
+            )
+                continue;
 
             // Check if policy already exists
             const existingPolicy = await policyRepository.findOne({

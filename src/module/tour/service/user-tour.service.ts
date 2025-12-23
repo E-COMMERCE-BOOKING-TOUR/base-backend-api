@@ -16,6 +16,7 @@ import {
     UserTourVariantDTO,
     UserTourVariantPaxPriceDTO,
     UserTourSessionDTO,
+    TourStatus,
 } from '../dto/tour.dto';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
 import { TourVariantEntity } from '../entity/tourVariant.entity';
@@ -52,7 +53,9 @@ export class UserTourService {
                 { reviewStatus: 'approved' },
             )
             .leftJoinAndSelect('tour.tour_categories', 'categories')
-            .where('tour.status = :tourStatus', { tourStatus: 'active' })
+            .where('tour.status = :tourStatus', {
+                tourStatus: TourStatus.active,
+            })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true });
     }
 
@@ -85,7 +88,8 @@ export class UserTourService {
 
         if (tour.variants && tour.variants.length > 0) {
             const activeVariant = tour.variants.find(
-                (v) => v.status === 'active',
+                (v) =>
+                    (v.status as unknown as TourStatus) === TourStatus.active,
             );
             if (
                 activeVariant &&
@@ -304,7 +308,7 @@ export class UserTourService {
             .leftJoinAndSelect('prices.pax_type', 'paxType')
             .leftJoinAndSelect('tour.tour_categories', 'categories')
             .where('tour.slug = :slug', { slug })
-            .andWhere('tour.status = :status', { status: 'active' })
+            .andWhere('tour.status = :status', { status: TourStatus.active })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true })
             .getOne();
 
@@ -349,16 +353,21 @@ export class UserTourService {
                 const computedPrices = await this.computeTourPricing(tour);
                 const prices = computedPrices
                     .map((p) => p.finalPrice)
-                    .filter((p): p is number => p !== null && p !== undefined && p > 0);
+                    .filter(
+                        (p): p is number =>
+                            p !== null && p !== undefined && p > 0,
+                    );
 
                 if (prices.length > 0) {
                     currentPrice = Math.min(...prices);
                     originalPrice = Math.round(currentPrice * 1.5);
                 }
-            } catch (error) {
+            } catch {
                 // Fallback to basic calculation if pricing service fails
                 const activeVariant = tour.variants.find(
-                    (v) => v.status === 'active',
+                    (v) =>
+                        (v.status as unknown as TourStatus) ===
+                        TourStatus.active,
                 );
                 if (
                     activeVariant &&
@@ -396,11 +405,17 @@ export class UserTourService {
         const maxPax: number = tour.max_pax || minPax + 2;
         const capacity: string = `${maxPax} People`;
 
-        const included: string[] = [];
-        const notIncluded: string[] = [];
+        const included: string[] = tour.included || [];
+        const notIncluded: string[] = tour.not_included || [];
 
         let testimonial: TourTestimonialDTO | undefined;
-        if (tour.reviews && tour.reviews.length > 0) {
+        if (tour.testimonial && tour.testimonial.name) {
+            testimonial = new TourTestimonialDTO({
+                name: tour.testimonial.name,
+                country: tour.testimonial.country,
+                text: tour.testimonial.text,
+            });
+        } else if (tour.reviews && tour.reviews.length > 0) {
             const latestReview = tour.reviews[0];
             const userName =
                 latestReview.user?.full_name ||
@@ -419,17 +434,24 @@ export class UserTourService {
         }
 
         const details = new TourDetailsInfoDTO({
-            language: ['English', 'Vietnamese'],
+            language: tour.languages?.length
+                ? tour.languages
+                : ['English', 'Vietnamese'],
             duration: durationStr,
             capacity: capacity,
         });
 
-        const activity: TourActivityDTO | undefined = tour.summary
+        const activity: TourActivityDTO | undefined = tour.highlights
             ? new TourActivityDTO({
-                title: 'What You Will Do',
-                items: [tour.summary],
+                title: tour.highlights.title,
+                items: tour.highlights.items,
             })
-            : undefined;
+            : tour.summary
+                ? new TourActivityDTO({
+                    title: 'What You Will Do',
+                    items: [tour.summary],
+                })
+                : undefined;
 
         return new UserTourDetailDTO({
             id: tour.id,
@@ -443,19 +465,20 @@ export class UserTourService {
             reviewCount: reviewsCount,
             score: avgRating,
             scoreLabel,
-            staffScore: parseFloat(staffScore.toFixed(1)),
+            staffScore: tour.staff_score || parseFloat(staffScore.toFixed(1)),
             images: images.length > 0 ? images : ['/assets/images/travel.jpg'],
             testimonial,
             mapUrl: tour.map_url || '',
             mapPreview:
-                images.length > 0 ? images[0] : '/assets/images/travel.jpg',
+                tour.map_preview ||
+                (images.length > 0 ? images[0] : '/assets/images/travel.jpg'),
             description: tour.description || '',
             summary: tour.summary || '',
             activity,
             included,
             notIncluded,
             details,
-            meetingPoint: '',
+            meetingPoint: tour.meeting_point || '',
             tags,
             variants:
                 tour.variants?.map(
@@ -481,7 +504,7 @@ export class UserTourService {
 
     async getTourReviews(slug: string): Promise<UserTourReviewDTO[]> {
         const tour = await this.tourRepository.findOne({
-            where: { slug, status: 'active', is_visible: true },
+            where: { slug, status: TourStatus.active, is_visible: true },
         });
 
         if (!tour) {
@@ -524,7 +547,7 @@ export class UserTourService {
         slug: string,
     ): Promise<UserTourReviewCategoryDTO[]> {
         const tour = await this.tourRepository.findOne({
-            where: { slug, status: 'active', is_visible: true },
+            where: { slug, status: TourStatus.active, is_visible: true },
             relations: ['reviews'],
         });
 
@@ -594,7 +617,7 @@ export class UserTourService {
                 'prices',
             )
             .leftJoinAndSelect('tour.tour_categories', 'categories')
-            .where('tour.status = :status', { status: 'active' })
+            .where('tour.status = :status', { status: TourStatus.active })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true })
             .andWhere('tour.id != :currentTourId', {
                 currentTourId: currentTour.id,
@@ -641,7 +664,9 @@ export class UserTourService {
 
             if (tour.variants && tour.variants.length > 0) {
                 const activeVariant = tour.variants.find(
-                    (v) => v.status === 'active',
+                    (v) =>
+                        (v.status as unknown as TourStatus) ===
+                        TourStatus.active,
                 );
                 if (
                     activeVariant &&
@@ -683,7 +708,7 @@ export class UserTourService {
         const tour = await this.tourRepository.findOne({
             where: {
                 slug,
-                status: 'active',
+                status: TourStatus.active,
                 is_visible: true,
             },
             relations: [
@@ -724,8 +749,12 @@ export class UserTourService {
     ): Promise<UserTourSessionDTO[]> {
         // Find variant to ensure it belongs to the tour and get capacity info
         const tour = await this.tourRepository.findOne({
-            where: { slug, status: 'active' },
-            relations: ['variants', 'variants.tour_variant_pax_type_prices', 'variants.tour_variant_pax_type_prices.pax_type'],
+            where: { slug, status: TourStatus.active },
+            relations: [
+                'variants',
+                'variants.tour_variant_pax_type_prices',
+                'variants.tour_variant_pax_type_prices.pax_type',
+            ],
         });
 
         if (!tour) {
@@ -775,7 +804,9 @@ export class UserTourService {
             );
             const held = (session.tour_inventory_holds ?? []).reduce(
                 (sum, hold) =>
-                    hold.expires_at > new Date() ? sum + (hold.quantity || 0) : sum,
+                    hold.expires_at && new Date(hold.expires_at) > new Date()
+                        ? sum + (hold.quantity || 0)
+                        : sum,
                 0,
             );
             const available = Math.max(0, totalCapacity - booked - held);
@@ -786,9 +817,27 @@ export class UserTourService {
             }
 
             return new UserTourSessionDTO({
-                date: session.session_date instanceof Date
-                    ? session.session_date.toISOString().split('T')[0]
-                    : session.session_date, // TypeORM might return string for date type
+                id: session.id,
+                date:
+                    session.session_date instanceof Date
+                        ? session.session_date.toISOString().split('T')[0]
+                        : session.session_date, // TypeORM might return string for date type
+                start_time:
+                    session.start_time instanceof Date
+                        ? session.start_time.toLocaleTimeString('en-GB', {
+                            hour12: false,
+                        })
+                        : typeof session.start_time === 'string'
+                            ? session.start_time
+                            : undefined,
+                end_time:
+                    session.end_time instanceof Date
+                        ? session.end_time.toLocaleTimeString('en-GB', {
+                            hour12: false,
+                        })
+                        : typeof session.end_time === 'string'
+                            ? session.end_time
+                            : undefined,
                 status,
                 capacity_available: available,
                 price: minPrice, // In future, apply date-specific pricing rules here

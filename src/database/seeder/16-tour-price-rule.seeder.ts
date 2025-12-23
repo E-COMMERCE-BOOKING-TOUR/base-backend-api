@@ -4,6 +4,7 @@ import { TourPriceRuleEntity } from '@/module/tour/entity/tourPriceRule.entity';
 import { TourRulePaxTypePriceEntity } from '@/module/tour/entity/tourRulePaxTypePrice.entity';
 import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 import { TourPaxTypeEntity } from '@/module/tour/entity/tourPaxType.entity';
+import { TourStatus } from '@/module/tour/dto/tour.dto';
 
 export default class TourPriceRuleSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -37,7 +38,11 @@ export default class TourPriceRuleSeeder implements Seeder {
         const year = today.getFullYear();
 
         for (const variant of variants) {
-            if (variant.tour.status === 'draft') continue;
+            if (
+                (variant.tour.status as unknown as TourStatus) ===
+                TourStatus.draft
+            )
+                continue;
 
             // High season rule (Summer: June - August)
             const summerStart = new Date(`${year}-06-01`);

@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { join } from 'path';
 
 export const dataSource = new DataSource({
@@ -14,6 +14,6 @@ export const dataSource = new DataSource({
     ],
     synchronize: false,
     logging: false,
-} as any);
+} as DataSourceOptions);
 
 export default dataSource;

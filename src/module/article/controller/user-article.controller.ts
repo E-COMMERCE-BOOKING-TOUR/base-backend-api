@@ -9,19 +9,12 @@ import { UserEntity } from 'src/module/user/entity/user.entity';
 
 @ApiTags('User Article')
 @Controller('user/article')
-// @UseGuards(JwtAuthGuard)
-// @ApiBearerAuth()
 export class UserArticleController {
-    constructor(private readonly articleServiceProxy: ArticleServiceProxy) { }
+    constructor(private readonly articleServiceProxy: ArticleServiceProxy) {}
+
     @Get('popular')
     @ApiOperation({ summary: 'Get popular articles' })
-    @ApiQuery({
-        name: 'limit',
-        required: false,
-        type: Number,
-        description: 'Number of articles to return',
-        example: 10,
-    })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
     @ApiResponse({
         status: 200,
         description: 'List of popular articles',

@@ -19,6 +19,7 @@ import {
     Matches,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { TourEntity } from '../entity/tour.entity';
 
 export enum TourStatus {
     draft = 'draft',
@@ -67,6 +68,220 @@ export class TourImageDTO {
     }
 }
 
+export class TestimonialDTO {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Tên người phát biểu' })
+    name: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Quốc gia' })
+    country: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Nội dung nhận xét' })
+    text: string;
+}
+
+export class HighlightsDTO {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Tiêu đề highlights' })
+    title: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Danh sách các điểm nổi bật', type: [String] })
+    items: string[];
+}
+
+export class TourVariantPaxTypePriceDTO {
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID giá', required: false })
+    id?: number;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID biến thể tour', required: false })
+    tour_variant_id?: number;
+
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID loại khách' })
+    pax_type_id: number;
+
+    @Type(() => Number)
+    @IsNumber({ allowInfinity: false, allowNaN: false })
+    @Min(0)
+    @ApiProperty({ description: 'Giá áp cho loại khách' })
+    price: number;
+}
+
+export class TourSessionDTO {
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID session', required: false })
+    id?: number;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID biến thể tour', required: false })
+    tour_variant_id?: number;
+
+    @IsDateString()
+    @ApiProperty({ description: 'Ngày chạy' })
+    session_date: Date;
+
+    @IsOptional()
+    @IsString()
+    @Matches(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
+    @ApiProperty({ description: 'Giờ bắt đầu (HH:mm:ss)', required: false })
+    start_time?: string;
+
+    @IsOptional()
+    @IsString()
+    @Matches(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
+    @ApiProperty({ description: 'Giờ kết thúc (HH:mm:ss)', required: false })
+    end_time?: string;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'Sức chứa slot', required: false })
+    capacity?: number;
+
+    @IsEnum(TourSessionStatus)
+    @ApiProperty({
+        description: 'Trạng thái slot',
+        enum: TourSessionStatus,
+        default: TourSessionStatus.open,
+    })
+    status: TourSessionStatus;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
+}
+
+export class TourVariantDTO {
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID biến thể tour', required: false })
+    id?: number;
+
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(2)
+    @ApiProperty({ description: 'Tên biến thể tour' })
+    name: string;
+
+    @IsOptional()
+    @IsInt()
+    @ApiProperty({ description: 'Số thứ tự', required: false })
+    sort_no?: number;
+
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'Số lượng tối thiểu mỗi đơn' })
+    min_pax_per_booking: number;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'Sức chứa mỗi slot', required: false })
+    capacity_per_slot?: number;
+
+    @IsBoolean()
+    @ApiProperty({ description: 'Thuế đã được bao gồm' })
+    tax_included: boolean;
+
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ description: 'Thời gian chặn trước khởi hành (giờ)' })
+    cutoff_hours: number;
+
+    @IsEnum(TourVariantStatus)
+    @ApiProperty({
+        description: 'Trạng thái biến thể',
+        enum: TourVariantStatus,
+    })
+    status: TourVariantStatus;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID tour', required: false })
+    tour_id?: number;
+
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID tiền tệ', required: false })
+    currency_id?: number;
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TourSessionDTO)
+    @ApiProperty({
+        description: 'Danh sách slot chạy',
+        required: false,
+        type: [TourSessionDTO],
+    })
+    sessions?: TourSessionDTO[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TourVariantPaxTypePriceDTO)
+    @ApiProperty({
+        description: 'Danh sách giá theo loại khách',
+        required: false,
+        type: [TourVariantPaxTypePriceDTO],
+    })
+    prices?: TourVariantPaxTypePriceDTO[];
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày xóa', required: false })
+    deleted_at?: Date;
+}
+
 @ApiSchema({ name: 'CreateTourRequest' })
 export class TourDTO {
     @IsString()
@@ -90,12 +305,15 @@ export class TourDTO {
     @ApiProperty({ description: 'URL bản đồ tour', required: false })
     map_url?: string;
 
+    @Transform(({ value }: { value: unknown }) =>
+        value === '' ? undefined : value,
+    )
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @MinLength(2)
     @MaxLength(255)
-    @ApiProperty({ description: 'Slug tour' })
-    slug: string;
+    @ApiProperty({ description: 'Slug tour', required: false })
+    slug?: string;
 
     @IsString()
     @IsNotEmpty()
@@ -183,6 +401,17 @@ export class TourDTO {
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
+    @Type(() => TourVariantDTO)
+    @ApiProperty({
+        description: 'Danh sách biến thể tour',
+        required: false,
+        type: [TourVariantDTO],
+    })
+    variants?: TourVariantDTO[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
     @Type(() => TourImageDTO)
     @ApiProperty({
         description: 'Danh sách ảnh tour',
@@ -209,132 +438,56 @@ export class TourDTO {
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
 
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Điểm hẹn', required: false })
+    meeting_point?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Bao gồm', required: false, type: [String] })
+    included?: string[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Không bao gồm', required: false, type: [String] })
+    not_included?: string[];
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => HighlightsDTO)
+    @ApiProperty({ description: 'Điểm nổi bật', required: false, type: HighlightsDTO })
+    highlights?: HighlightsDTO;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({ description: 'Ngông ngữ', required: false, type: [String] })
+    languages?: string[];
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(10)
+    @ApiProperty({ description: 'Điểm nhân viên', required: false })
+    staff_score?: number;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => TestimonialDTO)
+    @ApiProperty({ description: 'Nhận xét tiêu biểu', required: false, type: TestimonialDTO })
+    testimonial?: TestimonialDTO;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Ảnh xem trước bản đồ', required: false })
+    map_preview?: string;
+
     constructor(partial: Partial<TourDTO>) {
         Object.assign(this, partial);
     }
-}
-
-export class TourVariantDTO {
-    @IsString()
-    @IsNotEmpty()
-    @MinLength(2)
-    @ApiProperty({ description: 'Tên biến thể tour' })
-    name: string;
-
-    @IsOptional()
-    @IsInt()
-    @ApiProperty({ description: 'Số thứ tự', required: false })
-    sort_no?: number;
-
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'Số lượng tối thiểu mỗi đơn' })
-    min_pax_per_booking: number;
-
-    @IsOptional()
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'Sức chứa mỗi slot', required: false })
-    capacity_per_slot?: number;
-
-    @IsBoolean()
-    @ApiProperty({ description: 'Thuế đã được bao gồm' })
-    tax_included: boolean;
-
-    @IsInt()
-    @Min(0)
-    @ApiProperty({ description: 'Thời gian chặn trước khởi hành (giờ)' })
-    cutoff_hours: number;
-
-    @IsEnum(TourVariantStatus)
-    @ApiProperty({
-        description: 'Trạng thái biến thể',
-        enum: TourVariantStatus,
-    })
-    status: TourVariantStatus;
-
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID tour' })
-    tour_id: number;
-
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID tiền tệ' })
-    currency_id: number;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày tạo', required: false })
-    created_at?: Date;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày cập nhật', required: false })
-    updated_at?: Date;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày xóa', required: false })
-    deleted_at?: Date;
-}
-
-export class TourSessionDTO {
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID biến thể tour' })
-    tour_variant_id: number;
-
-    @IsDateString()
-    @ApiProperty({ description: 'Ngày chạy' })
-    session_date: Date;
-
-    @IsOptional()
-    @IsString()
-    @Matches(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
-    @ApiProperty({ description: 'Giờ bắt đầu (HH:mm:ss)', required: false })
-    start_time?: string;
-
-    @IsOptional()
-    @IsString()
-    @Matches(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
-    @ApiProperty({ description: 'Giờ kết thúc (HH:mm:ss)', required: false })
-    end_time?: string;
-
-    @IsOptional()
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'Sức chứa slot', required: false })
-    capacity?: number;
-
-    @IsEnum(TourSessionStatus)
-    @ApiProperty({
-        description: 'Trạng thái slot',
-        enum: TourSessionStatus,
-        default: TourSessionStatus.open,
-    })
-    status: TourSessionStatus;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày tạo', required: false })
-    created_at?: Date;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày cập nhật', required: false })
-    updated_at?: Date;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày xóa', required: false })
-    deleted_at?: Date;
 }
 
 export class TourPolicyRuleDTO {
@@ -371,24 +524,6 @@ export class TourPolicyDTO {
     @Type(() => TourPolicyRuleDTO)
     @ApiProperty({ description: 'Danh sách rule', type: [TourPolicyRuleDTO] })
     rules: TourPolicyRuleDTO[];
-}
-
-export class TourVariantPaxTypePriceDTO {
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID biến thể tour' })
-    tour_variant_id: number;
-
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID loại khách' })
-    pax_type_id: number;
-
-    @Type(() => Number)
-    @IsNumber({ allowInfinity: false, allowNaN: false })
-    @Min(0)
-    @ApiProperty({ description: 'Giá áp cho loại khách' })
-    price: number;
 }
 
 export class TourRulePaxTypePriceDTO {
@@ -649,6 +784,71 @@ export class UserTourSearchQueryDTO {
         default: 'popular',
     })
     sort?: string;
+}
+
+export class AdminTourQueryDTO {
+    @IsOptional()
+    @IsString()
+    @Transform(({ value }: { value: unknown }) =>
+        value === '' ? undefined : value,
+    )
+    @ApiProperty({ required: false, description: 'Từ khóa tìm kiếm' })
+    keyword?: string;
+
+    @IsOptional()
+    @IsEnum(TourStatus)
+    @Transform(({ value }: { value: unknown }) =>
+        value === '' ? undefined : value,
+    )
+    @ApiProperty({
+        required: false,
+        enum: TourStatus,
+        description: 'Trạng thái',
+    })
+    status?: TourStatus;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ required: false, default: 1 })
+    page?: number = 1;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @Max(100)
+    @ApiProperty({ required: false, default: 10 })
+    limit?: number = 10;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false, default: 'created_at' })
+    sortBy?: string = 'created_at';
+
+    @IsOptional()
+    @IsString()
+    @IsIn(['ASC', 'DESC'])
+    @ApiProperty({ required: false, enum: ['ASC', 'DESC'], default: 'DESC' })
+    sortOrder?: 'ASC' | 'DESC' = 'DESC';
+}
+
+export class PaginatedTourResponse {
+    @ApiProperty({ type: [TourEntity] })
+    data: TourEntity[];
+
+    @ApiProperty()
+    total: number;
+
+    @ApiProperty()
+    page: number;
+
+    @ApiProperty()
+    limit: number;
+
+    @ApiProperty()
+    totalPages: number;
 }
 
 export class TourDetailDTO extends TourSummaryDTO {
@@ -987,7 +1187,8 @@ export class TourPaxTypePriceDto {
     maxAge: number | null;
 
     @ApiProperty({
-        description: 'Giá base từ tour_variant_pax_type_prices (min theo tất cả variants)',
+        description:
+            'Giá base từ tour_variant_pax_type_prices (min theo tất cả variants)',
         nullable: true,
     })
     basePrice: number | null;
@@ -1019,7 +1220,16 @@ export class TourPaxTypePriceDto {
 
 export class UserTourSessionDTO {
     @ApiProperty()
+    id: number;
+
+    @ApiProperty()
     date: string;
+
+    @ApiProperty({ required: false })
+    start_time?: string;
+
+    @ApiProperty({ required: false })
+    end_time?: string;
 
     @ApiProperty({ enum: ['open', 'full', 'closed'] })
     status: string;

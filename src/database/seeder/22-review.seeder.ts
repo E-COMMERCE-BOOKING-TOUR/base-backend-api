@@ -3,6 +3,13 @@ import { Seeder } from 'typeorm-extension';
 import { ReviewEntity } from '@/module/review/entity/review.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
 import { UserEntity } from '@/module/user/entity/user.entity';
+import { TourStatus } from '@/module/tour/dto/tour.dto';
+
+interface ReviewSeederData {
+    titles: string[];
+    contents: string[];
+    rating: number;
+}
 
 export default class ReviewSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -11,7 +18,7 @@ export default class ReviewSeeder implements Seeder {
         const userRepository = dataSource.getRepository(UserEntity);
 
         const tours = await tourRepository.find({
-            where: { status: 'active', is_visible: true },
+            where: { status: TourStatus.active, is_visible: true },
         });
         const customers = await userRepository.find({
             where: { role: { name: 'customer' } },
@@ -24,7 +31,7 @@ export default class ReviewSeeder implements Seeder {
             return;
         }
 
-        const reviewData = [
+        const reviewData: ReviewSeederData[] = [
             {
                 titles: [
                     'Amazing experience!',
@@ -96,7 +103,7 @@ export default class ReviewSeeder implements Seeder {
                     customers[Math.floor(Math.random() * customers.length)];
 
                 // Weight towards higher ratings
-                let ratingCategory;
+                let ratingCategory: ReviewSeederData;
                 const rand = Math.random();
                 if (rand > 0.8) {
                     ratingCategory = reviewData[3]; // 2 stars
@@ -142,11 +149,12 @@ export default class ReviewSeeder implements Seeder {
                             title: title,
                             rating: rating,
                             content: content,
-                            sort_no: status === 'approved' ? sortNo++ : null,
+                            sort_no:
+                                status === 'approved' ? sortNo++ : undefined,
                             status: status,
                             tour: tour,
                             user: user,
-                        } as any),
+                        }),
                     );
                 }
             }

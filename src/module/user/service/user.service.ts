@@ -1,5 +1,6 @@
 import { UserEntity } from '../entity/user.entity';
 import { randomUUID } from 'crypto';
+import { hashPassword } from '@/utils/bcrypt.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import {
@@ -9,17 +10,20 @@ import {
     UserDetailDTO,
     UserStatus,
     LoginType,
+    UpdateProfileDTO,
+    ChangePasswordDTO,
 } from '../dtos/user.dto';
 import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
-import { TourEntity } from '@/module/tour/entity/tour.entity';
+import { comparePassword } from '@/utils/bcrypt.util';
+import { BadRequestException } from '@nestjs/common';
 
 export class UserService {
     constructor(
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
-    ) {}
+    ) { }
 
     async getAllUsers(): Promise<UserSummaryDTO[]> {
         const users = await this.userRepository.find({
@@ -53,24 +57,6 @@ export class UserService {
             relations: ['country', 'supplier', 'role'],
         });
         if (!u) return null;
-        const favRows: Array<{ tour_id: number }> =
-            await this.userRepository.query(
-                'SELECT tour_id FROM tour_users_favorites WHERE user_id = ?',
-                [id],
-            );
-        const likeRows: Array<{ article_id: number }> =
-            await this.userRepository.query(
-                'SELECT article_id FROM user_article_likes WHERE user_id = ?',
-                [id],
-            );
-        const tourIds = Array.from(
-            new Set(favRows.map((r) => Number(r.tour_id))),
-        );
-        const articleIds = Array.from(
-            new Set(likeRows.map((r) => Number(r.article_id))),
-        );
-        const tourRepo = this.userRepository.manager.getRepository(TourEntity);
-
         return new UserDetailDTO({
             id: u.id,
             uuid: u.uuid,
@@ -125,7 +111,6 @@ export class UserService {
     ): Promise<UserDetailDTO | null> {
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user) return null;
-        user.username = dto.username ?? user.username;
         user.password = dto.password ?? user.password;
         user.full_name = dto.full_name ?? user.full_name;
         user.email = dto.email ?? user.email;
@@ -147,5 +132,48 @@ export class UserService {
     async removeUser(id: number): Promise<boolean> {
         const res = await this.userRepository.delete({ id });
         return (res.affected ?? 0) > 0;
+    }
+
+    async updateProfile(
+        id: number,
+        dto: UpdateProfileDTO,
+    ): Promise<UserDetailDTO | null> {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) return null;
+
+        // Verify old password
+        const isValid = await comparePassword(dto.oldPassword, user.password);
+        if (!isValid) {
+            throw new BadRequestException('Mật khẩu cũ không chính xác!');
+        }
+
+        // Only allow updating specific fields
+        user.full_name = dto.full_name ?? user.full_name;
+        user.phone = dto.phone ?? user.phone;
+
+        user.updated_at = new Date();
+        await this.userRepository.save(user);
+        return this.getUserById(id);
+    }
+
+    async changePassword(
+        id: number,
+        dto: ChangePasswordDTO,
+    ): Promise<{ success: boolean }> {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) return { success: false };
+
+        // Verify old password
+        const isValid = await comparePassword(dto.oldPassword, user.password);
+        if (!isValid) {
+            throw new BadRequestException('Mật khẩu cũ không chính xác!');
+        }
+
+        // Hash and save new password
+        user.password = await hashPassword(dto.newPassword);
+        user.updated_at = new Date();
+        await this.userRepository.save(user);
+
+        return { success: true };
     }
 }

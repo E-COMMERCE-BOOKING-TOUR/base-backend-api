@@ -1,5 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    UseGuards,
+} from '@nestjs/common';
+import {
+    ApiBody,
+    ApiParam,
+    ApiResponse,
+    ApiTags,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ReviewService } from '../service/review.service';
 import {
     ReviewDTO,
@@ -10,8 +24,14 @@ import {
     ReviewStatus,
 } from '../dto/review.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '@/module/user/guard/roles.guard';
+import { Roles } from '@/module/user/decorator/roles.decorator';
 
 @ApiTags('Admin Review')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('admin')
 @Controller('admin/review')
 export class AdminReviewController {
     constructor(private readonly reviewService: ReviewService) {}
