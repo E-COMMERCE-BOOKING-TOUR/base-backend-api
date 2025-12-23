@@ -656,4 +656,31 @@ export class UserBookingService {
 
         doc.end();
     }
+    async getBookedTours(userUuid: string) {
+        const bookings = await this.bookingRepository.find({
+            where: {
+                user: { uuid: userUuid },
+                status: BookingStatus.confirmed,
+            },
+            relations: [
+                'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour',
+            ],
+            order: { updated_at: 'DESC' },
+        });
+
+        const tours = bookings
+            .flatMap((b) => b.booking_items.map((i) => i.variant?.tour))
+            .filter((t) => !!t);
+        const uniqueTours = Array.from(
+            new Map(tours.map((t) => [t.id, t])).values(),
+        );
+
+        return uniqueTours.map((t) => ({
+            id: t.id,
+            title: t.title,
+            image: t.images?.[0]?.image_url,
+        }));
+    }
 }

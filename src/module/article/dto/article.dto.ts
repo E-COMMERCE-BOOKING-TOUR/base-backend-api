@@ -7,7 +7,6 @@ import {
     IsNotEmpty,
     IsOptional,
     IsString,
-    Min,
     MinLength,
     ValidateNested,
 } from 'class-validator';
@@ -45,6 +44,14 @@ export class ArticleDTO {
     content: string;
 
     @IsOptional()
+    @IsInt()
+    @ApiProperty({
+        description: 'ID tour',
+        example: 1,
+    })
+    tour_id?: number;
+
+    @IsOptional()
     @IsBoolean()
     @ApiProperty({
         description: 'Hiển thị bài viết',
@@ -53,10 +60,12 @@ export class ArticleDTO {
     })
     is_visible?: boolean;
 
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID người viết bài', example: 10 })
-    user_id: number;
+    @IsOptional()
+    @ApiProperty({
+        description: 'Người viết bài',
+        example: '99999999-aaaa-bbbb-cccc-999999999999',
+    })
+    user_uuid: string;
 
     @IsOptional()
     @IsArray()
@@ -85,51 +94,6 @@ export class ArticleDTO {
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
-}
-
-export class ArticleSummaryDTO {
-    @ApiProperty({ example: 1 })
-    id: number;
-
-    @ApiProperty({ description: 'Tiêu đề bài viết' })
-    title: string;
-
-    @ApiProperty({ description: 'Số lượt xem' })
-    count_views: number;
-
-    @ApiProperty({ description: 'Số lượt thích' })
-    count_likes: number;
-
-    @ApiProperty({ description: 'Số lượt bình luận' })
-    count_comments: number;
-
-    @ApiProperty({ description: 'Hiển thị bài viết' })
-    is_visible: boolean;
-
-    @ApiProperty({ description: 'ID người viết bài' })
-    user_id: number;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày tạo', required: false })
-    created_at?: Date;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày cập nhật', required: false })
-    updated_at?: Date;
-
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    @ApiProperty({ description: 'Ngày xóa', required: false })
-    deleted_at?: Date;
-
-    constructor(partial: Partial<ArticleSummaryDTO>) {
-        Object.assign(this, partial);
-    }
 }
 
 export class ArticleImageDetailDTO {
@@ -162,59 +126,38 @@ export class ArticleCommentDetailDTO {
     }
 }
 
-export class ArticleDetailDTO extends ArticleSummaryDTO {
-    @ApiProperty({ description: 'Nội dung bài viết' })
-    content: string;
+export class ArticleDetailDTO extends ArticleDTO {
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Tags', required: false })
+    tags?: string[];
 
-    @ApiProperty({ type: [ArticleImageDetailDTO] })
-    images: ArticleImageDetailDTO[];
+    @IsOptional()
+    @IsInt()
+    @ApiProperty({ description: 'Số lượt xem', required: false })
+    count_views?: number;
 
-    @ApiProperty({ type: [ArticleCommentDetailDTO] })
-    comments: ArticleCommentDetailDTO[];
+    @IsOptional()
+    @IsInt()
+    @ApiProperty({ description: 'Số lượt thích', required: false })
+    count_likes?: number;
 
-    constructor(partial: Partial<ArticleDetailDTO>) {
-        super(partial);
-        Object.assign(this, partial);
-    }
-}
-
-export class UserArticlePopularDTO {
-    @ApiProperty({ example: 1 })
-    id: number | string;
-
-    @ApiProperty({ example: 'Introducing the charm of the paradise' })
-    title: string;
+    @IsOptional()
+    @IsInt()
+    @ApiProperty({ description: 'Số lượng bình luận', required: false })
+    count_comments?: number;
 
     @ApiProperty({
-        example: 'Would you like to spend an extraordinary moment...',
+        type: [ArticleCommentDetailDTO],
+        description: 'Các bình luận',
     })
-    description: string;
+    comments: ArticleCommentDetailDTO[];
 
-    @ApiProperty({ example: '/assets/images/travel.jpg' })
-    image: string;
+    @ApiProperty({ description: 'Danh sách người thích', required: false })
+    users_like: number[];
 
-    @ApiProperty({ type: [String], example: ['#travel', '#beach'] })
-    tags: string[];
-
-    @ApiProperty({ type: [String], example: ['/assets/images/travel.jpg'] })
-    images: string[];
-
-    @ApiProperty({ example: '2 days ago', required: false })
-    timestamp?: string;
-
-    @ApiProperty({ example: 150 })
-    views: number;
-
-    @ApiProperty({ example: 25 })
-    likes: number;
-
-    @ApiProperty({ example: 10 })
-    comments: number;
-
-    @ApiProperty({ type: Object, example: { name: 'John Doe', avatar: 'url' } })
-    user: { name: string; avatar: string };
-
-    constructor(partial: Partial<UserArticlePopularDTO>) {
+    constructor(partial: Partial<ArticleDetailDTO>) {
+        super();
         Object.assign(this, partial);
     }
 }

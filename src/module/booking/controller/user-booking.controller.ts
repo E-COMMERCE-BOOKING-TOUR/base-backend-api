@@ -123,4 +123,15 @@ export class UserBookingController {
     ) {
         return await this.userBookingService.downloadInvoice(id, user, res);
     }
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Get('history')
+    @ApiResponse({
+        status: 200,
+        description: 'Get user booking history (tours)',
+    })
+    async getBookingHistory(@User() user: UserEntity) {
+        return await this.userBookingService.getBookedTours(user.uuid);
+    }
 }
