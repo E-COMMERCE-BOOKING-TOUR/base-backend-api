@@ -63,9 +63,9 @@ export class ArticleDTO {
     @IsOptional()
     @ApiProperty({
         description: 'Người viết bài',
-        example: '99999999-aaaa-bbbb-cccc-999999999999',
+        example: 1,
     })
-    user_uuid: string;
+    user_id: number;
 
     @IsOptional()
     @IsArray()
@@ -120,6 +120,18 @@ export class ArticleCommentDetailDTO {
 
     @ApiProperty({ nullable: true })
     parent_id?: number | null;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày tạo', required: false })
+    created_at?: Date;
+
+    @IsOptional()
+    @IsDate()
+    @Type(() => Date)
+    @ApiProperty({ description: 'Ngày cập nhật', required: false })
+    updated_at?: Date;
 
     constructor(partial: Partial<ArticleCommentDetailDTO>) {
         Object.assign(this, partial);
