@@ -53,7 +53,10 @@ export class DivisionEntity {
     country: CountryEntity;
 
     @OneToMany(() => TourEntity, (tour) => tour.division)
-    @ApiProperty({ description: 'Danh sách các tour', type: () => [TourEntity] })
+    @ApiProperty({
+        description: 'Danh sách các tour',
+        type: () => [TourEntity],
+    })
     tours: TourEntity[];
 
     @Index()

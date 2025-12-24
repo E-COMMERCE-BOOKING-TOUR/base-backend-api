@@ -66,20 +66,29 @@ export class TourSessionEntity extends BaseEntityTimestamp {
         { nullable: false, onDelete: 'CASCADE' },
     )
     @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Lịch chạy của biến thể tour', type: () => TourVariantEntity })
+    @ApiProperty({
+        description: 'Lịch chạy của biến thể tour',
+        type: () => TourVariantEntity,
+    })
     tour_variant: TourVariantEntity;
 
     @OneToMany(
         () => TourInventoryHoldEntity,
         (tour_inventory_hold) => tour_inventory_hold.tour_session,
     )
-    @ApiProperty({ description: 'Danh sách các giữ chỗ của slot', type: () => [TourInventoryHoldEntity] })
+    @ApiProperty({
+        description: 'Danh sách các giữ chỗ của slot',
+        type: () => [TourInventoryHoldEntity],
+    })
     tour_inventory_holds: TourInventoryHoldEntity[];
 
     @OneToMany(
         () => BookingItemEntity,
         (booking_item) => booking_item.tour_session,
     )
-    @ApiProperty({ description: 'Danh sách các mục đặt tour có lịch chạy này', type: () => [BookingItemEntity] })
+    @ApiProperty({
+        description: 'Danh sách các mục đặt tour có lịch chạy này',
+        type: () => [BookingItemEntity],
+    })
     booking_items: BookingItemEntity[];
 }

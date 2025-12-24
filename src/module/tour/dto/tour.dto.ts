@@ -452,13 +452,21 @@ export class TourDTO {
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
-    @ApiProperty({ description: 'Không bao gồm', required: false, type: [String] })
+    @ApiProperty({
+        description: 'Không bao gồm',
+        required: false,
+        type: [String],
+    })
     not_included?: string[];
 
     @IsOptional()
     @ValidateNested()
     @Type(() => HighlightsDTO)
-    @ApiProperty({ description: 'Điểm nổi bật', required: false, type: HighlightsDTO })
+    @ApiProperty({
+        description: 'Điểm nổi bật',
+        required: false,
+        type: HighlightsDTO,
+    })
     highlights?: HighlightsDTO;
 
     @IsOptional()
@@ -477,7 +485,11 @@ export class TourDTO {
     @IsOptional()
     @ValidateNested()
     @Type(() => TestimonialDTO)
-    @ApiProperty({ description: 'Nhận xét tiêu biểu', required: false, type: TestimonialDTO })
+    @ApiProperty({
+        description: 'Nhận xét tiêu biểu',
+        required: false,
+        type: TestimonialDTO,
+    })
     testimonial?: TestimonialDTO;
 
     @IsOptional()

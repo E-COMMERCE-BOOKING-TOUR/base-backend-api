@@ -33,7 +33,7 @@ export class UserTourService {
         @InjectRepository(TourSessionEntity)
         private readonly sessionRepository: Repository<TourSessionEntity>,
         private readonly pricingService: PricingService,
-    ) { }
+    ) {}
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
         return this.tourRepository
@@ -443,15 +443,15 @@ export class UserTourService {
 
         const activity: TourActivityDTO | undefined = tour.highlights
             ? new TourActivityDTO({
-                title: tour.highlights.title,
-                items: tour.highlights.items,
-            })
+                  title: tour.highlights.title,
+                  items: tour.highlights.items,
+              })
             : tour.summary
-                ? new TourActivityDTO({
+              ? new TourActivityDTO({
                     title: 'What You Will Do',
                     items: [tour.summary],
                 })
-                : undefined;
+              : undefined;
 
         return new UserTourDetailDTO({
             id: tour.id,
@@ -825,19 +825,19 @@ export class UserTourService {
                 start_time:
                     session.start_time instanceof Date
                         ? session.start_time.toLocaleTimeString('en-GB', {
-                            hour12: false,
-                        })
+                              hour12: false,
+                          })
                         : typeof session.start_time === 'string'
-                            ? session.start_time
-                            : undefined,
+                          ? session.start_time
+                          : undefined,
                 end_time:
                     session.end_time instanceof Date
                         ? session.end_time.toLocaleTimeString('en-GB', {
-                            hour12: false,
-                        })
+                              hour12: false,
+                          })
                         : typeof session.end_time === 'string'
-                            ? session.end_time
-                            : undefined,
+                          ? session.end_time
+                          : undefined,
                 status,
                 capacity_available: available,
                 price: minPrice, // In future, apply date-specific pricing rules here

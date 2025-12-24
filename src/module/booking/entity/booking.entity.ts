@@ -77,7 +77,10 @@ export class BookingEntity extends BaseEntityTimestamp {
         nullable: false,
     })
     @JoinColumn({ name: 'currency_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Tiền tệ đặt tour', type: () => CurrencyEntity })
+    @ApiProperty({
+        description: 'Tiền tệ đặt tour',
+        type: () => CurrencyEntity,
+    })
     currency: CurrencyEntity;
 
     @ManyToOne(
@@ -86,7 +89,10 @@ export class BookingEntity extends BaseEntityTimestamp {
         { nullable: true },
     )
     @JoinColumn({ name: 'payment_information_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Thông tin thanh toán', type: () => PaymentInfomationEntity })
+    @ApiProperty({
+        description: 'Thông tin thanh toán',
+        type: () => PaymentInfomationEntity,
+    })
     payment_information: PaymentInfomationEntity;
 
     @OneToOne(
@@ -95,11 +101,17 @@ export class BookingEntity extends BaseEntityTimestamp {
         { nullable: false },
     )
     @JoinColumn({ name: 'tour_inventory_hold_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Giữ chỗ tour', type: () => TourInventoryHoldEntity })
+    @ApiProperty({
+        description: 'Giữ chỗ tour',
+        type: () => TourInventoryHoldEntity,
+    })
     tour_inventory_hold: TourInventoryHoldEntity;
 
     @OneToMany(() => BookingItemEntity, (booking_item) => booking_item.booking)
-    @ApiProperty({ description: 'Danh sách các mục đặt tour', type: () => [BookingItemEntity] })
+    @ApiProperty({
+        description: 'Danh sách các mục đặt tour',
+        type: () => [BookingItemEntity],
+    })
     booking_items: BookingItemEntity[];
 
     @ManyToOne(
@@ -108,6 +120,9 @@ export class BookingEntity extends BaseEntityTimestamp {
         { nullable: true },
     )
     @JoinColumn({ name: 'booking_payment_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Phương thức thanh toán', type: () => BookingPaymentEntity })
+    @ApiProperty({
+        description: 'Phương thức thanh toán',
+        type: () => BookingPaymentEntity,
+    })
     booking_payment: BookingPaymentEntity;
 }

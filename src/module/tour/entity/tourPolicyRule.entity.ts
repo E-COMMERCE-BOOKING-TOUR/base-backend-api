@@ -43,6 +43,9 @@ export class TourPolicyRuleEntity extends BaseEntityTimestamp {
         { nullable: false },
     )
     @JoinColumn({ name: 'tour_policy_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Chính sách hủy/fee', type: () => TourPolicyEntity })
+    @ApiProperty({
+        description: 'Chính sách hủy/fee',
+        type: () => TourPolicyEntity,
+    })
     tour_policy: TourPolicyEntity;
 }

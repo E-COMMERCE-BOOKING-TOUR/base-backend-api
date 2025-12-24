@@ -26,7 +26,7 @@ import { BookingEntity } from '../entity/booking.entity';
 @ApiTags('User Booking')
 @Controller('user/booking')
 export class UserBookingController {
-    constructor(private readonly userBookingService: UserBookingService) { }
+    constructor(private readonly userBookingService: UserBookingService) {}
 
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
@@ -188,5 +188,4 @@ export class UserBookingController {
     ) {
         return await this.userBookingService.downloadInvoice(id, user, res);
     }
-
 }

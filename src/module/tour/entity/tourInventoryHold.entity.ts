@@ -36,14 +36,17 @@ export class TourInventoryHoldEntity extends BaseEntityTimestamp {
         { nullable: false },
     )
     @JoinColumn({ name: 'tour_session_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Lịch chạy của biến thể tour', type: () => TourSessionEntity })
+    @ApiProperty({
+        description: 'Lịch chạy của biến thể tour',
+        type: () => TourSessionEntity,
+    })
     tour_session: TourSessionEntity;
 
     @OneToOne(() => BookingEntity, (booking) => booking.tour_inventory_hold)
     @JoinColumn({ name: 'booking_id', referencedColumnName: 'id' })
     @ApiProperty({
         description: 'Đơn đặt tour (nullable nếu giữ chỗ chưa được đặt)',
-        type: () => BookingEntity
+        type: () => BookingEntity,
     })
     booking: BookingEntity | null;
 }

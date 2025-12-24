@@ -26,15 +26,24 @@ export class CurrencyEntity {
     symbol: string;
 
     @OneToMany(() => TourEntity, (tour) => tour.currency)
-    @ApiProperty({ description: 'Danh sách các tour có tiền tệ này', type: () => [TourEntity] })
+    @ApiProperty({
+        description: 'Danh sách các tour có tiền tệ này',
+        type: () => [TourEntity],
+    })
     tours: TourEntity[];
 
     @OneToMany(() => TourVariantEntity, (variant) => variant.currency)
-    @ApiProperty({ description: 'Danh sách các biến thể tour có tiền tệ này', type: () => [TourVariantEntity] })
+    @ApiProperty({
+        description: 'Danh sách các biến thể tour có tiền tệ này',
+        type: () => [TourVariantEntity],
+    })
     tour_variants: TourVariantEntity[];
 
     @OneToMany(() => BookingEntity, (booking) => booking.currency)
-    @ApiProperty({ description: 'Danh sách các đơn đặt tour có tiền tệ này', type: () => [BookingEntity] })
+    @ApiProperty({
+        description: 'Danh sách các đơn đặt tour có tiền tệ này',
+        type: () => [BookingEntity],
+    })
     bookings: BookingEntity[];
 
     @OneToMany(
@@ -43,7 +52,7 @@ export class CurrencyEntity {
     )
     @ApiProperty({
         description: 'Danh sách các phương thức thanh toán có tiền tệ này',
-        type: () => [BookingPaymentEntity]
+        type: () => [BookingPaymentEntity],
     })
     booking_payments: BookingPaymentEntity[];
 }

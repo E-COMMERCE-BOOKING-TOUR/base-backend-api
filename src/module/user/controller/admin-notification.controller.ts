@@ -22,10 +22,13 @@ import { NotificationDTO } from '../dtos/notification.dto';
 @Roles('admin')
 @Controller('admin/notification')
 export class AdminNotificationController {
-    constructor(private readonly notificationService: NotificationService) { }
+    constructor(private readonly notificationService: NotificationService) {}
 
     @Get()
-    @ApiResponse({ status: 200, description: 'Lấy danh sách thông báo (Admin)' })
+    @ApiResponse({
+        status: 200,
+        description: 'Lấy danh sách thông báo (Admin)',
+    })
     async findAll(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
@@ -33,7 +36,13 @@ export class AdminNotificationController {
         @Query('type') type?: string,
         @Query('targetGroup') targetGroup?: string,
     ) {
-        return await this.notificationService.findAll(+page, +limit, search, type, targetGroup);
+        return await this.notificationService.findAll(
+            +page,
+            +limit,
+            search,
+            type,
+            targetGroup,
+        );
     }
 
     @Get(':id')

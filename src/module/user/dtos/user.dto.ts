@@ -107,7 +107,6 @@ export class UserDTO {
 }
 
 export class UpdateUserDTO {
-
     @IsOptional()
     @MinLength(8)
     @ApiProperty({ description: 'Mật khẩu người dùng', required: false })

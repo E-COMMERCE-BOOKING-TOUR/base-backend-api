@@ -31,7 +31,10 @@ export class RoleEntity extends BaseEntityTimestamp {
     desciption: string;
 
     @OneToMany(() => UserEntity, (user) => user.role)
-    @ApiProperty({ description: 'Danh sách các người dùng', type: () => [UserEntity] })
+    @ApiProperty({
+        description: 'Danh sách các người dùng',
+        type: () => [UserEntity],
+    })
     users: UserEntity[];
 
     @ManyToMany(() => PermissionEntity)
