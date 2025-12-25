@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TourEntity } from '../entity/tour.entity';
-import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
     UserTourPopularDTO,
     UserTourDetailDTO,
@@ -22,6 +22,8 @@ import { ReviewEntity } from '@/module/review/entity/review.entity';
 import { TourVariantEntity } from '../entity/tourVariant.entity';
 import { TourSessionEntity } from '../entity/tourSession.entity';
 import { PricingService } from '@/module/pricing/pricing.service';
+import { PriceCacheService } from './price-cache.service';
+import { DivisionEntity } from '@/common/entity/division.entity';
 
 @Injectable()
 export class UserTourService {
@@ -32,8 +34,11 @@ export class UserTourService {
         private readonly reviewRepository: Repository<ReviewEntity>,
         @InjectRepository(TourSessionEntity)
         private readonly sessionRepository: Repository<TourSessionEntity>,
+        @InjectRepository(DivisionEntity)
+        private readonly divisionRepository: Repository<DivisionEntity>,
         private readonly pricingService: PricingService,
-    ) {}
+        private readonly priceCacheService: PriceCacheService,
+    ) { }
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
         return this.tourRepository
@@ -46,6 +51,7 @@ export class UserTourService {
             )
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
+            .leftJoinAndSelect('tour.currency', 'currency')
             .leftJoinAndSelect(
                 'tour.reviews',
                 'reviews',
@@ -86,24 +92,27 @@ export class UserTourService {
         let currentPrice: number = 0;
         let originalPrice: number | undefined;
 
-        if (tour.variants && tour.variants.length > 0) {
-            const activeVariant = tour.variants.find(
-                (v) =>
-                    (v.status as unknown as TourStatus) === TourStatus.active,
-            );
-            if (
-                activeVariant &&
-                activeVariant.tour_variant_pax_type_prices?.length > 0
-            ) {
-                const prices: number[] =
-                    activeVariant.tour_variant_pax_type_prices
-                        .map((p) => p.price)
-                        .filter((p) => p > 0);
+        // Use cached price if available (for consistency with sorting)
+        if (tour.cached_min_price) {
+            currentPrice = Number(tour.cached_min_price);
+            originalPrice = Math.round(currentPrice * 1.3);
+        } else if (tour.variants && tour.variants.length > 0) {
+            // Fallback: calculate from variants if cache is not set
+            const allPrices: number[] = [];
 
-                if (prices.length > 0) {
-                    currentPrice = Math.min(...prices);
-                    originalPrice = Math.round(currentPrice * 1.3);
-                }
+            tour.variants
+                .filter(v => (v.status as unknown as TourStatus) === TourStatus.active)
+                .forEach(activeVariant => {
+                    if (activeVariant.tour_variant_pax_type_prices?.length > 0) {
+                        activeVariant.tour_variant_pax_type_prices
+                            .filter(p => p.price > 0)
+                            .forEach(p => allPrices.push(p.price));
+                    }
+                });
+
+            if (allPrices.length > 0) {
+                currentPrice = Math.min(...allPrices);
+                originalPrice = Math.round(currentPrice * 1.3);
             }
         }
 
@@ -123,6 +132,8 @@ export class UserTourService {
             currentPrice,
             tags,
             slug: tour.slug,
+            currencySymbol: tour.currency?.symbol,
+            currencyCode: tour.currency?.name,
         });
     }
 
@@ -194,8 +205,32 @@ export class UserTourService {
             );
         }
 
-        if (query.tags?.length) {
-            qb.andWhere('categories.name IN (:...tags)', { tags: query.tags });
+        if (query.country_ids?.length || query.division_ids?.length) {
+            qb.andWhere(
+                new Brackets((locationQb) => {
+                    if (query.country_ids?.length) {
+                        locationQb.orWhere('tour.country_id IN (:...countryIds)', {
+                            countryIds: query.country_ids,
+                        });
+                    }
+                    if (query.division_ids?.length) {
+                        locationQb.orWhere('tour.division_id IN (:...divisionIds)', {
+                            divisionIds: query.division_ids,
+                        });
+                    }
+                }),
+            );
+
+            // Increment view_count for searched divisions (fire and forget)
+            if (query.division_ids?.length) {
+                this.divisionRepository
+                    .createQueryBuilder()
+                    .update(DivisionEntity)
+                    .set({ view_count: () => 'view_count + 1' })
+                    .where({ id: In(query.division_ids) })
+                    .execute()
+                    .catch(() => { }); // Ignore errors
+            }
         }
 
         if (typeof query.minRating === 'number') {
@@ -230,53 +265,41 @@ export class UserTourService {
             });
         }
 
-        const priceOrderSubQuery = `
-            (SELECT MIN(tvp.price)
-             FROM tour_variants tv
-             INNER JOIN tour_variant_pax_type_prices tvp ON tvp.tour_variant_id = tv.id
-             WHERE tv.tour_id = tour.id
-               AND tv.status = 'active')
-        `;
+        const offset = query.offset || 0;
+        const limit = query.limit || 12;
 
+        // Clone query for counting BEFORE applying sort/pagination
+        const countQb = qb.clone();
+        const total = await countQb.getCount();
+
+        // Use cached_min_price for sorting (much faster than subquery)
         switch (query.sort) {
             case 'price_asc':
-                qb.addSelect(priceOrderSubQuery, 'min_price_value')
-                    .orderBy(
-                        'CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END',
-                        'ASC',
-                    )
-                    .addOrderBy('min_price_value', 'ASC');
+                // MySQL sorts NULLs first in ASC. To put NULLs last:
+                // We can't use standard SQL standard NULLS LAST.
+                // For now, just remove the invalid syntax.
+                qb.orderBy('tour.cached_min_price', 'ASC');
+                qb.addOrderBy('tour.created_at', 'DESC');
                 break;
             case 'price_desc':
-                qb.addSelect(priceOrderSubQuery, 'min_price_value')
-                    .orderBy(
-                        'CASE WHEN min_price_value IS NULL THEN 1 ELSE 0 END',
-                        'ASC',
-                    )
-                    .addOrderBy('min_price_value', 'DESC');
+                qb.orderBy('tour.cached_min_price', 'DESC');
+                qb.addOrderBy('tour.created_at', 'DESC');
                 break;
             case 'rating_desc':
-                qb.orderBy('tour.score_rating', 'DESC').addOrderBy(
-                    'tour.created_at',
-                    'DESC',
-                );
+                qb.orderBy('tour.score_rating', 'DESC');
+                qb.addOrderBy('tour.created_at', 'DESC');
                 break;
             case 'newest':
                 qb.orderBy('tour.created_at', 'DESC');
                 break;
             default:
-                qb.orderBy('tour.score_rating', 'DESC').addOrderBy(
-                    'tour.created_at',
-                    'DESC',
-                );
+                qb.orderBy('tour.score_rating', 'DESC');
+                qb.addOrderBy('tour.created_at', 'DESC');
         }
-
-        const offset = query.offset || 0;
-        const limit = query.limit || 12;
 
         qb.skip(offset).take(limit);
 
-        const [tours, total] = await qb.getManyAndCount();
+        const tours = await qb.getMany();
 
         return {
             data: tours.map((tour) => this.mapToPopularDTO(tour)),
@@ -293,6 +316,7 @@ export class UserTourService {
             .leftJoinAndSelect('tour.variants', 'variants')
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
+            .leftJoinAndSelect('tour.currency', 'currency')
             .leftJoinAndSelect(
                 'tour.reviews',
                 'reviews',
@@ -347,7 +371,10 @@ export class UserTourService {
         let currentPrice: number = 0;
         let originalPrice: number | undefined;
 
-        if (tour.variants && tour.variants.length > 0) {
+        if (tour.cached_min_price) {
+            currentPrice = Number(tour.cached_min_price);
+            originalPrice = Math.round(currentPrice * 1.5);
+        } else if (tour.variants && tour.variants.length > 0) {
             try {
                 // Use PricingService to ensure price consistency with checkout
                 const computedPrices = await this.computeTourPricing(tour);
@@ -443,15 +470,19 @@ export class UserTourService {
 
         const activity: TourActivityDTO | undefined = tour.highlights
             ? new TourActivityDTO({
-                  title: tour.highlights.title,
-                  items: tour.highlights.items,
-              })
+                title: tour.highlights.title,
+                items: tour.highlights.items,
+            })
             : tour.summary
-              ? new TourActivityDTO({
+                ? new TourActivityDTO({
                     title: 'What You Will Do',
                     items: [tour.summary],
                 })
-              : undefined;
+                : undefined;
+
+        // Fire-and-forget: Update price cache in background when viewing tour detail
+        // This ensures prices are always fresh without blocking the response
+        void this.priceCacheService.updateTourPriceCache(tour.id);
 
         return new UserTourDetailDTO({
             id: tour.id,
@@ -460,6 +491,8 @@ export class UserTourService {
             location,
             price: currentPrice,
             oldPrice: originalPrice,
+            currencySymbol: tour.currency?.symbol,
+            currencyCode: tour.currency?.name,
             rating: avgRating > 0 ? Math.round(avgRating) : 0,
             durationDays: tour.duration_days || 1,
             reviewCount: reviewsCount,
@@ -825,19 +858,19 @@ export class UserTourService {
                 start_time:
                     session.start_time instanceof Date
                         ? session.start_time.toLocaleTimeString('en-GB', {
-                              hour12: false,
-                          })
+                            hour12: false,
+                        })
                         : typeof session.start_time === 'string'
-                          ? session.start_time
-                          : undefined,
+                            ? session.start_time
+                            : undefined,
                 end_time:
                     session.end_time instanceof Date
                         ? session.end_time.toLocaleTimeString('en-GB', {
-                              hour12: false,
-                          })
+                            hour12: false,
+                        })
                         : typeof session.end_time === 'string'
-                          ? session.end_time
-                          : undefined,
+                            ? session.end_time
+                            : undefined,
                 status,
                 capacity_available: available,
                 price: minPrice, // In future, apply date-specific pricing rules here

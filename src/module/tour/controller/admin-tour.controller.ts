@@ -15,6 +15,7 @@ import {
 import {
     ApiBearerAuth,
     ApiBody,
+    ApiOperation,
     ApiParam,
     ApiResponse,
     ApiTags,
@@ -22,6 +23,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminTourService } from '../service/admin-tour.service';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { PriceCacheService } from '../service/price-cache.service';
 import {
     AdminTourQueryDTO,
     PaginatedTourResponse,
@@ -41,7 +43,32 @@ export class AdminTourController {
     constructor(
         private readonly adminTourService: AdminTourService,
         private readonly cloudinaryService: CloudinaryService,
-    ) {}
+        private readonly priceCacheService: PriceCacheService,
+    ) { }
+
+    @Post('refresh-price-cache')
+    @ApiOperation({ summary: 'Manually refresh price cache for all tours' })
+    @ApiResponse({
+        status: 200,
+        description: 'Price cache refresh result',
+        schema: {
+            properties: {
+                message: { type: 'string' },
+            }
+        }
+    })
+    async refreshPriceCache() {
+        return this.priceCacheService.updateAllTourPriceCache();
+    }
+
+    @Post('refresh-price-cache/:id')
+    @ApiOperation({ summary: 'Refresh price cache for a specific tour' })
+    @ApiParam({ name: 'id', type: Number })
+    @ApiResponse({ status: 200, description: 'Price cache updated' })
+    async refreshTourPriceCache(@Param('id') id: number) {
+        await this.priceCacheService.updateTourPriceCache(id);
+        return { success: true, message: `Price cache updated for tour ${id}` };
+    }
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))

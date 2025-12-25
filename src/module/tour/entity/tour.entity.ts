@@ -278,4 +278,35 @@ export class TourEntity extends BaseEntityTimestamp {
     })
     @ApiProperty({ description: 'Ảnh xem trước bản đồ' })
     map_preview: string;
+
+    // Cached price columns for faster sorting and filtering
+    @Index()
+    @Column({
+        type: 'decimal',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        default: null,
+    })
+    @ApiProperty({ description: 'Giá tối thiểu (cached)' })
+    cached_min_price: number;
+
+    @Index()
+    @Column({
+        type: 'decimal',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        default: null,
+    })
+    @ApiProperty({ description: 'Giá tối đa (cached)' })
+    cached_max_price: number;
+
+    @Column({
+        type: 'datetime',
+        nullable: true,
+        default: null,
+    })
+    @ApiProperty({ description: 'Thời điểm cập nhật giá cache' })
+    price_cached_at: Date;
 }

@@ -23,6 +23,12 @@ export class CreateDivisionDTO {
     @MaxLength(100)
     code?: string;
 
+    @ApiPropertyOptional({ description: 'URL hình ảnh đại diện', example: 'https://res.cloudinary.com/...' })
+    @IsOptional()
+    @IsString()
+    @MaxLength(500)
+    image_url?: string;
+
     @ApiProperty({ description: 'ID Quốc gia', example: 1 })
     @IsNumber()
     country_id: number;
@@ -56,6 +62,12 @@ export class UpdateDivisionDTO {
     @IsString()
     @MaxLength(100)
     code?: string;
+
+    @ApiPropertyOptional({ description: 'URL hình ảnh đại diện', example: 'https://res.cloudinary.com/...' })
+    @IsOptional()
+    @IsString()
+    @MaxLength(500)
+    image_url?: string;
 
     @ApiPropertyOptional({ description: 'ID Quốc gia', example: 1 })
     @IsOptional()

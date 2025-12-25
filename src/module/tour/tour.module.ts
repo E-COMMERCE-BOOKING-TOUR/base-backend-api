@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { TourEntity } from './entity/tour.entity';
 import { TourImageEntity } from './entity/tourImage.entity';
 import { TourVariantEntity } from './entity/tourVariant.entity';
@@ -26,9 +27,15 @@ import { TourRulePriceStep } from '../pricing/steps/tour-rule-price.step';
 import { TourAssemblePriceStep } from '../pricing/steps/tour-assemble-price.step';
 import { AdminTourService } from './service/admin-tour.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { PriceCacheService } from './service/price-cache.service';
+import { PriceCacheProcessor, PRICE_CACHE_QUEUE } from './queue/price-cache.processor';
 
 @Module({
     imports: [
+        // BullMQ Queue for price cache jobs
+        BullModule.registerQueue({
+            name: PRICE_CACHE_QUEUE,
+        }),
         TypeOrmModule.forFeature([
             TourEntity,
             TourImageEntity,
@@ -55,7 +62,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
         CloudinaryModule,
     ],
     controllers: [AdminTourController, UserTourController],
-    providers: [TourService, UserTourService, AdminTourService],
-    exports: [TourService, UserTourService, AdminTourService],
+    providers: [TourService, UserTourService, AdminTourService, PriceCacheService, PriceCacheProcessor],
+    exports: [TourService, UserTourService, AdminTourService, PriceCacheService],
 })
-export class TourModule {}
+export class TourModule { }

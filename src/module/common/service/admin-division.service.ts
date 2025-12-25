@@ -50,6 +50,7 @@ export class AdminDivisionService {
             name_local: dto.name_local,
             level: dto.level?.toString() || '1',
             code: dto.code ?? undefined,
+            image_url: dto.image_url ?? undefined,
             country: { id: dto.country_id } as CountryEntity,
             parent_id: dto.parent_id ?? undefined,
         });
@@ -63,6 +64,7 @@ export class AdminDivisionService {
         if (dto.name_local !== undefined) division.name_local = dto.name_local;
         if (dto.level !== undefined) division.level = dto.level.toString();
         if (dto.code !== undefined) division.code = dto.code;
+        if (dto.image_url !== undefined) division.image_url = dto.image_url;
         if (dto.country_id !== undefined) {
             division.country = { id: dto.country_id } as CountryEntity;
         }
@@ -76,5 +78,9 @@ export class AdminDivisionService {
     async remove(id: number): Promise<void> {
         const division = await this.getById(id);
         await this.divisionRepository.remove(division);
+    }
+
+    async incrementViewCount(id: number): Promise<void> {
+        await this.divisionRepository.increment({ id }, 'view_count', 1);
     }
 }

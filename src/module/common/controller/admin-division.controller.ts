@@ -8,18 +8,25 @@ import {
     Param,
     ParseIntPipe,
     UseGuards,
+    UseInterceptors,
+    UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminDivisionService } from '../service/admin-division.service';
 import { CreateDivisionDTO, UpdateDivisionDTO } from '../dto/admin-division.dto';
+import { CloudinaryService } from '@/module/cloudinary/cloudinary.service';
 
 @ApiTags('Admin - Division')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('admin/division')
 export class AdminDivisionController {
-    constructor(private readonly adminDivisionService: AdminDivisionService) { }
+    constructor(
+        private readonly adminDivisionService: AdminDivisionService,
+        private readonly cloudinaryService: CloudinaryService,
+    ) { }
 
     @Get('getAll')
     @ApiOperation({ summary: 'Lấy danh sách tất cả division' })
@@ -65,5 +72,29 @@ export class AdminDivisionController {
     async remove(@Param('id', ParseIntPipe) id: number) {
         await this.adminDivisionService.remove(id);
         return { message: 'Xóa division thành công' };
+    }
+
+    @Post(':id/upload-image')
+    @ApiOperation({ summary: 'Upload hình ảnh cho division' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadImage(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        const result = await this.cloudinaryService.uploadFile(file);
+        await this.adminDivisionService.update(id, { image_url: result.secure_url });
+        return { image_url: result.secure_url };
     }
 }
