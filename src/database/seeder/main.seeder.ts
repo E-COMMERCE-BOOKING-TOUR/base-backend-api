@@ -22,6 +22,9 @@ import ReviewSeeder from './22-review.seeder';
 import ReviewImageSeeder from './23-review-image.seeder';
 import BookingPaymentSeeder from './24-booking-payment.seeder';
 import NotificationSeeder from './26-notification.seeder';
+import SiteSettingSeeder from './27-site-setting.seeder';
+import StaticPageSeeder from './28-static-page.seeder';
+
 
 export default class MainSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
@@ -62,7 +65,12 @@ export default class MainSeeder implements Seeder {
 
                     // Notification Module
                     NotificationSeeder,
+
+                    // Site Settings
+                    SiteSettingSeeder,
+                    StaticPageSeeder,
                 ],
+
             });
         } catch (error) {
             console.error('Seeding failed:', error);

@@ -14,14 +14,18 @@ import {
     ApiTags,
     ApiBearerAuth,
 } from '@nestjs/swagger';
+import { User } from '@/module/user/decorator/user.decorator';
+import { UserEntity } from '@/module/user/entity/user.entity';
 import { ReviewService } from '../service/review.service';
 import {
-    ReviewDTO,
+    CreateReviewUserDTO,
+    AdminReviewDTO,
     ReviewImageDTO,
     ReviewSummaryDTO,
     ReviewDetailDTO,
     ReviewImageDetailDTO,
     ReviewStatus,
+    ReviewStatsDTO,
 } from '../dto/review.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 import { AuthGuard } from '@nestjs/passport';
@@ -34,29 +38,29 @@ import { Roles } from '@/module/user/decorator/roles.decorator';
 @Roles('admin')
 @Controller('admin/review')
 export class AdminReviewController {
-    constructor(private readonly reviewService: ReviewService) {}
+    constructor(private readonly reviewService: ReviewService) { }
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getAllReviews() {
-        return await this.reviewService.getAllReviews();
+    async getAllReviews(@User() user: UserEntity) {
+        return await this.reviewService.getAllReviews(user.id);
     }
 
     @Post('getAllByTour/:tourId')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'tourId', type: Number, example: 1 })
-    async getReviewsByTour(@Param('tourId') tourId: number) {
-        return await this.reviewService.getReviewsByTour(tourId);
+    async getReviewsByTour(@Param('tourId') tourId: number, @User() user: UserEntity) {
+        return await this.reviewService.getReviewsByTour(tourId, user.id);
     }
 
     @Post('getAllByUser/:userId')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'userId', type: Number, example: 1 })
-    async getReviewsByUser(@Param('userId') userId: number) {
-        return await this.reviewService.getReviewsByUser(userId);
+    async getReviewsByUser(@Param('userId') userId: number, @User() user: UserEntity) {
+        return await this.reviewService.getReviewsByUser(userId, user.id);
     }
 
     @Post('getById/:id')
@@ -70,17 +74,17 @@ export class AdminReviewController {
     @Post('create')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    @ApiBody({ type: ReviewDTO })
-    async create(@Body() dto: ReviewDTO) {
-        return await this.reviewService.create(dto);
+    @ApiBody({ type: AdminReviewDTO })
+    async create(@Body() dto: AdminReviewDTO) {
+        return await this.reviewService.create(dto.user_id, dto);
     }
 
     @Post('update/:id')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
-    @ApiBody({ type: ReviewDTO })
-    async update(@Param('id') id: number, @Body() payload: Partial<ReviewDTO>) {
+    @ApiBody({ type: AdminReviewDTO })
+    async update(@Param('id') id: number, @Body() payload: Partial<AdminReviewDTO>) {
         return await this.reviewService.update(id, payload);
     }
 
@@ -124,5 +128,29 @@ export class AdminReviewController {
         @Body() payload: { status: ReviewStatus },
     ) {
         return await this.reviewService.updateStatus(id, payload.status);
+    }
+    @Post('toggleVisibility/:id')
+    @ApiResponse({ status: 200, type: ReviewDetailDTO })
+    @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    async toggleVisibility(@Param('id') id: number) {
+        // Toggle visibility by checking current status then switching
+        // For simplicity, let's assume 'approved' is visible and 'pending'/'rejected' is hidden or just use a specific logic.
+        // However, user asked for Hide/Show, which usually implies a separate flag or specific status.
+        // Let's use status: approved = visible, rejected = hidden.
+        const review = await this.reviewService.getReviewById(id);
+        if (!review) return null;
+        const newStatus =
+            review.status === ReviewStatus.approved
+                ? ReviewStatus.rejected
+                : ReviewStatus.approved;
+        return await this.reviewService.updateStatus(id, newStatus);
+    }
+
+    @Get('stats')
+    @ApiResponse({ status: 200, type: ReviewStatsDTO })
+    @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
+    async getStats() {
+        return await this.reviewService.getStats();
     }
 }

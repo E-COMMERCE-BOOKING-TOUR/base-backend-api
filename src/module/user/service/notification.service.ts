@@ -16,25 +16,37 @@ export class NotificationService {
         private readonly notificationRepository: Repository<NotificationEntity>,
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
-    ) { }
+    ) {}
 
     async getNotificationsByUser(
         user: UserEntity,
         page: number = 1,
         limit: number = 10,
-    ): Promise<{ data: NotificationSummaryDTO[], total: number, page: number, limit: number, totalPages: number }> {
+    ): Promise<{
+        data: NotificationSummaryDTO[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }> {
         const skip = (page - 1) * limit;
         const roleName = user.role?.name;
 
         const query = this.notificationRepository
             .createQueryBuilder('notification')
             .leftJoinAndSelect('notification.users', 'user')
-            .where('notification.target_group = :all', { all: TargetGroup.all });
+            .where('notification.target_group = :all', {
+                all: TargetGroup.all,
+            });
 
         if (roleName === 'admin') {
-            query.orWhere('notification.target_group = :admin', { admin: TargetGroup.admin });
+            query.orWhere('notification.target_group = :admin', {
+                admin: TargetGroup.admin,
+            });
         } else if (roleName === 'supplier') {
-            query.orWhere('notification.target_group = :supplier', { supplier: TargetGroup.supplier });
+            query.orWhere('notification.target_group = :supplier', {
+                supplier: TargetGroup.supplier,
+            });
         }
 
         query.orWhere(
@@ -77,15 +89,25 @@ export class NotificationService {
         };
     }
 
-    async findAll(page: number = 1, limit: number = 10, search?: string, type?: string, targetGroup?: string) {
+    async findAll(
+        page: number = 1,
+        limit: number = 10,
+        search?: string,
+        type?: string,
+        targetGroup?: string,
+    ) {
         const skip = (page - 1) * limit;
 
-        const query = this.notificationRepository.createQueryBuilder('notification')
+        const query = this.notificationRepository
+            .createQueryBuilder('notification')
             .leftJoinAndSelect('notification.users', 'users')
             .orderBy('notification.created_at', 'DESC');
 
         if (search) {
-            query.andWhere('(notification.title ILIKE :search OR notification.description ILIKE :search)', { search: `%${search}%` });
+            query.andWhere(
+                '(notification.title ILIKE :search OR notification.description ILIKE :search)',
+                { search: `%${search}%` },
+            );
         }
 
         if (type) {
@@ -93,7 +115,9 @@ export class NotificationService {
         }
 
         if (targetGroup) {
-            query.andWhere('notification.target_group = :targetGroup', { targetGroup });
+            query.andWhere('notification.target_group = :targetGroup', {
+                targetGroup,
+            });
         }
 
         const [list, total] = await query
@@ -102,19 +126,22 @@ export class NotificationService {
             .getManyAndCount();
 
         return {
-            data: list.map(n => new NotificationSummaryDTO({
-                id: n.id,
-                title: n.title,
-                description: n.description,
-                type: n.type as NotificationType,
-                is_error: !!n.is_error,
-                is_user: !!n.is_user,
-                target_group: n.target_group as TargetGroup,
-                user_ids: n.users?.map(u => u.id) ?? [],
-                created_at: n.created_at,
-                updated_at: n.updated_at,
-                deleted_at: n.deleted_at ?? undefined,
-            })),
+            data: list.map(
+                (n) =>
+                    new NotificationSummaryDTO({
+                        id: n.id,
+                        title: n.title,
+                        description: n.description,
+                        type: n.type as NotificationType,
+                        is_error: !!n.is_error,
+                        is_user: !!n.is_user,
+                        target_group: n.target_group as TargetGroup,
+                        user_ids: n.users?.map((u) => u.id) ?? [],
+                        created_at: n.created_at,
+                        updated_at: n.updated_at,
+                        deleted_at: n.deleted_at ?? undefined,
+                    }),
+            ),
             total,
             page,
             limit,
@@ -140,7 +167,7 @@ export class NotificationService {
             is_error: !!notification.is_error,
             is_user: !!notification.is_user,
             target_group: notification.target_group as TargetGroup,
-            user_ids: notification.users?.map(u => u.id) ?? [],
+            user_ids: notification.users?.map((u) => u.id) ?? [],
             created_at: notification.created_at,
             updated_at: notification.updated_at,
             deleted_at: notification.deleted_at ?? undefined,
@@ -158,7 +185,9 @@ export class NotificationService {
         });
 
         if (dto.user_ids && dto.user_ids.length > 0) {
-            notification.users = await this.userRepository.findBy({ id: In(dto.user_ids) });
+            notification.users = await this.userRepository.findBy({
+                id: In(dto.user_ids),
+            });
         }
 
         const saved = await this.notificationRepository.save(notification);
@@ -180,11 +209,14 @@ export class NotificationService {
         notification.type = dto.type ?? notification.type;
         notification.is_error = dto.is_error ?? notification.is_error;
         notification.is_user = dto.is_user ?? notification.is_user;
-        notification.target_group = dto.target_group ?? notification.target_group;
+        notification.target_group =
+            dto.target_group ?? notification.target_group;
 
         if (dto.user_ids) {
             if (dto.user_ids.length > 0) {
-                notification.users = await this.userRepository.findBy({ id: In(dto.user_ids) });
+                notification.users = await this.userRepository.findBy({
+                    id: In(dto.user_ids),
+                });
             } else {
                 notification.users = [];
             }
@@ -195,7 +227,9 @@ export class NotificationService {
     }
 
     async remove(id: number) {
-        const notification = await this.notificationRepository.findOne({ where: { id } });
+        const notification = await this.notificationRepository.findOne({
+            where: { id },
+        });
         if (!notification) {
             throw new NotFoundException(`Notification with ID ${id} not found`);
         }

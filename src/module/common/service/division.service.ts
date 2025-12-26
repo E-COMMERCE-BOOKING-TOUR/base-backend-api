@@ -9,6 +9,8 @@ interface RawTrendingDivision {
     name: string;
     countryCode: string;
     toursCount: string;
+    imageUrl: string | null;
+    viewCount: string;
 }
 
 @Injectable()
@@ -16,7 +18,7 @@ export class DivisionService {
     constructor(
         @InjectRepository(DivisionEntity)
         private readonly divisionRepository: Repository<DivisionEntity>,
-    ) {}
+    ) { }
 
     async getTrendingDestinations(
         limit: number = 6,
@@ -35,13 +37,18 @@ export class DivisionService {
             )
             .select('division.id', 'id')
             .addSelect('division.name', 'name')
+            .addSelect('division.image_url', 'imageUrl')
+            .addSelect('division.view_count', 'viewCount')
             .addSelect('country.iso3', 'countryCode')
             .addSelect('COUNT(tours.id)', 'toursCount')
             .where('division.level = :level', { level: 1 })
             .groupBy('division.id')
             .addGroupBy('division.name')
+            .addGroupBy('division.image_url')
+            .addGroupBy('division.view_count')
             .addGroupBy('country.iso3')
-            .orderBy('toursCount', 'DESC')
+            .orderBy('division.view_count', 'DESC')
+            .addOrderBy('toursCount', 'DESC')
             .addOrderBy('division.name', 'ASC')
             .limit(limit)
             .getRawMany<RawTrendingDivision>();
@@ -51,7 +58,8 @@ export class DivisionService {
                 const flag: string = this.getCountryFlag(division.countryCode);
                 const title: string = division.name.toUpperCase();
                 const toursCount: number = parseInt(division.toursCount) || 0;
-                const image: string = `/assets/images/${division.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+                // Use database image or fallback to generated path
+                const image: string = division.imageUrl || `/assets/images/${division.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
 
                 return new UserDivisionTrendingDTO({
                     id: division.id,

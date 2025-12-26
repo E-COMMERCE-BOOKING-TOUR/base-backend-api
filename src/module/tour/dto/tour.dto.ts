@@ -452,13 +452,21 @@ export class TourDTO {
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
-    @ApiProperty({ description: 'Không bao gồm', required: false, type: [String] })
+    @ApiProperty({
+        description: 'Không bao gồm',
+        required: false,
+        type: [String],
+    })
     not_included?: string[];
 
     @IsOptional()
     @ValidateNested()
     @Type(() => HighlightsDTO)
-    @ApiProperty({ description: 'Điểm nổi bật', required: false, type: HighlightsDTO })
+    @ApiProperty({
+        description: 'Điểm nổi bật',
+        required: false,
+        type: HighlightsDTO,
+    })
     highlights?: HighlightsDTO;
 
     @IsOptional()
@@ -477,7 +485,11 @@ export class TourDTO {
     @IsOptional()
     @ValidateNested()
     @Type(() => TestimonialDTO)
-    @ApiProperty({ description: 'Nhận xét tiêu biểu', required: false, type: TestimonialDTO })
+    @ApiProperty({
+        description: 'Nhận xét tiêu biểu',
+        required: false,
+        type: TestimonialDTO,
+    })
     testimonial?: TestimonialDTO;
 
     @IsOptional()
@@ -681,6 +693,19 @@ const transformStringArray = ({ value }: { value: unknown }) => {
     return undefined;
 };
 
+const transformNumberArray = ({ value }: { value: unknown }) => {
+    if (Array.isArray(value)) {
+        return value.map((v) => Number(v)).filter((v) => !isNaN(v));
+    }
+    if (typeof value === 'string' && value.trim().length > 0) {
+        return value
+            .split(',')
+            .map((v) => Number(v.trim()))
+            .filter((v) => !isNaN(v));
+    }
+    return undefined;
+};
+
 export class UserTourSearchQueryDTO {
     @IsOptional()
     @IsString()
@@ -705,16 +730,24 @@ export class UserTourSearchQueryDTO {
     destinations?: string[];
 
     @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    @Transform(transformStringArray)
+    @Transform(transformNumberArray)
     @ApiProperty({
         required: false,
-        description: 'Danh sách tag/danh mục cần lọc',
-        type: [String],
-        example: ['Family', 'Adventure'],
+        description: 'Danh sách ID quốc gia cần lọc',
+        type: [Number],
+        example: [1, 2],
     })
-    tags?: string[];
+    country_ids?: number[];
+
+    @IsOptional()
+    @Transform(transformNumberArray)
+    @ApiProperty({
+        required: false,
+        description: 'Danh sách ID tỉnh thành cần lọc',
+        type: [Number],
+        example: [1, 2],
+    })
+    division_ids?: number[];
 
     @IsOptional()
     @Type(() => Number)
@@ -925,6 +958,12 @@ export class UserTourPopularDTO {
     @ApiProperty({ example: 'tour-slug' })
     slug: string;
 
+    @ApiProperty({ example: 'đ', required: false })
+    currencySymbol?: string;
+
+    @ApiProperty({ example: 'VND', required: false })
+    currencyCode?: string;
+
     constructor(partial: Partial<UserTourPopularDTO>) {
         Object.assign(this, partial);
     }
@@ -1026,6 +1065,12 @@ export class UserTourDetailDTO {
 
     @ApiProperty({ example: 500000, required: false })
     oldPrice?: number;
+
+    @ApiProperty({ example: 'đ', required: false })
+    currencySymbol?: string;
+
+    @ApiProperty({ example: 'VND', required: false })
+    currencyCode?: string;
 
     @ApiProperty({ example: 4 })
     rating: number;

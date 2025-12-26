@@ -33,13 +33,16 @@ export class TourPaxTypeEntity extends BaseEntityTimestamp {
         () => TourVariantPaxTypePriceEntity,
         (tour_variant_pax_type_price) => tour_variant_pax_type_price.pax_type,
     )
-    @ApiProperty({ description: 'Giá áp theo rule cho loại khách', type: () => [TourVariantPaxTypePriceEntity] })
+    @ApiProperty({
+        description: 'Giá áp theo rule cho loại khách',
+        type: () => [TourVariantPaxTypePriceEntity],
+    })
     tour_variant_pax_type_prices: TourVariantPaxTypePriceEntity[];
 
     @OneToMany(() => BookingItemEntity, (booking_item) => booking_item.pax_type)
     @ApiProperty({
         description: 'Danh sách các mục đặt tour có loại khách này',
-        type: () => [BookingItemEntity]
+        type: () => [BookingItemEntity],
     })
     booking_items: BookingItemEntity[];
 
@@ -47,6 +50,9 @@ export class TourPaxTypeEntity extends BaseEntityTimestamp {
         () => BookingPassengerEntity,
         (booking_passenger) => booking_passenger.pax_type,
     )
-    @ApiProperty({ description: 'Danh sách các hành khách có loại khách này', type: () => [BookingPassengerEntity] })
+    @ApiProperty({
+        description: 'Danh sách các hành khách có loại khách này',
+        type: () => [BookingPassengerEntity],
+    })
     booking_passengers: BookingPassengerEntity[];
 }

@@ -29,7 +29,10 @@ export class TourVariantPaxTypePriceEntity {
         },
     )
     @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Biến thể tour', type: () => TourVariantEntity })
+    @ApiProperty({
+        description: 'Biến thể tour',
+        type: () => TourVariantEntity,
+    })
     tour_variant: TourVariantEntity;
 
     @ManyToOne(

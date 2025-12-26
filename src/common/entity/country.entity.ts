@@ -42,14 +42,23 @@ export class CountryEntity {
     phone_code: string | null;
 
     @OneToMany(() => DivisionEntity, (division) => division.country)
-    @ApiProperty({ description: 'Danh sách các tỉnh/thành phố', type: () => [DivisionEntity] })
+    @ApiProperty({
+        description: 'Danh sách các tỉnh/thành phố',
+        type: () => [DivisionEntity],
+    })
     divisions: DivisionEntity[];
 
     @OneToMany(() => UserEntity, (user) => user.country)
-    @ApiProperty({ description: 'Danh sách các người dùng', type: () => [UserEntity] })
+    @ApiProperty({
+        description: 'Danh sách các người dùng',
+        type: () => [UserEntity],
+    })
     users: UserEntity[];
 
     @OneToMany(() => TourEntity, (tour) => tour.country)
-    @ApiProperty({ description: 'Danh sách các tour', type: () => [TourEntity] })
+    @ApiProperty({
+        description: 'Danh sách các tour',
+        type: () => [TourEntity],
+    })
     tours: TourEntity[];
 }

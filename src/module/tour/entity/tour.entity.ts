@@ -171,7 +171,10 @@ export class TourEntity extends BaseEntityTimestamp {
     users_favorites: UserEntity[];
 
     @OneToMany(() => ReviewEntity, (review) => review.tour)
-    @ApiProperty({ description: 'Danh sách các đánh giá', type: () => [ReviewEntity] })
+    @ApiProperty({
+        description: 'Danh sách các đánh giá',
+        type: () => [ReviewEntity],
+    })
     reviews: ReviewEntity[];
 
     @ManyToMany(() => TourCategoryEntity)
@@ -198,11 +201,17 @@ export class TourEntity extends BaseEntityTimestamp {
     supplier: SupplierEntity;
 
     @OneToMany(() => TourImageEntity, (image) => image.tour)
-    @ApiProperty({ description: 'Danh sách các ảnh tour', type: () => [TourImageEntity] })
+    @ApiProperty({
+        description: 'Danh sách các ảnh tour',
+        type: () => [TourImageEntity],
+    })
     images: TourImageEntity[];
 
     @OneToMany(() => TourVariantEntity, (variant) => variant.tour)
-    @ApiProperty({ description: 'Danh sách các biến thể tour', type: () => [TourVariantEntity] })
+    @ApiProperty({
+        description: 'Danh sách các biến thể tour',
+        type: () => [TourVariantEntity],
+    })
     variants: TourVariantEntity[];
 
     @Column({
@@ -231,7 +240,10 @@ export class TourEntity extends BaseEntityTimestamp {
         type: 'simple-json',
         nullable: true,
     })
-    @ApiProperty({ description: 'Điểm nổi bật (highlights/activity)', example: { title: 'Highlights', items: ['...'] } })
+    @ApiProperty({
+        description: 'Điểm nổi bật (highlights/activity)',
+        example: { title: 'Highlights', items: ['...'] },
+    })
     highlights: { title: string; items: string[] };
 
     @Column({
@@ -253,7 +265,10 @@ export class TourEntity extends BaseEntityTimestamp {
         type: 'simple-json',
         nullable: true,
     })
-    @ApiProperty({ description: 'Nhận xét tiêu biểu (testimonial)', example: { name: '...', country: '...', text: '...' } })
+    @ApiProperty({
+        description: 'Nhận xét tiêu biểu (testimonial)',
+        example: { name: '...', country: '...', text: '...' },
+    })
     testimonial: { name: string; country: string; text: string };
 
     @Column({
@@ -263,4 +278,35 @@ export class TourEntity extends BaseEntityTimestamp {
     })
     @ApiProperty({ description: 'Ảnh xem trước bản đồ' })
     map_preview: string;
+
+    // Cached price columns for faster sorting and filtering
+    @Index()
+    @Column({
+        type: 'decimal',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        default: null,
+    })
+    @ApiProperty({ description: 'Giá tối thiểu (cached)' })
+    cached_min_price: number;
+
+    @Index()
+    @Column({
+        type: 'decimal',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        default: null,
+    })
+    @ApiProperty({ description: 'Giá tối đa (cached)' })
+    cached_max_price: number;
+
+    @Column({
+        type: 'datetime',
+        nullable: true,
+        default: null,
+    })
+    @ApiProperty({ description: 'Thời điểm cập nhật giá cache' })
+    price_cached_at: Date;
 }

@@ -45,6 +45,21 @@ export class DivisionEntity {
     @ApiProperty({ description: 'Mã bưu chính' })
     code: string;
 
+    @Column({
+        type: 'varchar',
+        length: 500,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'URL hình ảnh đại diện' })
+    image_url: string;
+
+    @Column({
+        type: 'int',
+        default: 0,
+    })
+    @ApiProperty({ description: 'Số lượt xem/tìm kiếm' })
+    view_count: number;
+
     @ManyToOne(() => CountryEntity, (country) => country.divisions, {
         nullable: false,
     })
@@ -53,7 +68,10 @@ export class DivisionEntity {
     country: CountryEntity;
 
     @OneToMany(() => TourEntity, (tour) => tour.division)
-    @ApiProperty({ description: 'Danh sách các tour', type: () => [TourEntity] })
+    @ApiProperty({
+        description: 'Danh sách các tour',
+        type: () => [TourEntity],
+    })
     tours: TourEntity[];
 
     @Index()

@@ -55,7 +55,10 @@ export class BookingItemEntity extends BaseEntityTimestamp {
         nullable: false,
     })
     @JoinColumn({ name: 'variant_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Biến thể tour', type: () => TourVariantEntity })
+    @ApiProperty({
+        description: 'Biến thể tour',
+        type: () => TourVariantEntity,
+    })
     variant: TourVariantEntity;
 
     @ManyToOne(() => TourPaxTypeEntity, (pax_type) => pax_type.booking_items, {
@@ -71,7 +74,10 @@ export class BookingItemEntity extends BaseEntityTimestamp {
         { nullable: false },
     )
     @JoinColumn({ name: 'tour_session_id', referencedColumnName: 'id' })
-    @ApiProperty({ description: 'Lịch chạy tour', type: () => TourSessionEntity })
+    @ApiProperty({
+        description: 'Lịch chạy tour',
+        type: () => TourSessionEntity,
+    })
     tour_session: TourSessionEntity;
 
     @OneToMany(
@@ -80,7 +86,7 @@ export class BookingItemEntity extends BaseEntityTimestamp {
     )
     @ApiProperty({
         description: 'Danh sách các hành khách của mục đặt tour này',
-        type: () => [BookingPassengerEntity]
+        type: () => [BookingPassengerEntity],
     })
     booking_passengers: BookingPassengerEntity[];
 }

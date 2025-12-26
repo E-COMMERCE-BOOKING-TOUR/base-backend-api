@@ -2,7 +2,7 @@ import { UserEntity } from '../entity/user.entity';
 import { randomUUID } from 'crypto';
 import { hashPassword } from '@/utils/bcrypt.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, Like, Repository } from 'typeorm';
 import {
     UserDTO,
     UpdateUserDTO,
@@ -23,14 +23,63 @@ export class UserService {
     constructor(
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
-    ) { }
+    ) {}
 
-    async getAllUsers(): Promise<UserSummaryDTO[]> {
-        const users = await this.userRepository.find({
-            relations: ['country', 'supplier', 'role'],
-            order: { created_at: 'DESC' },
-        });
-        return users.map(
+    async getAllUsers(
+        page: number = 1,
+        limit: number = 10,
+        search?: string,
+        role_id?: number,
+        supplier_id?: number,
+        status?: number,
+    ): Promise<{
+        data: UserSummaryDTO[];
+        total_items: number;
+        total_pages: number;
+        current_page: number;
+    }> {
+        const skip = (page - 1) * limit;
+        const where: Record<string, any> = {};
+
+        if (search) {
+            where.full_name = Like(`%${search}%`);
+            // You might want to search other fields too, but TypeORM simple find options don't support OR across fields easily without QueryBuilder.
+            // For now, let's search full_name or switch to QueryBuilder if needed.
+            // Using QueryBuilder is better for multiple fields OR search.
+        }
+
+        // Actually, complex OR search is better with QueryBuilder. Let's rewrite to use QueryBuilder.
+        const query = this.userRepository
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.country', 'country')
+            .leftJoinAndSelect('user.supplier', 'supplier')
+            .leftJoinAndSelect('user.role', 'role')
+            .orderBy('user.created_at', 'DESC')
+            .take(limit)
+            .skip(skip);
+
+        if (search) {
+            query.andWhere(
+                '(LOWER(user.full_name) LIKE LOWER(:search) OR LOWER(user.email) LIKE LOWER(:search) OR LOWER(user.username) LIKE LOWER(:search))',
+                { search: `%${search}%` },
+            );
+        }
+
+        if (role_id) {
+            query.andWhere('user.role_id = :role_id', { role_id });
+        }
+
+        if (supplier_id) {
+            query.andWhere('user.supplier_id = :supplier_id', { supplier_id });
+        }
+
+        if (status !== undefined) {
+            query.andWhere('user.status = :status', { status });
+        }
+
+        const [users, total] = await query.getManyAndCount();
+
+        const dtos = users.map(
             (u) =>
                 new UserSummaryDTO({
                     id: u.id,
@@ -49,6 +98,13 @@ export class UserService {
                     deleted_at: u.deleted_at ?? undefined,
                 } as Partial<UserSummaryDTO>),
         );
+
+        return {
+            data: dtos,
+            total_items: total,
+            total_pages: Math.ceil(total / limit),
+            current_page: page,
+        };
     }
 
     async getUserById(id: number): Promise<UserDetailDTO | null> {

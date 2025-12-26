@@ -80,7 +80,10 @@ export class UserEntity extends BaseEntityTimestamp {
         () => PaymentInfomationEntity,
         (payment_information) => payment_information.user,
     )
-    @ApiProperty({ description: 'Thông tin thanh toán', type: () => [PaymentInfomationEntity] })
+    @ApiProperty({
+        description: 'Thông tin thanh toán',
+        type: () => [PaymentInfomationEntity],
+    })
     payment_informations: PaymentInfomationEntity[];
 
     @OneToMany(() => ReviewEntity, (review) => review.user)
@@ -93,7 +96,10 @@ export class UserEntity extends BaseEntityTimestamp {
     country: CountryEntity;
 
     @ManyToMany(() => TourEntity, (tour) => tour.users_favorites)
-    @ApiProperty({ description: 'Danh sách các tour yêu thích', type: () => [TourEntity] })
+    @ApiProperty({
+        description: 'Danh sách các tour yêu thích',
+        type: () => [TourEntity],
+    })
     tours_favorites: TourEntity[];
 
     @ManyToOne(() => SupplierEntity, (supplier) => supplier.users, {
@@ -104,7 +110,10 @@ export class UserEntity extends BaseEntityTimestamp {
     supplier: SupplierEntity | null;
 
     @OneToMany(() => BookingEntity, (booking) => booking.user)
-    @ApiProperty({ description: 'Danh sách các đơn đặt tour', type: () => [BookingEntity] })
+    @ApiProperty({
+        description: 'Danh sách các đơn đặt tour',
+        type: () => [BookingEntity],
+    })
     bookings: BookingEntity[];
 
     toJSON() {

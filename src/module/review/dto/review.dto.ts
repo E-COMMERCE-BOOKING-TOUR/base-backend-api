@@ -41,7 +41,7 @@ export class ReviewImageDTO {
 }
 
 @ApiSchema({ name: 'CreateReviewRequest' })
-export class ReviewDTO {
+export class CreateReviewUserDTO {
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
@@ -75,11 +75,7 @@ export class ReviewDTO {
     })
     status?: ReviewStatus;
 
-    @IsInt()
-    @Min(1)
-    @ApiProperty({ description: 'ID người dùng' })
-    user_id: number;
-
+    @Type(() => Number)
     @IsInt()
     @Min(1)
     @ApiProperty({ description: 'ID tour' })
@@ -113,6 +109,13 @@ export class ReviewDTO {
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
+}
+
+export class AdminReviewDTO extends CreateReviewUserDTO {
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ description: 'ID người dùng' })
+    user_id: number;
 }
 
 export class ReviewImageDetailDTO {
@@ -152,6 +155,15 @@ export class ReviewSummaryDTO {
     @ApiProperty()
     tour_id: number;
 
+    @ApiProperty({ description: 'Số lượt hữu ích' })
+    helpful_count: number;
+
+    @ApiProperty({ description: 'Đã bị báo cáo' })
+    is_reported: boolean;
+
+    @ApiProperty({ description: 'Người dùng hiện tại đã nhấn hữu ích chưa' })
+    is_helpful: boolean;
+
     @IsOptional()
     @IsDate()
     @Type(() => Date)
@@ -170,15 +182,28 @@ export class ReviewSummaryDTO {
     @ApiProperty({ description: 'Ngày xóa', required: false })
     deleted_at?: Date;
 
+    @ApiProperty()
+    content: string;
+
+    @ApiProperty()
+    user: {
+        id: number;
+        full_name: string;
+        avatar?: string;
+    };
+
+    @ApiProperty()
+    tour: {
+        id: number;
+        title: string;
+    };
+
     constructor(partial: Partial<ReviewSummaryDTO>) {
         Object.assign(this, partial);
     }
 }
 
 export class ReviewDetailDTO extends ReviewSummaryDTO {
-    @ApiProperty()
-    content: string;
-
     @ApiProperty({ required: false })
     sort_no?: number;
 
@@ -187,6 +212,24 @@ export class ReviewDetailDTO extends ReviewSummaryDTO {
 
     constructor(partial: Partial<ReviewDetailDTO>) {
         super(partial);
+        Object.assign(this, partial);
+    }
+}
+
+export class ReviewStatsDTO {
+    @ApiProperty()
+    total_reviews: number;
+
+    @ApiProperty()
+    average_rating: number;
+
+    @ApiProperty()
+    rating_breakdown: { [key: number]: number };
+
+    @ApiProperty()
+    status_breakdown: { [key: string]: number };
+
+    constructor(partial: Partial<ReviewStatsDTO>) {
         Object.assign(this, partial);
     }
 }

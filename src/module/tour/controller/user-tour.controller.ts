@@ -21,7 +21,7 @@ import {
 @ApiTags('User Tour')
 @Controller('user/tour')
 export class UserTourController {
-    constructor(private readonly userTourService: UserTourService) {}
+    constructor(private readonly userTourService: UserTourService) { }
     @Get('search/list')
     @ApiOperation({ summary: 'Search tours with filters' })
     @ApiResponse({
@@ -39,7 +39,8 @@ export class UserTourController {
             },
         },
     })
-    async searchTours(@Query() query: UserTourSearchQueryDTO) {
+    async searchTours(@Query() query: UserTourSearchQueryDTO, @Query() rawQuery: Record<string, any>) {
+        console.log('Raw query params:', rawQuery);
         return this.userTourService.searchTours(query);
     }
 

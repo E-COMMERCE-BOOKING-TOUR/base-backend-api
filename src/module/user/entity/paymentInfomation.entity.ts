@@ -103,7 +103,7 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     @OneToMany(() => BookingEntity, (booking) => booking.payment_information)
     @ApiProperty({
         description: 'Danh sách các đơn đặt tour có thông tin thanh toán này',
-        type: () => [BookingEntity]
+        type: () => [BookingEntity],
     })
     bookings: BookingEntity[];
 }
