@@ -84,6 +84,7 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
         JwtRefreshStrategy,
         AuthService,
         UserPaymentService,
+        NotificationService,
     ],
 })
 export class UserModule { }

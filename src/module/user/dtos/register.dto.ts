@@ -1,5 +1,5 @@
 import { ApiProperty, ApiSchema } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 @ApiSchema({ name: 'CreateCatRequest' })
 export class RegisterDTO {
@@ -23,4 +23,19 @@ export class RegisterDTO {
         example: '123456789',
     })
     password: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Họ và tên', example: 'Nguyen Van A' })
+    full_name: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: 'Email', example: 'test@example.com' })
+    email: string;
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ description: 'Số điện thoại', example: '0123456789' })
+    phone?: string;
 }

@@ -12,6 +12,8 @@ import { ReviewModule } from './module/review/review.module';
 import { CommonModule } from './module/common/common.module';
 import { DashboardModule } from './module/dashboard/dashboard.module';
 import { ChatboxModule } from './module/chatbox/chatbox.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MailModule } from './module/mail/mail.module';
 
 @Module({
     imports: [
@@ -21,6 +23,8 @@ import { ChatboxModule } from './module/chatbox/chatbox.module';
             envFilePath: ['.env.local', '.env'],
             expandVariables: true,
         }),
+        ScheduleModule.forRoot(),
+        MailModule,
         // Database modules
         TypeOrmModule.forRootAsync({
             useFactory: () => databaseConfig(),

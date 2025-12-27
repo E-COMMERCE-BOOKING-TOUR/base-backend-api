@@ -125,4 +125,34 @@ export class BookingEntity extends BaseEntityTimestamp {
         type: () => BookingPaymentEntity,
     })
     booking_payment: BookingPaymentEntity;
+
+    @Column({
+        type: 'decimal',
+        precision: 12,
+        scale: 2,
+        default: 0,
+    })
+    @ApiProperty({ description: 'Số tiền đã hoàn lại' })
+    refund_amount: number;
+
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Lý do hủy booking' })
+    cancel_reason: string;
+
+    @Column({
+        type: 'boolean',
+        default: false,
+    })
+    @ApiProperty({ description: 'Đã thông báo cho nhà cung cấp chưa' })
+    is_supplier_notified: boolean;
+
+    @Column({
+        type: 'datetime',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Thời điểm thông báo cho nhà cung cấp' })
+    supplier_notified_at: Date;
 }

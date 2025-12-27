@@ -16,9 +16,12 @@ import { TourSessionEntity } from '@/module/tour/entity/tourSession.entity';
 import { TourVariantPaxTypePriceEntity } from '@/module/tour/entity/tourVariantPaxTypePrice.entity';
 import { UserBookingService } from './service/user-booking.service';
 import { UserBookingController } from './controller/user-booking.controller';
+import { SupplierBookingController } from './controller/supplier-booking.controller';
+import { SupplierBookingService } from './service/supplier-booking.service';
 import { TourModule } from '@/module/tour/tour.module';
 import { UserModule } from '@/module/user/user.module';
 import { PurchaseModule } from './purchase/purchase.module';
+import { BookingCleanupScheduler } from './scheduler/booking-cleanup.scheduler';
 
 @Module({
     imports: [
@@ -40,7 +43,7 @@ import { PurchaseModule } from './purchase/purchase.module';
         TourModule,
         PurchaseModule.forRoot([]),
     ],
-    controllers: [AdminBookingController, UserBookingController],
-    providers: [BookingService, UserBookingService],
+    controllers: [AdminBookingController, UserBookingController, SupplierBookingController],
+    providers: [BookingService, UserBookingService, SupplierBookingService, BookingCleanupScheduler],
 })
-export class BookingModule {}
+export class BookingModule { }

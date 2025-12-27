@@ -65,6 +65,14 @@ export class UserEntity extends BaseEntityTimestamp {
     })
     public login_type: number;
 
+    @Exclude()
+    @Column({ nullable: true })
+    public reset_password_token: string;
+
+    @Exclude()
+    @Column({ nullable: true, type: 'timestamp' })
+    public reset_password_token_expires: Date;
+
     @OneToMany(() => UserAuthSessionEntity, (session) => session.user, {
         cascade: true,
     })

@@ -34,7 +34,7 @@ import { Roles } from '@/module/user/decorator/roles.decorator';
 @Roles('admin')
 @Controller('admin/booking')
 export class AdminBookingController {
-    constructor(private readonly bookingService: BookingService) {}
+    constructor(private readonly bookingService: BookingService) { }
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [BookingSummaryDTO] })
@@ -168,13 +168,22 @@ export class AdminBookingController {
         return await this.bookingService.confirmBooking(id);
     }
 
+    @Get('calculate-refund/:id')
+    @ApiResponse({ status: 200, description: 'Calculate refund for booking' })
+    @ApiParam({ name: 'id', type: Number })
+    async calculateRefund(@Param('id') id: number) {
+        return await this.bookingService.calculateRefund(id);
+    }
+
     @Post('cancel/:id')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
-    @ApiBody({ type: BookingDTO })
-    async cancel(@Param('id') id: number) {
-        return await this.bookingService.cancelBooking(id);
+    async cancel(
+        @Param('id') id: number,
+        @Body() payload: { reason?: string },
+    ) {
+        return await this.bookingService.cancelBooking(id, payload.reason);
     }
 
     @Post('expire/:id')
@@ -184,5 +193,16 @@ export class AdminBookingController {
     @ApiBody({ type: BookingDTO })
     async expire(@Param('id') id: number) {
         return await this.bookingService.expireBooking(id);
+    }
+
+    @Post('refund/:id')
+    @ApiResponse({ status: 200, description: 'Process manual refund' })
+    @ApiParam({ name: 'id', type: Number })
+    async refund(
+        @Param('id') id: number,
+        @Body() payload: { amount?: number },
+    ) {
+        // Admin refund logic (to be implemented in BookingService)
+        return await this.bookingService.processAdminRefund(id, payload.amount);
     }
 }

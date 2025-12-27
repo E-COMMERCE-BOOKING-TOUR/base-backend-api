@@ -93,6 +93,14 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: '4 số cuối thẻ (hiển thị)' })
     last4: string | null;
 
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Stripe Charge ID' })
+    stripe_charge_id: string | null;
+
     @ManyToOne(() => UserEntity, (user) => user.payment_informations, {
         nullable: false,
     })

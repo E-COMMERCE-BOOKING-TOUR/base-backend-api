@@ -121,4 +121,34 @@ export class UserPaymentService {
             );
         }
     }
+
+    /**
+     * Refund a Stripe Charge
+     * @param chargeId - Stripe Charge ID
+     * @param amount - Amount to refund (in original currency units)
+     * @param currency - Currency code
+     */
+    async refundCharge(
+        chargeId: string,
+        amount: number,
+        currency: string,
+    ): Promise<Stripe.Refund> {
+        try {
+            const currencyCode = currency.toLowerCase();
+            const zeroDecimalCurrencies = ['jpy', 'vnd', 'krw'];
+            const stripeAmount = zeroDecimalCurrencies.includes(currencyCode)
+                ? Math.round(amount)
+                : Math.round(amount * 100);
+
+            const refund = await this.stripe.refunds.create({
+                charge: chargeId,
+                amount: stripeAmount,
+            });
+            return refund;
+        } catch (e) {
+            throw new BadRequestException(
+                e instanceof Error ? e.message : 'Failed to process refund',
+            );
+        }
+    }
 }

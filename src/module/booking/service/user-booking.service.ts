@@ -246,6 +246,7 @@ export class UserBookingService {
                     rules: firstItem.variant.tour_policy.tour_policy_rules,
                 }
                 : undefined,
+            cancel_reason: booking.cancel_reason,
         };
     }
 
@@ -506,15 +507,18 @@ export class UserBookingService {
             const amount = Number(booking.total_amount);
             const currency = booking.currency.symbol.toLowerCase();
 
-            await this.userPaymentService.chargeCustomer(
+            const charge = await this.userPaymentService.chargeCustomer(
                 customerId,
                 amount,
                 currency,
             );
+            // Save charge ID to payment_information
+            booking.payment_information.stripe_charge_id = charge.id;
+            await this.paymentInfoRepository.save(booking.payment_information);
         }
 
         // Update booking status
-        booking.status = BookingStatus.confirmed;
+        booking.status = BookingStatus.waiting_supplier;
         booking.payment_status = PaymentStatus.paid;
 
         // Clear expiry to prevent frontend alert
@@ -662,6 +666,135 @@ export class UserBookingService {
         );
 
         return { success: true, message: 'Booking cancelled successfully' };
+    }
+
+    /**
+     * Calculate refund amount based on supplier policy
+     */
+    async calculateRefund(bookingId: number): Promise<{
+        refundAmount: number;
+        feeAmount: number;
+        feePct: number;
+    }> {
+        const booking = await this.bookingRepository.findOne({
+            where: { id: bookingId },
+            relations: [
+                'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour_policy',
+                'booking_items.variant.tour_policy.tour_policy_rules',
+                'booking_items.tour_session',
+            ],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+
+        const firstItem = booking.booking_items?.[0];
+        if (!firstItem) throw new BadRequestException('Booking has no items');
+
+        const session = firstItem.tour_session;
+        const policy = firstItem.variant?.tour_policy;
+
+        if (!policy) {
+            return {
+                refundAmount: Number(booking.total_amount),
+                feeAmount: 0,
+                feePct: 0,
+            };
+        }
+
+        // Calculate hours until tour starts
+        const tourStartDate = new Date(session.session_date);
+        if (session.start_time) {
+            const [h, m, s] = String(session.start_time).split(':').map(Number);
+            tourStartDate.setHours(h || 0, m || 0, s || 0);
+        }
+
+        const now = new Date();
+        const diffMs = tourStartDate.getTime() - now.getTime();
+        const diffHours = Math.max(0, diffMs / (1000 * 60 * 60));
+
+        // Find applicable rule (closest before_hours that is <= diffHours)
+        const rules = (policy.tour_policy_rules || []).sort(
+            (a, b) => b.before_hours - a.before_hours,
+        );
+        let applicableFeePct = 100; // Default to 100% fee if no rules match
+
+        for (const rule of rules) {
+            if (diffHours >= rule.before_hours) {
+                applicableFeePct = rule.fee_pct;
+                break;
+            }
+        }
+
+        const feeAmount = (Number(booking.total_amount) * applicableFeePct) / 100;
+        const refundAmount = Number(booking.total_amount) - feeAmount;
+
+        return {
+            refundAmount,
+            feeAmount,
+            feePct: applicableFeePct,
+        };
+    }
+
+    /**
+     * Cancel a confirmed booking and process refund
+     */
+    async cancelConfirmedBooking(
+        id: number,
+        user: UserEntity,
+    ): Promise<{ success: boolean; message: string; refundAmount: number }> {
+        const booking = await this.bookingRepository.findOne({
+            where: { id, user: { uuid: user.uuid } },
+            relations: ['currency', 'tour_inventory_hold'],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+        if (![BookingStatus.confirmed, BookingStatus.waiting_supplier].includes(booking.status)) {
+            throw new BadRequestException(
+                'Only confirmed or waiting bookings can be cancelled here',
+            );
+        }
+
+        let refundAmount = 0;
+        if (booking.status === BookingStatus.waiting_supplier) {
+            refundAmount = Number(booking.total_amount);
+        } else {
+            const result = await this.calculateRefund(id);
+            refundAmount = result.refundAmount;
+        }
+
+        const stripeChargeId = booking.payment_information?.stripe_charge_id;
+
+        if (refundAmount > 0 && stripeChargeId) {
+            await this.userPaymentService.refundCharge(
+                stripeChargeId,
+                refundAmount,
+                booking.currency.symbol,
+            );
+        }
+
+        // Update booking
+        booking.status = BookingStatus.cancelled;
+        booking.payment_status =
+            refundAmount > 0 ? PaymentStatus.refunded : booking.payment_status;
+        booking.refund_amount = refundAmount;
+
+        // Release inventory hold
+        if (booking.tour_inventory_hold) {
+            booking.tour_inventory_hold.expires_at = new Date(0);
+            await this.inventoryHoldRepository.save(
+                booking.tour_inventory_hold,
+            );
+        }
+
+        await this.bookingRepository.save(booking);
+
+        return {
+            success: true,
+            message: 'Booking cancelled and refund processed',
+            refundAmount,
+        };
     }
 
     async downloadReceipt(

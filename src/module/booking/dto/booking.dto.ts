@@ -21,6 +21,7 @@ export enum BookingStatus {
     pending_info = 'pending_info',
     pending_payment = 'pending_payment',
     pending_confirm = 'pending_confirm',
+    waiting_supplier = 'waiting_supplier',
     pending = 'pending',
     confirmed = 'confirmed',
     cancelled = 'cancelled',
@@ -293,8 +294,29 @@ export class BookingSummaryDTO {
     @ApiProperty()
     booking_payment_id: number;
 
+    @ApiProperty({ required: false })
+    booking_payment?: {
+        id: number;
+        payment_method_name: string;
+    };
+
     @ApiProperty({ type: [BookingItemDetailDTO], required: false })
     booking_items?: BookingItemDetailDTO[];
+
+    @ApiProperty({ required: false })
+    cancel_reason?: string;
+
+    @ApiProperty({ required: false })
+    currency?: string;
+
+    @ApiProperty({ required: false })
+    created_at?: Date;
+
+    @ApiProperty({ required: false })
+    updated_at?: Date;
+
+    @ApiProperty({ required: false })
+    deleted_at?: Date;
 
     constructor(partial: Partial<BookingSummaryDTO>) {
         Object.assign(this, partial);
@@ -338,6 +360,9 @@ export class UserBookingDetailDTO {
 
     @ApiProperty()
     currency: string;
+
+    @ApiProperty({ required: false })
+    cancel_reason?: string;
 
     @ApiProperty()
     tour_title: string;

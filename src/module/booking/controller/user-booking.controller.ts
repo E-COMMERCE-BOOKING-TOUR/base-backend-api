@@ -26,7 +26,7 @@ import { BookingEntity } from '../entity/booking.entity';
 @ApiTags('User Booking')
 @Controller('user/booking')
 export class UserBookingController {
-    constructor(private readonly userBookingService: UserBookingService) {}
+    constructor(private readonly userBookingService: UserBookingService) { }
 
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
@@ -187,5 +187,32 @@ export class UserBookingController {
         @Res() res: express.Response,
     ) {
         return await this.userBookingService.downloadInvoice(id, user, res);
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Post(':id/cancel-confirmed')
+    @ApiResponse({
+        status: 200,
+        description: 'Cancel a confirmed booking and process refund',
+    })
+    async cancelConfirmedBooking(
+        @User() user: UserEntity,
+        @Param('id') id: number,
+    ): Promise<{ success: boolean; message: string; refundAmount: number }> {
+        return await this.userBookingService.cancelConfirmedBooking(id, user);
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Get(':id/calculate-refund')
+    @ApiResponse({
+        status: 200,
+        description: 'Calculate potential refund amount',
+    })
+    async calculateRefund(@Param('id') id: number): Promise<any> {
+        return await this.userBookingService.calculateRefund(id);
     }
 }

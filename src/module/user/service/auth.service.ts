@@ -16,71 +16,97 @@ import { JwtService } from '@nestjs/jwt';
 import { JWTRefresh, RefreshPayload, TokenPayload } from '../types';
 import { jwtRefreshTokenConfig } from '@/config/jwt.config';
 import * as jwt from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
+
+import { MailService } from '../../mail/mail.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectRepository(UserEntity)
-        private userRepository: Repository<UserEntity>,
+        private readonly userRepository: Repository<UserEntity>,
         @InjectRepository(UserAuthSessionEntity)
-        private userAuthSessionRepository: Repository<UserAuthSessionEntity>,
-        private jwtService: JwtService,
-        private dataSource: DataSource,
+        private readonly userAuthSessionRepository: Repository<UserAuthSessionEntity>,
+        private readonly jwtService: JwtService,
+        private readonly dataSource: DataSource,
+        private readonly mailService: MailService,
+        private readonly configService: ConfigService,
     ) { }
 
     async register(dto: RegisterDTO) {
-        const user = await this.userRepository.findOne({
-            where: {
-                username: dto.username,
-            },
+        // Check if username or email already exists
+        const existingUser = await this.userRepository.findOne({
+            where: [
+                { username: dto.username },
+                { email: dto.email },
+            ],
         });
 
-        // Check exists user
-        if (user) {
+        if (existingUser) {
             throw new UnauthorizedException(
-                'Tên người dùng này đã có người sử dụng!',
+                existingUser.username === dto.username
+                    ? 'Tên người dùng này đã có người sử dụng!'
+                    : 'Email này đã được sử dụng!',
             );
         }
+
         // Hash password
         const hashedPassword = await hashPassword(dto.password);
         const data: DeepPartial<UserEntity> = {
             ...dto,
             uuid: generateUUID(),
-            full_name: dto.username,
-            email: undefined,
             status: 1,
             login_type: 0,
             password: hashedPassword,
         };
+
         try {
-            const userInstance = await this.dataSource.transaction(
-                async (manager) => {
-                    // Create user Instance
-                    const userInstance = manager.create(UserEntity, data);
-                    // Insert to database
-                    await manager.save(userInstance);
-                    return userInstance;
-                },
-            );
+            const userInstance = await this.userRepository.save(this.userRepository.create(data));
+
             // create token with payload
             const token = await this.getToken({
                 uuid: userInstance.uuid,
-                full_name: userInstance.username,
+                full_name: userInstance.full_name,
                 phone: userInstance.phone,
                 email: userInstance.email,
             });
+
             return new AuthResponseDTO({
                 error: false,
-                message: 'Thành công!',
+                message: 'Đăng ký thành công!',
                 token: new TokenDTO(token),
             });
         } catch (error) {
-            // log error & push error
-            // throw error
             throw new UnauthorizedException(
                 error instanceof Error ? error.message : String(error),
             );
         }
+    }
+
+    async forgotPassword(email: string) {
+        const user = await this.userRepository.findOne({ where: { email } });
+        if (!user) {
+            throw new UnauthorizedException('Email không tồn tại trong hệ thống!');
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour
+
+        user.reset_password_token = resetToken;
+        user.reset_password_token_expires = resetTokenExpires;
+        await this.userRepository.save(user);
+
+        // Send Email using external template and dynamic link
+        const frontendUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL');
+        const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+        await this.mailService.sendForgotPasswordEmail(user.email, user.full_name, resetLink);
+
+        return new MessageResponseDTO({
+            error: false,
+            message: 'Yêu cầu đặt lại mật khẩu đã được gửi tới email của bạn!',
+        });
     }
 
     async login(dto: LoginDTO) {

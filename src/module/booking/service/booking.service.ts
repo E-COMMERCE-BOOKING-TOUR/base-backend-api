@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BookingEntity } from '../entity/booking.entity';
@@ -21,6 +21,7 @@ import {
     PaymentStatus,
     BookingItemDetailDTO,
 } from '../dto/booking.dto';
+import { UserPaymentService } from '@/module/user/service/user-payment.service';
 
 @Injectable()
 export class BookingService {
@@ -47,7 +48,8 @@ export class BookingService {
         private readonly sessionRepository: Repository<TourSessionEntity>,
         @InjectRepository(TourVariantPaxTypePriceEntity)
         private readonly priceRepository: Repository<TourVariantPaxTypePriceEntity>,
-    ) {}
+        private readonly userPaymentService: UserPaymentService,
+    ) { }
 
     private toSummaryDTO(b: BookingEntity): BookingSummaryDTO {
         return new BookingSummaryDTO({
@@ -60,7 +62,13 @@ export class BookingService {
             payment_status: b.payment_status,
             user_id: b.user?.id,
             currency_id: b.currency?.id,
+            currency: b.currency?.symbol,
+            cancel_reason: b.cancel_reason,
             booking_payment_id: b.booking_payment?.id,
+            booking_payment: b.booking_payment ? {
+                id: b.booking_payment.id,
+                payment_method_name: b.booking_payment.payment_method_name,
+            } : undefined,
             booking_items: (b.booking_items ?? []).map(
                 (item) =>
                     new BookingItemDetailDTO({
@@ -94,7 +102,18 @@ export class BookingService {
             payment_status: b.payment_status,
             user_id: b.user?.id,
             currency_id: b.currency?.id,
+            currency: b.currency?.symbol,
+            cancel_reason: b.cancel_reason,
             booking_payment_id: b.booking_payment?.id,
+            booking_payment: b.booking_payment ? {
+                id: b.booking_payment.id,
+                payment_method_name: b.booking_payment.payment_method_name,
+            } : undefined,
+            payment_information: b.payment_information ? {
+                brand: b.payment_information.brand,
+                last4: b.payment_information.last4,
+                account_holder: b.payment_information.account_holder,
+            } : undefined,
             payment_information_id: b.payment_information?.id,
             tour_inventory_hold_id: b.tour_inventory_hold?.id,
             booking_items: (b.booking_items ?? []).map(
@@ -150,7 +169,7 @@ export class BookingService {
         } catch (error) {
             throw new Error(
                 'Fail getAllBooking: ' +
-                    (error instanceof Error ? error.message : String(error)),
+                (error instanceof Error ? error.message : String(error)),
             );
         }
     }
@@ -178,7 +197,7 @@ export class BookingService {
         } catch (error) {
             throw new Error(
                 'Fail getBookingById: ' +
-                    (error instanceof Error ? error.message : String(error)),
+                (error instanceof Error ? error.message : String(error)),
             );
         }
     }
@@ -203,7 +222,7 @@ export class BookingService {
         } catch (error) {
             throw new Error(
                 'Fail getBookingsByUser: ' +
-                    (error instanceof Error ? error.message : String(error)),
+                (error instanceof Error ? error.message : String(error)),
             );
         }
     }
@@ -687,11 +706,152 @@ export class BookingService {
         return this.updateStatus(id, BookingStatus.confirmed);
     }
 
-    async cancelBooking(id: number): Promise<BookingDetailDTO | null> {
-        return this.updateStatus(id, BookingStatus.cancelled);
+    async cancelBooking(id: number, reason?: string): Promise<BookingDetailDTO | null> {
+        const booking = await this.bookingRepository.findOne({
+            where: { id },
+            relations: [
+                'currency',
+                'payment_information',
+                'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour_policy',
+                'booking_items.variant.tour_policy.tour_policy_rules',
+                'booking_items.tour_session',
+            ],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+
+        // Process refund if booking was confirmed/waiting_supplier and paid
+        if ((booking.status === BookingStatus.confirmed || booking.status === BookingStatus.waiting_supplier) && booking.payment_status === PaymentStatus.paid) {
+            let refundAmount = 0;
+            if (booking.status === BookingStatus.waiting_supplier) {
+                refundAmount = Number(booking.total_amount);
+            } else {
+                const result = await this.calculateRefund(id);
+                refundAmount = result.refundAmount;
+            }
+
+            const stripeChargeId = booking.payment_information?.stripe_charge_id;
+
+            if (refundAmount > 0 && stripeChargeId) {
+                await this.userPaymentService.refundCharge(
+                    stripeChargeId,
+                    refundAmount,
+                    booking.currency.symbol,
+                );
+                booking.payment_status = PaymentStatus.refunded;
+                booking.refund_amount = refundAmount;
+            }
+        }
+
+        // Save cancel reason
+        if (reason) {
+            booking.cancel_reason = reason;
+        }
+        booking.status = BookingStatus.cancelled;
+        await this.bookingRepository.save(booking);
+
+        return this.getBookingById(id);
     }
 
     async expireBooking(id: number): Promise<BookingDetailDTO | null> {
         return this.updateStatus(id, BookingStatus.expired);
     }
+
+    /**
+     * Calculate refund amount based on supplier policy (for admin)
+     */
+    async calculateRefund(bookingId: number): Promise<{
+        refundAmount: number;
+        feeAmount: number;
+        feePct: number;
+    }> {
+        const booking = await this.bookingRepository.findOne({
+            where: { id: bookingId },
+            relations: [
+                'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour_policy',
+                'booking_items.variant.tour_policy.tour_policy_rules',
+                'booking_items.tour_session',
+            ],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+
+        // Get policy from first item
+        const firstItem = booking.booking_items?.[0];
+        const policy = firstItem?.variant?.tour_policy;
+        const session = firstItem?.tour_session;
+
+        if (!policy || !session) {
+            // No policy = full refund
+            return {
+                refundAmount: Number(booking.total_amount),
+                feeAmount: 0,
+                feePct: 0,
+            };
+        }
+
+        // Calculate hours until tour starts
+        const tourStartDate = new Date(session.session_date);
+        if (session.start_time) {
+            const [h, m, s] = String(session.start_time).split(':').map(Number);
+            tourStartDate.setHours(h || 0, m || 0, s || 0);
+        }
+
+        const now = new Date();
+        const diffMs = tourStartDate.getTime() - now.getTime();
+        const diffHours = Math.max(0, diffMs / (1000 * 60 * 60));
+
+        // Find applicable rule
+        const rules = (policy.tour_policy_rules || []).sort(
+            (a, b) => b.before_hours - a.before_hours,
+        );
+        let applicableFeePct = 100;
+
+        for (const rule of rules) {
+            if (diffHours >= rule.before_hours) {
+                applicableFeePct = rule.fee_pct;
+                break;
+            }
+        }
+
+        const feeAmount = (Number(booking.total_amount) * applicableFeePct) / 100;
+        const refundAmount = Number(booking.total_amount) - feeAmount;
+
+        return {
+            refundAmount: Math.max(0, refundAmount),
+            feeAmount,
+            feePct: applicableFeePct,
+        };
+    }
+
+    async processAdminRefund(id: number, amount?: number): Promise<any> {
+        const booking = await this.bookingRepository.findOne({
+            where: { id },
+            relations: ['currency', 'payment_information'],
+        });
+
+        if (!booking) throw new NotFoundException('Booking not found');
+
+        const refundAmount = amount ?? Number(booking.total_amount);
+        const stripeChargeId = booking.payment_information?.stripe_charge_id;
+
+        if (refundAmount > 0 && stripeChargeId) {
+            await this.userPaymentService.refundCharge(
+                stripeChargeId,
+                refundAmount,
+                booking.currency.symbol,
+            );
+        }
+
+        booking.payment_status = PaymentStatus.refunded;
+        booking.refund_amount = (booking.refund_amount || 0) + refundAmount;
+        await this.bookingRepository.save(booking);
+
+        return { success: true, refundAmount };
+    }
 }
+

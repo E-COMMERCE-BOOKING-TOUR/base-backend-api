@@ -27,7 +27,7 @@ import { JWT } from '../decorator/jwt.decorator';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
     @Post('register')
     @UseFilters(AuthExceptionFilter)
@@ -87,6 +87,15 @@ export class AuthController {
     })
     async refresh(@JWT() jwt: JWTRefresh) {
         return await this.authService.refreshToken(jwt);
+    }
+
+    @Post('forgot-password')
+    @ApiResponse({
+        status: 201,
+        type: MessageResponseDTO,
+    })
+    async forgotPassword(@Body('email') email: string) {
+        return await this.authService.forgotPassword(email);
     }
 
     @ApiBearerAuth()
