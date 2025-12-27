@@ -30,6 +30,9 @@ import { AdminPermissionController } from './controller/admin-permission.control
 import { AdminSupplierService } from './service/admin-supplier.service';
 import { AdminRoleService } from './service/admin-role.service';
 import { AdminPermissionService } from './service/admin-permission.service';
+import { BullModule } from '@nestjs/bullmq';
+import { ChatboxModule } from '../chatbox/chatbox.module';
+import { UserSyncProcessor } from './processor/user-sync.processor';
 
 @Module({
     imports: [
@@ -45,6 +48,10 @@ import { AdminPermissionService } from './service/admin-permission.service';
         ]),
         PassportModule,
         JwtModule.register(jwtConfig()),
+        BullModule.registerQueue({
+            name: 'user-sync',
+        }),
+        ChatboxModule,
     ],
     controllers: [
         AuthController,
@@ -67,6 +74,7 @@ import { AdminPermissionService } from './service/admin-permission.service';
         AdminSupplierService,
         AdminRoleService,
         AdminPermissionService,
+        UserSyncProcessor,
     ],
     exports: [
         TypeOrmModule, // Export TypeOrmModule to share User repositories
@@ -78,4 +86,4 @@ import { AdminPermissionService } from './service/admin-permission.service';
         UserPaymentService,
     ],
 })
-export class UserModule {}
+export class UserModule { }

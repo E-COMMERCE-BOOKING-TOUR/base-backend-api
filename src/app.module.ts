@@ -11,6 +11,7 @@ import { TourModule } from './module/tour/tour.module';
 import { ReviewModule } from './module/review/review.module';
 import { CommonModule } from './module/common/common.module';
 import { DashboardModule } from './module/dashboard/dashboard.module';
+import { ChatboxModule } from './module/chatbox/chatbox.module';
 
 @Module({
     imports: [
@@ -43,6 +44,7 @@ import { DashboardModule } from './module/dashboard/dashboard.module';
         ReviewModule,
         CommonModule,
         DashboardModule,
+        ChatboxModule,
     ],
     controllers: [AppController],
     providers: [],

@@ -17,13 +17,17 @@ import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
 import { comparePassword } from '@/utils/bcrypt.util';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
+@Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
-    ) {}
+        @InjectQueue('user-sync') private bgQueue: Queue,
+    ) { }
 
     async getAllUsers(
         page: number = 1,
@@ -180,8 +184,17 @@ export class UserService {
                 ? ({ id: dto.supplier_id } as SupplierEntity)
                 : null;
         if (dto.role_id) user.role = { id: dto.role_id } as RoleEntity;
+        if (dto.role_id) user.role = { id: dto.role_id } as RoleEntity;
         user.updated_at = dto.updated_at ?? new Date();
         await this.userRepository.save(user);
+
+        if (dto.full_name) {
+            this.bgQueue.add('update-info', {
+                userId: user.id.toString(),
+                name: user.full_name
+            });
+        }
+
         return this.getUserById(id);
     }
 
@@ -209,6 +222,15 @@ export class UserService {
 
         user.updated_at = new Date();
         await this.userRepository.save(user);
+
+        // Sync to chatbox if name changed
+        if (dto.full_name) {
+            this.bgQueue.add('update-info', {
+                userId: user.id.toString(), // Assuming userId in chatbox is string(id)
+                name: user.full_name
+            });
+        }
+
         return this.getUserById(id);
     }
 
