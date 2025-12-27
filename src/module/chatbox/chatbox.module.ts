@@ -14,7 +14,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     transport: Transport.TCP,
                     options: {
                         host: configService.get('CHATBOX_HOST', 'chatbox'),
-                        port: configService.get('CHATBOX_TCP_PORT', 8877),
+                        port: configService.get('CHATBOX_TCP_PORT', 3002),
                     },
                 }),
                 inject: [ConfigService],
