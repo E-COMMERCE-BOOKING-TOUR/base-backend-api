@@ -9,7 +9,7 @@ import {
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TourPolicyRuleEntity } from './tourPolicyRule.entity';
-import { TourVariantEntity } from './tourVariant.entity';
+import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 
 @Entity('tour_policies')
 export class TourPolicyEntity extends BaseEntityTimestamp {
@@ -33,15 +33,19 @@ export class TourPolicyEntity extends BaseEntityTimestamp {
     })
     tour_policy_rules: TourPolicyRuleEntity[];
 
+    @Column()
+    @ApiProperty({ description: 'ID nhà cung cấp' })
+    supplier_id: number;
+
     @ManyToOne(
-        () => TourVariantEntity,
-        (tour_variant) => tour_variant.tour_policy,
+        () => SupplierEntity,
+        (supplier) => supplier.tour_policies,
         { nullable: false, onDelete: 'CASCADE' },
     )
-    @JoinColumn({ name: 'tour_variant_id', referencedColumnName: 'id' })
+    @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
     @ApiProperty({
-        description: 'Biến thể tour',
-        type: () => TourVariantEntity,
+        description: 'Nhà cung cấp sở hữu chính sách',
+        type: () => SupplierEntity,
     })
-    tour_variant: TourVariantEntity;
+    supplier: SupplierEntity;
 }

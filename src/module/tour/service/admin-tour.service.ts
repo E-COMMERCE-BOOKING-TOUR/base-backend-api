@@ -11,6 +11,8 @@ import { CountryEntity } from '@/common/entity/country.entity';
 import { DivisionEntity } from '@/common/entity/division.entity';
 import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { TourCategoryEntity } from '../entity/tourCategory.entity';
+import { TourPolicyEntity } from '../entity/tourPolicy.entity';
+import { TourPolicyRuleEntity } from '../entity/tourPolicyRule.entity';
 import { DataSource } from 'typeorm';
 import {
     TourDTO,
@@ -19,6 +21,8 @@ import {
     AdminTourQueryDTO,
     PaginatedTourResponse,
     TourStatus,
+    TourPolicyDTO,
+    TourPolicyRuleDTO,
 } from '../dto/tour.dto';
 
 @Injectable()
@@ -45,7 +49,7 @@ export class AdminTourService {
         @InjectRepository(TourCategoryEntity)
         private readonly categoryRepository: Repository<TourCategoryEntity>,
         private readonly dataSource: DataSource,
-    ) {}
+    ) { }
 
     async getAllTours(
         query: AdminTourQueryDTO,
@@ -109,6 +113,21 @@ export class AdminTourService {
         return this.currencyRepository.find({ order: { name: 'ASC' } });
     }
 
+    async getPoliciesBySupplier(
+        supplierId: number,
+    ): Promise<TourPolicyEntity[]> {
+        const policies = await this.dataSource.getRepository(TourPolicyEntity).find({
+            where: { supplier: { id: supplierId } },
+            relations: ['tour_policy_rules'],
+            order: { name: 'ASC' },
+        });
+
+        return policies.map(p => ({
+            ...p,
+            rules: p.tour_policy_rules
+        })) as any;
+    }
+
     private slugify(text: string): string {
         return text
             .toString()
@@ -143,10 +162,72 @@ export class AdminTourService {
                 'variants.tour_sessions',
                 'variants.tour_variant_pax_type_prices',
                 'variants.tour_variant_pax_type_prices.pax_type',
+                'variants.tour_policy',
+                'variants.tour_policy.tour_policy_rules',
             ],
         });
         if (!tour) throw new NotFoundException(`Tour with ID ${id} not found`);
         return tour;
+    }
+
+    async getVisibilityReport(id: number) {
+        const tour = await this.tourRepository.findOne({
+            where: { id },
+            relations: [
+                'images',
+                'variants',
+                'variants.tour_sessions',
+                'variants.tour_variant_pax_type_prices',
+            ]
+        });
+
+        if (!tour) throw new NotFoundException(`Tour with ID ${id} not found`);
+
+        const issues: string[] = [];
+        const checks = {
+            status: tour.status === TourStatus.active,
+            is_visible: tour.is_visible,
+            has_images: tour.images && tour.images.length > 0,
+            has_variants: tour.variants && tour.variants.length > 0,
+            has_active_variants: tour.variants?.some(v => v.status === 'active'),
+            has_pricing: tour.variants?.some(v =>
+                v.tour_variant_pax_type_prices?.some(p => p.price > 0)
+            ),
+            has_upcoming_sessions: false
+        };
+
+        if (tour.status !== TourStatus.active) issues.push('Tour status is not set to ACTIVE');
+        if (!tour.is_visible) issues.push('Tour visibility is turned OFF');
+        if (!checks.has_images) issues.push('No images uploaded for this tour');
+        if (!checks.has_variants) issues.push('No variants defined for this tour');
+        else if (!checks.has_active_variants) issues.push('No active variants found');
+
+        if (checks.has_variants && !checks.has_pricing) {
+            issues.push('No valid prices (>0) found in any variant');
+        }
+
+        // Check for upcoming open sessions
+        const now = new Date();
+        const dStr = now.toISOString().split('T')[0];
+
+        checks.has_upcoming_sessions = tour.variants?.some(v =>
+            v.tour_sessions?.some(s =>
+                s.status === 'open' && (s.session_date.toString() >= dStr)
+            )
+        );
+
+        if (!checks.has_upcoming_sessions) {
+            issues.push('No upcoming open sessions found for this tour');
+        }
+
+        return {
+            id: tour.id,
+            title: tour.title,
+            slug: tour.slug,
+            isVisiblePublic: checks.status && checks.is_visible && issues.length === 0, // Simplified but accurate for the modal
+            checks,
+            issues
+        };
     }
 
     async createTour(dto: TourDTO): Promise<TourEntity> {
@@ -164,8 +245,8 @@ export class AdminTourService {
         return await this.dataSource.transaction(async (manager) => {
             const categories = tour_category_ids?.length
                 ? await manager.find(TourCategoryEntity, {
-                      where: { id: In(tour_category_ids) },
-                  })
+                    where: { id: In(tour_category_ids) },
+                })
                 : [];
 
             const slug =
@@ -206,7 +287,8 @@ export class AdminTourService {
                         ...(vRest as any),
                         tour: savedTour,
                         currency: { id: vCurrencyId || currency_id },
-                    } as DeepPartial<TourVariantEntity>);
+                        tour_policy: vDto.tour_policy_id ? { id: vDto.tour_policy_id } : undefined,
+                    } as any);
 
                     const savedVariant = await manager.save(variant);
 
@@ -370,12 +452,14 @@ export class AdminTourService {
                         variant.currency = {
                             id: vCurrencyId || tour.currency.id,
                         } as CurrencyEntity;
+                        variant.tour_policy = vDtoAny.tour_policy_id ? ({ id: vDtoAny.tour_policy_id } as any) : undefined;
                     } else {
                         variant = manager.create(TourVariantEntity, {
                             ...vRest,
                             tour: savedTour,
                             currency: { id: vCurrencyId || tour.currency.id },
-                        });
+                            tour_policy: vDtoAny.tour_policy_id ? { id: vDtoAny.tour_policy_id } : undefined,
+                        } as any);
                     }
 
                     const savedVariant = await manager.save(variant);
@@ -413,11 +497,11 @@ export class AdminTourService {
                             const tStr =
                                 t instanceof Date
                                     ? t.toLocaleTimeString('en-GB', {
-                                          hour12: false,
-                                      })
+                                        hour12: false,
+                                    })
                                     : typeof t === 'string'
-                                      ? t
-                                      : '00:00:00';
+                                        ? t
+                                        : '00:00:00';
                             // Normalize to HH:mm:ss if it's HH:mm
                             const normalizedTime =
                                 tStr.length === 5 ? `${tStr}:00` : tStr;
@@ -524,5 +608,73 @@ export class AdminTourService {
 
     async removeSession(id: number): Promise<void> {
         await this.sessionRepository.delete(id);
+    }
+
+    // --- Policy Management ---
+
+    async createPolicy(dto: TourPolicyDTO): Promise<TourPolicyEntity> {
+        return await this.dataSource.transaction(async (manager) => {
+            const policy = manager.create(TourPolicyEntity, {
+                name: dto.name,
+                supplier: { id: dto.supplier_id },
+            });
+            const savedPolicy = await manager.save(policy);
+
+            if (dto.rules?.length) {
+                const rules = dto.rules.map((r) =>
+                    manager.create(TourPolicyRuleEntity, {
+                        ...r,
+                        tour_policy: savedPolicy,
+                    }),
+                );
+                await manager.save(rules);
+            }
+
+            const result = await manager.findOne(TourPolicyEntity, {
+                where: { id: savedPolicy.id },
+                relations: ['tour_policy_rules'],
+            });
+            return { ...result, rules: result?.tour_policy_rules } as any;
+        });
+    }
+
+    async updatePolicy(
+        id: number,
+        dto: Partial<TourPolicyDTO>,
+    ): Promise<TourPolicyEntity> {
+        return await this.dataSource.transaction(async (manager) => {
+            const policy = await manager.findOne(TourPolicyEntity, {
+                where: { id },
+                relations: ['tour_policy_rules'],
+            });
+            if (!policy) throw new NotFoundException(`Policy ${id} not found`);
+
+            if (dto.name) policy.name = dto.name;
+            await manager.save(policy);
+
+            if (dto.rules) {
+                // For simplicity, replace rules
+                await manager.delete(TourPolicyRuleEntity, {
+                    tour_policy: { id },
+                });
+                const rules = dto.rules.map((r) =>
+                    manager.create(TourPolicyRuleEntity, {
+                        ...r,
+                        tour_policy: policy,
+                    }),
+                );
+                await manager.save(rules);
+            }
+
+            const result = await manager.findOne(TourPolicyEntity, {
+                where: { id: policy.id },
+                relations: ['tour_policy_rules'],
+            });
+            return { ...result, rules: result?.tour_policy_rules } as any;
+        });
+    }
+
+    async removePolicy(id: number): Promise<void> {
+        await this.dataSource.getRepository(TourPolicyEntity).delete(id);
     }
 }

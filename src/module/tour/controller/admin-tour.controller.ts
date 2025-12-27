@@ -28,6 +28,7 @@ import {
     AdminTourQueryDTO,
     PaginatedTourResponse,
     TourDTO,
+    TourPolicyDTO,
 } from '../dto/tour.dto';
 import { TourEntity } from '../entity/tour.entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -97,11 +98,24 @@ export class AdminTourController {
         return this.adminTourService.getCurrencies();
     }
 
+    @Get('policies/:supplierId')
+    @ApiParam({ name: 'supplierId', type: Number })
+    async getPoliciesBySupplier(@Param('supplierId') supplierId: number) {
+        return this.adminTourService.getPoliciesBySupplier(supplierId);
+    }
+
     @Get('getById/:id')
     @ApiParam({ name: 'id', type: Number })
     @ApiResponse({ status: 200, type: TourEntity })
     async getTourById(@Param('id') id: number) {
         return this.adminTourService.getTourById(id);
+    }
+
+    @Get('visibility-check/:id')
+    @ApiParam({ name: 'id', type: Number })
+    @ApiOperation({ summary: 'Check why a tour is visible or hidden' })
+    async getVisibilityReport(@Param('id') id: number) {
+        return this.adminTourService.getVisibilityReport(id);
     }
 
     @Post('create')
@@ -135,5 +149,26 @@ export class AdminTourController {
     @ApiParam({ name: 'id', type: Number })
     async removeTour(@Param('id') id: number) {
         return this.adminTourService.removeTour(id);
+    }
+
+    // --- Policy Management ---
+
+    @Post('policy')
+    @ApiBody({ type: TourPolicyDTO })
+    async createPolicy(@Body() dto: TourPolicyDTO) {
+        return this.adminTourService.createPolicy(dto);
+    }
+
+    @Put('policy/:id')
+    @ApiParam({ name: 'id', type: Number })
+    @ApiBody({ type: TourPolicyDTO })
+    async updatePolicy(@Param('id') id: number, @Body() dto: Partial<TourPolicyDTO>) {
+        return this.adminTourService.updatePolicy(id, dto);
+    }
+
+    @Delete('policy/:id')
+    @ApiParam({ name: 'id', type: Number })
+    async removePolicy(@Param('id') id: number) {
+        return this.adminTourService.removePolicy(id);
     }
 }

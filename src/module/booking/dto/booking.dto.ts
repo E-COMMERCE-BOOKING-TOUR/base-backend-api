@@ -15,6 +15,7 @@ import {
     IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { TourPolicyDTO } from '@/module/tour/dto/tour.dto';
 
 export enum BookingStatus {
     pending_info = 'pending_info',
@@ -384,6 +385,9 @@ export class UserBookingDetailDTO {
         expiry_date?: string;
         account_holder?: string;
     };
+
+    @ApiProperty({ type: TourPolicyDTO, required: false })
+    policy?: TourPolicyDTO;
 }
 
 export class ConfirmBookingDTO {

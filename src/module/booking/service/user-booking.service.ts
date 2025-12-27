@@ -43,7 +43,7 @@ export class UserBookingService {
         private readonly paymentInfoRepository: Repository<PaymentInfomationEntity>,
         private readonly purchaseService: PurchaseService,
         private readonly userPaymentService: UserPaymentService,
-    ) {}
+    ) { }
 
     async createBooking(
         uuid: string,
@@ -110,6 +110,8 @@ export class UserBookingService {
                 'booking_items.variant.tour.images',
                 'booking_items.variant.tour.division',
                 'booking_items.variant.tour.country',
+                'booking_items.variant.tour_policy',
+                'booking_items.variant.tour_policy.tour_policy_rules',
                 'booking_items.tour_session',
                 'booking_items.pax_type',
                 'currency',
@@ -143,6 +145,8 @@ export class UserBookingService {
                 'booking_items.variant.tour.images',
                 'booking_items.variant.tour.division',
                 'booking_items.variant.tour.country',
+                'booking_items.variant.tour_policy',
+                'booking_items.variant.tour_policy.tour_policy_rules',
                 'booking_items.tour_session',
                 'booking_items.pax_type',
                 'currency',
@@ -187,19 +191,19 @@ export class UserBookingService {
             session_start_time:
                 session?.start_time instanceof Date
                     ? session.start_time.toLocaleTimeString('en-GB', {
-                          hour12: false,
-                      })
+                        hour12: false,
+                    })
                     : typeof session?.start_time === 'string'
-                      ? session.start_time
-                      : undefined,
+                        ? session.start_time
+                        : undefined,
             session_end_time:
                 session?.end_time instanceof Date
                     ? session.end_time.toLocaleTimeString('en-GB', {
-                          hour12: false,
-                      })
+                        hour12: false,
+                    })
                     : typeof session?.end_time === 'string'
-                      ? session.end_time
-                      : undefined,
+                        ? session.end_time
+                        : undefined,
             hold_expires_at: booking.tour_inventory_hold?.expires_at,
             items: sortedItems.map((item) => ({
                 variant_id: item.variant.id,
@@ -219,21 +223,28 @@ export class UserBookingService {
             ),
             booking_payment: booking.booking_payment
                 ? {
-                      id: booking.booking_payment.id,
-                      payment_method_name:
-                          booking.booking_payment.payment_method_name,
-                  }
+                    id: booking.booking_payment.id,
+                    payment_method_name:
+                        booking.booking_payment.payment_method_name,
+                }
                 : undefined,
             payment_information: booking.payment_information
                 ? {
-                      brand: booking.payment_information.brand || undefined,
-                      last4: booking.payment_information.last4 || undefined,
-                      expiry_date:
-                          booking.payment_information.expiry_date || undefined,
-                      account_holder:
-                          booking.payment_information.account_holder ||
-                          undefined,
-                  }
+                    brand: booking.payment_information.brand || undefined,
+                    last4: booking.payment_information.last4 || undefined,
+                    expiry_date:
+                        booking.payment_information.expiry_date || undefined,
+                    account_holder:
+                        booking.payment_information.account_holder ||
+                        undefined,
+                }
+                : undefined,
+            policy: firstItem?.variant?.tour_policy
+                ? {
+                    ...firstItem.variant.tour_policy,
+                    supplier_id: firstItem.variant.tour_policy.supplier_id,
+                    rules: firstItem.variant.tour_policy.tour_policy_rules,
+                }
                 : undefined,
         };
     }
@@ -879,8 +890,8 @@ export class UserBookingService {
             .fontSize(9)
             .text(
                 'Payment was received via ' +
-                    (booking.booking_payment?.payment_method_name ||
-                        'Credit Card'),
+                (booking.booking_payment?.payment_method_name ||
+                    'Credit Card'),
                 50,
                 700,
                 { align: 'center' },

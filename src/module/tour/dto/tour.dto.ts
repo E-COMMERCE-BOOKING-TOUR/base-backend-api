@@ -264,6 +264,15 @@ export class TourVariantDTO {
     prices?: TourVariantPaxTypePriceDTO[];
 
     @IsOptional()
+    @IsInt()
+    @ApiProperty({
+        description: 'ID chính sách hủy/fee',
+        required: false,
+        example: 1,
+    })
+    tour_policy_id?: number;
+
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày tạo', required: false })
@@ -526,10 +535,15 @@ export class TourPolicyDTO {
     @ApiProperty({ description: 'Tên chính sách' })
     name: string;
 
+    @IsOptional()
+    @IsInt()
+    @ApiProperty({ description: 'ID chính sách (nếu update)', required: false })
+    id?: number;
+
     @IsInt()
     @Min(1)
-    @ApiProperty({ description: 'ID biến thể tour' })
-    tour_variant_id: number;
+    @ApiProperty({ description: 'ID nhà cung cấp' })
+    supplier_id: number;
 
     @IsArray()
     @ValidateNested({ each: true })
@@ -1112,6 +1126,9 @@ export class UserTourVariantDTO {
 
     @ApiProperty({ type: [UserTourVariantPaxPriceDTO] })
     prices: UserTourVariantPaxPriceDTO[];
+
+    @ApiProperty({ type: TourPolicyDTO, required: false })
+    policy?: TourPolicyDTO;
 
     constructor(partial: Partial<UserTourVariantDTO>) {
         Object.assign(this, partial);

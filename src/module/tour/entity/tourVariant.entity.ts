@@ -95,13 +95,15 @@ export class TourVariantEntity extends BaseEntityTimestamp {
     })
     tour_sessions: TourSessionEntity[];
 
-    @OneToMany(
+    @ManyToOne(
         () => TourPolicyEntity,
-        (tour_policy) => tour_policy.tour_variant,
+        { nullable: true, onDelete: 'SET NULL' },
     )
+    @JoinColumn({ name: 'tour_policy_id', referencedColumnName: 'id' })
     @ApiProperty({
         description: 'Chính sách hủy/fee của biến thể tour',
         type: () => TourPolicyEntity,
+        required: false,
     })
     tour_policy: TourPolicyEntity;
 

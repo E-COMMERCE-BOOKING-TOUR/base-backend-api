@@ -4,6 +4,7 @@ import { Exclude } from 'class-transformer';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
+import { TourPolicyEntity } from '@/module/tour/entity/tourPolicy.entity';
 
 @Entity('suppliers')
 export class SupplierEntity extends BaseEntityTimestamp {
@@ -53,4 +54,11 @@ export class SupplierEntity extends BaseEntityTimestamp {
         type: () => [TourEntity],
     })
     tours: TourEntity[];
+
+    @OneToMany(() => TourPolicyEntity, (policy) => policy.supplier)
+    @ApiProperty({
+        description: 'Danh sách các chính sách hoàn tiền của nhà cung cấp',
+        type: () => [TourPolicyEntity],
+    })
+    tour_policies: TourPolicyEntity[];
 }

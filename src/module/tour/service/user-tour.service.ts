@@ -354,6 +354,8 @@ export class UserTourService {
             .createQueryBuilder('tour')
             .leftJoinAndSelect('tour.images', 'images')
             .leftJoinAndSelect('tour.variants', 'variants')
+            .leftJoinAndSelect('variants.tour_policy', 'policy')
+            .leftJoinAndSelect('policy.tour_policy_rules', 'rules')
             .leftJoinAndSelect('tour.division', 'division')
             .leftJoinAndSelect('tour.country', 'country')
             .leftJoinAndSelect('tour.currency', 'currency')
@@ -570,6 +572,13 @@ export class UserTourService {
                                             pax_type_name: p.pax_type?.name,
                                         }),
                                 ) || [],
+                            policy: v.tour_policy
+                                ? {
+                                    ...v.tour_policy,
+                                    supplier_id: v.tour_policy.supplier_id,
+                                    rules: v.tour_policy.tour_policy_rules,
+                                }
+                                : undefined,
                         }),
                 ) || [],
         });
