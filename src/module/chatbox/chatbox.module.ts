@@ -3,6 +3,8 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UserChatboxController } from './controller/user-chatbox.controller';
 import { UserChatboxService } from './service/user-chatbox.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AdminChatboxController } from './controller/admin-chatbox.controller';
+import { AdminChatboxService } from './service/admin-chatbox.service';
 
 @Module({
     imports: [
@@ -14,15 +16,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     transport: Transport.TCP,
                     options: {
                         host: configService.get('CHATBOX_HOST', 'chatbox'),
-                        port: configService.get('CHATBOX_TCP_PORT', 3002),
+                        port: configService.get('CHATBOX_TCP_PORT', 8877),
                     },
                 }),
                 inject: [ConfigService],
             }
         ]),
     ],
-    controllers: [UserChatboxController],
-    providers: [UserChatboxService],
-    exports: [UserChatboxService],
+    controllers: [UserChatboxController, AdminChatboxController],
+    providers: [UserChatboxService, AdminChatboxService],
+    exports: [UserChatboxService, AdminChatboxService],
 })
 export class ChatboxModule { }

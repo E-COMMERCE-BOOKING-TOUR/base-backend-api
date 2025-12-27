@@ -18,8 +18,8 @@ export class UserChatboxController {
     async startChatWithAdmin(@Request() req) {
         const currentUser = req.user; // Retrieved from JWT
         const participants = [
-            { userId: currentUser.id.toString(), role: currentUser.role },
-            { userId: 'ADMIN_SYSTEM', role: 'ADMIN' } // Fixed ID for Admin or generic
+            { userId: currentUser.id.toString(), role: currentUser.role.name.toUpperCase(), name: currentUser.full_name },
+            { userId: 'ADMIN_SYSTEM', role: 'ADMIN', name: 'System Admin' }
         ];
         return this.userChatboxService.createConversation(participants);
     }
@@ -31,7 +31,7 @@ export class UserChatboxController {
     async startChatWithSupplier(@Request() req, @Param('supplierId') supplierId: string) {
         const currentUser = req.user;
         const participants = [
-            { userId: currentUser.id.toString(), role: currentUser.role },
+            { userId: currentUser.id.toString(), role: currentUser.role.name.toUpperCase(), name: currentUser.full_name },
             { userId: supplierId, role: 'SUPPLIER' }
         ];
         return this.userChatboxService.createConversation(participants);

@@ -26,7 +26,7 @@ export class AuthService {
         private userAuthSessionRepository: Repository<UserAuthSessionEntity>,
         private jwtService: JwtService,
         private dataSource: DataSource,
-    ) {}
+    ) { }
 
     async register(dto: RegisterDTO) {
         const user = await this.userRepository.findOne({
@@ -104,7 +104,7 @@ export class AuthService {
         // Create token
         const token = await this.getToken({
             uuid: user.uuid,
-            full_name: user.username,
+            full_name: user.full_name,
             phone: user.phone,
             email: user.email,
         });
