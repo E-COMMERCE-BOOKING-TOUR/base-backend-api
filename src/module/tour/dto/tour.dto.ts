@@ -783,6 +783,77 @@ export class UserTourSearchQueryDTO {
     minRating?: number;
 
     @IsOptional()
+    @IsDateString()
+    @ApiProperty({
+        required: false,
+        description: 'Ngày bắt đầu tìm khởi hành',
+        example: '2024-01-01',
+    })
+    startDate?: string;
+
+    @IsOptional()
+    @IsDateString()
+    @ApiProperty({
+        required: false,
+        description: 'Ngày kết thúc tìm khởi hành',
+        example: '2024-12-31',
+    })
+    endDate?: string;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @ApiProperty({
+        required: false,
+        description: 'Số lượng khách cần tìm slot trống',
+        example: 2,
+    })
+    travelers?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ required: false })
+    adults?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ required: false })
+    seniors?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ required: false })
+    youth?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ required: false })
+    children?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ required: false })
+    infants?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @ApiProperty({ required: false })
+    rooms?: number;
+
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(0)

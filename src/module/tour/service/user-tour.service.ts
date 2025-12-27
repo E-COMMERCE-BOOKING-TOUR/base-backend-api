@@ -101,12 +101,18 @@ export class UserTourService {
             const allPrices: number[] = [];
 
             tour.variants
-                .filter(v => (v.status as unknown as TourStatus) === TourStatus.active)
-                .forEach(activeVariant => {
-                    if (activeVariant.tour_variant_pax_type_prices?.length > 0) {
+                .filter(
+                    (v) =>
+                        (v.status as unknown as TourStatus) ===
+                        TourStatus.active,
+                )
+                .forEach((activeVariant) => {
+                    if (
+                        activeVariant.tour_variant_pax_type_prices?.length > 0
+                    ) {
                         activeVariant.tour_variant_pax_type_prices
-                            .filter(p => p.price > 0)
-                            .forEach(p => allPrices.push(p.price));
+                            .filter((p) => p.price > 0)
+                            .forEach((p) => allPrices.push(p.price));
                     }
                 });
 
@@ -209,14 +215,20 @@ export class UserTourService {
             qb.andWhere(
                 new Brackets((locationQb) => {
                     if (query.country_ids?.length) {
-                        locationQb.orWhere('tour.country_id IN (:...countryIds)', {
-                            countryIds: query.country_ids,
-                        });
+                        locationQb.orWhere(
+                            'tour.country_id IN (:...countryIds)',
+                            {
+                                countryIds: query.country_ids,
+                            },
+                        );
                     }
                     if (query.division_ids?.length) {
-                        locationQb.orWhere('tour.division_id IN (:...divisionIds)', {
-                            divisionIds: query.division_ids,
-                        });
+                        locationQb.orWhere(
+                            'tour.division_id IN (:...divisionIds)',
+                            {
+                                divisionIds: query.division_ids,
+                            },
+                        );
                     }
                 }),
             );
@@ -263,6 +275,34 @@ export class UserTourService {
             qb.andWhere(priceFilterSubQuery('<=', 'maxPrice'), {
                 maxPrice: query.maxPrice,
             });
+        }
+
+        if (query.startDate || query.endDate || query.travelers) {
+            const hasStartDate = query.startDate && query.startDate.trim() !== '';
+            const hasEndDate = query.endDate && query.endDate.trim() !== '';
+
+            const sessionFilter = `
+                EXISTS (
+                    SELECT 1 
+                    FROM tour_sessions ts
+                    INNER JOIN tour_variants tv ON tv.id = ts.tour_variant_id
+                    WHERE tv.tour_id = tour.id
+                      AND tv.status = 'active'
+                      AND ts.status = 'open'
+                      ${hasStartDate ? 'AND ts.session_date >= :startDate' : ''}
+                      ${hasEndDate
+                    ? 'AND DATE_ADD(ts.session_date, INTERVAL (COALESCE(tour.duration_days, 1) - 1) DAY) <= :endDate'
+                    : ''
+                }
+                      ${query.travelers ? 'AND COALESCE(ts.capacity, tv.capacity_per_slot, 999) >= :travelers' : ''}
+                )
+            `;
+
+            if (hasStartDate) qb.setParameter('startDate', query.startDate);
+            if (hasEndDate) qb.setParameter('endDate', query.endDate);
+            if (query.travelers) qb.setParameter('travelers', query.travelers);
+
+            qb.andWhere(sessionFilter);
         }
 
         const offset = query.offset || 0;
