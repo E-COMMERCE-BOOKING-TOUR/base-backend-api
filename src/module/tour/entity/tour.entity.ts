@@ -309,4 +309,18 @@ export class TourEntity extends BaseEntityTimestamp {
     })
     @ApiProperty({ description: 'Thời điểm cập nhật giá cache' })
     price_cached_at: Date;
+
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Insight data from AI' })
+    insight_data: string;
+
+    @Column({
+        type: 'json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Vector embedding for recommendation' })
+    vector: number[];
 }

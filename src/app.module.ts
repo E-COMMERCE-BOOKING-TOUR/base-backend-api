@@ -14,6 +14,7 @@ import { DashboardModule } from './module/dashboard/dashboard.module';
 import { ChatboxModule } from './module/chatbox/chatbox.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailModule } from './module/mail/mail.module';
+import { RecommendModule } from './module/recommend/recommend.module';
 
 @Module({
     imports: [
@@ -49,6 +50,7 @@ import { MailModule } from './module/mail/mail.module';
         CommonModule,
         DashboardModule,
         ChatboxModule,
+        RecommendModule,
     ],
     controllers: [AppController],
     providers: [],

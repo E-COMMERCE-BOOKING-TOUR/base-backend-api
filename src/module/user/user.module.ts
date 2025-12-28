@@ -33,6 +33,7 @@ import { AdminSupplierService } from './service/admin-supplier.service';
 import { AdminRoleService } from './service/admin-role.service';
 import { BullModule } from '@nestjs/bullmq';
 import { ChatboxModule } from '../chatbox/chatbox.module';
+import { RecommendModule } from '../recommend/recommend.module';
 import { UserSyncProcessor } from './processor/user-sync.processor';
 
 @Module({
@@ -53,6 +54,7 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
             name: 'user-sync',
         }),
         ChatboxModule,
+        RecommendModule,
         forwardRef(() => ArticleModule),
     ],
     controllers: [

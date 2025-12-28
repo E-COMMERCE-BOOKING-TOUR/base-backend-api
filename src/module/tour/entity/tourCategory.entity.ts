@@ -29,4 +29,11 @@ export class TourCategoryEntity extends BaseEntityTimestamp {
         type: () => [TourEntity],
     })
     tours: TourEntity[];
+
+    @Column({
+        type: 'json',
+        nullable: true,
+    })
+    @ApiProperty({ description: 'Vector embedding for recommendation' })
+    vector: number[];
 }

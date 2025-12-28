@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class LoginDTO {
     @IsString()
@@ -22,4 +22,9 @@ export class LoginDTO {
         example: '123456789',
     })
     password: string;
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ description: 'ID khách hàng (nếu có)', required: false })
+    guest_id?: string;
 }

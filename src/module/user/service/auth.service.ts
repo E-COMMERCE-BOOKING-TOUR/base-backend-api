@@ -20,6 +20,8 @@ import { ConfigService } from '@nestjs/config';
 
 import { MailService } from '../../mail/mail.service';
 import * as crypto from 'crypto';
+import { ClientProxy } from '@nestjs/microservices';
+import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +34,7 @@ export class AuthService {
         private readonly dataSource: DataSource,
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
+        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
     ) { }
 
     async register(dto: RegisterDTO) {
@@ -134,6 +137,14 @@ export class AuthService {
             phone: user.phone,
             email: user.email,
         });
+
+        // Merge guest data if guest_id is provided
+        if (dto.guest_id) {
+            this.recommendClient.emit({ cmd: 'merge_guest_data' }, {
+                guestId: dto.guest_id,
+                userId: user.id.toString(),
+            });
+        }
 
         return new AuthResponseDTO({
             error: false,

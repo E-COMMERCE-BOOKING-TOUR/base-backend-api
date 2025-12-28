@@ -45,4 +45,14 @@ export class AdminChatboxController {
     async updateHideStatus(@Param('id') id: string, @Body() body: { isHidden: boolean }) {
         return this.adminChatboxService.toggleHide(id, body.isHidden);
     }
+
+    @Patch('conversation/:id/ai')
+    async toggleAi(@Param('id') id: string, @Body() body: { isAiEnabled: boolean }) {
+        return this.adminChatboxService.toggleAi(id, body.isAiEnabled);
+    }
+
+    @Patch('conversation/:id/human')
+    async toggleHumanTakeover(@Param('id') id: string, @Body() body: { isHumanTakeover: boolean }) {
+        return this.adminChatboxService.toggleHumanTakeover(id, body.isHumanTakeover);
+    }
 }

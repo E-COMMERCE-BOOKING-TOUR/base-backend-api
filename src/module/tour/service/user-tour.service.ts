@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TourEntity } from '../entity/tour.entity';
 import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
@@ -24,6 +24,8 @@ import { TourSessionEntity } from '../entity/tourSession.entity';
 import { PricingService } from '@/module/pricing/pricing.service';
 import { PriceCacheService } from './price-cache.service';
 import { DivisionEntity } from '@/common/entity/division.entity';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserTourService {
@@ -38,6 +40,7 @@ export class UserTourService {
         private readonly divisionRepository: Repository<DivisionEntity>,
         private readonly pricingService: PricingService,
         private readonly priceCacheService: PriceCacheService,
+        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
     ) { }
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
@@ -922,6 +925,69 @@ export class UserTourService {
                 price: minPrice, // In future, apply date-specific pricing rules here
             });
         });
+    }
+
+    async getRecommendations(userId?: string, guestId?: string): Promise<UserTourPopularDTO[]> {
+        try {
+            // 1. Get user behavior (interacted tour IDs)
+            const behavior: any = await firstValueFrom(
+                this.recommendClient.send({ cmd: 'get_user_behavior' }, { userId, guestId })
+            );
+
+            if (!behavior || behavior.interactedTourIds.length === 0) {
+                // Return popular tours if no behavior
+                return this.getPopularTours(8);
+            }
+
+            // 2. Fetch vectors for interacted tours
+            const interactedTours = await this.tourRepository.find({
+                where: { id: In(behavior.interactedTourIds) },
+                select: ['id', 'vector']
+            });
+
+            const userVectors = interactedTours
+                .filter(t => t.vector)
+                .map(t => t.vector);
+
+            if (userVectors.length === 0) {
+                return this.getPopularTours(8);
+            }
+
+            // 3. Fetch candidate tours (recent 100 tours with vectors)
+            const candidates = await this.tourRepository.createQueryBuilder('tour')
+                .where('tour.vector IS NOT NULL')
+                .andWhere('tour.is_visible = :visible', { visible: true })
+                .select(['tour.id', 'tour.vector'])
+                .take(100) // Limit candidates to 100
+                .getMany();
+
+            // 4. Calculate similarity via microservice
+            const recommendations: any[] = await firstValueFrom(
+                this.recommendClient.send({ cmd: 'calculate_recommendations' }, {
+                    userInteractedVectors: userVectors,
+                    candidateTours: candidates.map(c => ({ id: c.id, vector: c.vector }))
+                })
+            );
+
+            if (!recommendations || recommendations.length === 0) {
+                return this.getPopularTours(8);
+            }
+
+            // 5. Fetch full tour data for top recommendations
+            const recommendedIds = recommendations.map(r => r.id);
+            const fullTours = await this.createBaseTourQuery()
+                .andWhere('tour.id IN (:...ids)', { ids: recommendedIds })
+                .getMany();
+
+            // Sort by recommendation score
+            return fullTours
+                .sort((a, b) => recommendedIds.indexOf(a.id) - recommendedIds.indexOf(b.id))
+                .map(tour => this.mapToPopularDTO(tour));
+
+        } catch (error) {
+            console.error('Error getting recommendations:', error);
+            return this.getPopularTours(8);
+        }
     }
 
     async computeTourPricing(tour: TourEntity): Promise<TourPaxTypePriceDto[]> {

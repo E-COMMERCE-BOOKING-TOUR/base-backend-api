@@ -13,6 +13,9 @@ import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { TourCategoryEntity } from '../entity/tourCategory.entity';
 import { TourPolicyEntity } from '../entity/tourPolicy.entity';
 import { TourPolicyRuleEntity } from '../entity/tourPolicyRule.entity';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import {
     TourDTO,
@@ -49,6 +52,7 @@ export class AdminTourService {
         @InjectRepository(TourCategoryEntity)
         private readonly categoryRepository: Repository<TourCategoryEntity>,
         private readonly dataSource: DataSource,
+        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
     ) { }
 
     async getAllTours(
@@ -341,6 +345,11 @@ export class AdminTourService {
             if (!reloadedTour)
                 throw new Error('Failed to create and reload tour');
 
+            // Trigger vector generation in background
+            this.triggerTourVectorGeneration(reloadedTour.id).catch(err =>
+                console.error(`Auto vector generation failed for tour ${reloadedTour.id}:`, err)
+            );
+
             return reloadedTour;
         });
     }
@@ -570,6 +579,11 @@ export class AdminTourService {
                 }
             }
 
+            // Trigger vector generation in background
+            this.triggerTourVectorGeneration(id).catch(err =>
+                console.error(`Auto vector update failed for tour ${id}:`, err)
+            );
+
             return this.getTourById(id);
         });
     }
@@ -599,6 +613,58 @@ export class AdminTourService {
         return this.variantRepository.save(variant);
     }
 
+    async triggerTourVectorGeneration(tourId: number) {
+        const tour = await this.tourRepository.findOne({
+            where: { id: tourId },
+            relations: ['images'],
+        });
+        if (!tour) return;
+
+        try {
+            const response: any = await firstValueFrom(
+                this.recommendClient.send({ cmd: 'generate_tour_vector' }, {
+                    title: tour.title,
+                    description: tour.description,
+                    summary: tour.summary,
+                    address: tour.address,
+                    imageUrls: tour.images.map(img => img.image_url),
+                    numeric: {
+                        price: tour.cached_min_price || 0,
+                        duration_days: tour.duration_days || 0
+                    }
+                })
+            );
+
+            if (response && response.vector) {
+                tour.vector = response.vector;
+                tour.insight_data = response.insights ? JSON.stringify(response.insights) : `Generated insight.`;
+                await this.tourRepository.save(tour);
+            }
+        } catch (error) {
+            console.error(`Error in triggerTourVectorGeneration for tour ${tourId}:`, error);
+        }
+    }
+
+    async generateVectorsForAllTours() {
+        const tours = await this.tourRepository.find({
+            relations: ['images', 'tour_categories'],
+        });
+
+        const maxPrice = Math.max(...tours.map(t => t.cached_min_price || 0), 1);
+        const maxDays = Math.max(...tours.map(t => t.duration_days || 0), 1);
+
+        const results: any[] = [];
+        for (const tour of tours) {
+            try {
+                await this.triggerTourVectorGeneration(tour.id);
+                results.push({ id: tour.id, status: 'success' });
+            } catch (error) {
+                results.push({ id: tour.id, status: 'error', message: error.message });
+            }
+        }
+
+        return { total: tours.length, processed: results.length, details: results };
+    }
     async removeVariant(id: number): Promise<void> {
         await this.variantRepository.delete(id);
     }

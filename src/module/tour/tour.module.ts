@@ -26,6 +26,7 @@ import { AdminTourService } from './service/admin-tour.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { PriceCacheService } from './service/price-cache.service';
 import { PriceCacheProcessor, PRICE_CACHE_QUEUE } from './queue/price-cache.processor';
+import { RecommendModule } from '../recommend/recommend.module';
 
 @Module({
     imports: [
@@ -54,6 +55,7 @@ import { PriceCacheProcessor, PRICE_CACHE_QUEUE } from './queue/price-cache.proc
             TourAssemblePriceStep,
         ]),
         CloudinaryModule,
+        RecommendModule,
     ],
     controllers: [AdminTourController, UserTourController],
     providers: [TourService, UserTourService, AdminTourService, PriceCacheService, PriceCacheProcessor],

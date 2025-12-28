@@ -171,4 +171,10 @@ export class AdminTourController {
     async removePolicy(@Param('id') id: number) {
         return this.adminTourService.removePolicy(id);
     }
+
+    @Post('generate-vectors')
+    @ApiOperation({ summary: 'Generate AI vectors for all tours' })
+    async generateVectors() {
+        return this.adminTourService.generateVectorsForAllTours();
+    }
 }

@@ -38,4 +38,12 @@ export class AdminChatboxService {
     markAsRead(conversationId: string) {
         return this.client.send({ cmd: 'mark_as_read' }, conversationId);
     }
+
+    toggleAi(conversationId: string, isAiEnabled: boolean) {
+        return this.client.send({ cmd: 'toggle_ai' }, { conversationId, isAiEnabled });
+    }
+
+    toggleHumanTakeover(conversationId: string, isHumanTakeover: boolean) {
+        return this.client.send({ cmd: 'toggle_human_takeover' }, { conversationId, isHumanTakeover });
+    }
 }
