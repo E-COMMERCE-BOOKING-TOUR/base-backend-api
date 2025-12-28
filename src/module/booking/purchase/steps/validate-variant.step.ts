@@ -14,7 +14,7 @@ export class ValidateVariantStep implements PurchaseStep {
         private readonly variantRepository: Repository<TourVariantEntity>,
         @InjectRepository(TourEntity)
         private readonly tourRepository: Repository<TourEntity>,
-    ) {}
+    ) { }
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         const variant = await this.variantRepository.findOne({
@@ -33,9 +33,6 @@ export class ValidateVariantStep implements PurchaseStep {
                 'variants',
                 'variants.tour_variant_pax_type_prices',
                 'variants.tour_variant_pax_type_prices.pax_type',
-                'variants.tour_price_rules',
-                'variants.tour_price_rules.tour_rule_pax_type_prices',
-                'variants.tour_price_rules.tour_rule_pax_type_prices.pax_type',
             ],
         });
 

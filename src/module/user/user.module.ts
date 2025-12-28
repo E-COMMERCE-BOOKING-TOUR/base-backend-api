@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { ArticleModule } from '../article/article.module';
 import { AuthController } from './controller/auth.controller';
 import { AuthService } from './service/auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -24,12 +25,12 @@ import { BookingEntity } from '../booking/entity/booking.entity';
 import { SupplierEntity } from './entity/supplier.entity';
 import { RoleEntity } from './entity/role.entity';
 import { PermissionEntity } from './entity/permission.entity';
+import { AdminPermissionService } from './service/admin-permission.service';
 import { AdminSupplierController } from './controller/admin-supplier.controller';
 import { AdminRoleController } from './controller/admin-role.controller';
 import { AdminPermissionController } from './controller/admin-permission.controller';
 import { AdminSupplierService } from './service/admin-supplier.service';
 import { AdminRoleService } from './service/admin-role.service';
-import { AdminPermissionService } from './service/admin-permission.service';
 import { BullModule } from '@nestjs/bullmq';
 import { ChatboxModule } from '../chatbox/chatbox.module';
 import { UserSyncProcessor } from './processor/user-sync.processor';
@@ -52,6 +53,7 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
             name: 'user-sync',
         }),
         ChatboxModule,
+        forwardRef(() => ArticleModule),
     ],
     controllers: [
         AuthController,

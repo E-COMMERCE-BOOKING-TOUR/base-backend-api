@@ -1,14 +1,19 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserArticleController } from './controller/user-article.controller';
 import { UserEntity } from '../user/entity/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ArticleServiceProxy } from './service/article.service-proxy';
+import { UserModule } from '../user/user.module';
+import { TourEntity } from '../tour/entity/tour.entity';
+import { AdminArticleServiceProxy } from './service/admin-article.service-proxy';
+import { AdminArticleController } from './controller/admin-article.controller';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserEntity]),
+        TypeOrmModule.forFeature([UserEntity, TourEntity]),
+        forwardRef(() => UserModule),
         ClientsModule.registerAsync([
             {
                 imports: [ConfigModule],
@@ -31,8 +36,8 @@ import { ArticleServiceProxy } from './service/article.service-proxy';
             },
         ]),
     ],
-    controllers: [UserArticleController],
-    providers: [ArticleServiceProxy],
-    exports: [ArticleServiceProxy],
+    controllers: [UserArticleController, AdminArticleController],
+    providers: [ArticleServiceProxy, AdminArticleServiceProxy],
+    exports: [ArticleServiceProxy, AdminArticleServiceProxy],
 })
-export class ArticleModule {}
+export class ArticleModule { }

@@ -36,7 +36,7 @@ export class ArticleDTO {
 
     @IsString()
     @IsNotEmpty()
-    @MinLength(10)
+    @MinLength(3)
     @ApiProperty({
         description: 'Nội dung bài viết',
         example: 'Nội dung chi tiết về chuyến đi...',
@@ -63,9 +63,9 @@ export class ArticleDTO {
     @IsOptional()
     @ApiProperty({
         description: 'Người viết bài',
-        example: 1,
+        example: 'uuid-string',
     })
-    user_id: number;
+    user_id: string;
 
     @IsOptional()
     @IsArray()
@@ -116,7 +116,7 @@ export class ArticleCommentDetailDTO {
     content: string;
 
     @ApiProperty()
-    user_id: number;
+    user_id: string;
 
     @ApiProperty({ nullable: true })
     parent_id?: number | null;
@@ -140,7 +140,8 @@ export class ArticleCommentDetailDTO {
 
 export class ArticleDetailDTO extends ArticleDTO {
     @IsOptional()
-    @IsString()
+    @IsArray()
+    @IsString({ each: true })
     @ApiProperty({ description: 'Tags', required: false })
     tags?: string[];
 

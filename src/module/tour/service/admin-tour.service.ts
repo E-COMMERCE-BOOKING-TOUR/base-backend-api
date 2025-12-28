@@ -356,7 +356,6 @@ export class AdminTourService {
                     'currency',
                     'variants.tour_sessions',
                     'variants.tour_variant_pax_type_prices',
-                    'variants.tour_price_rules',
                     'variants.tour_policy',
                 ],
             });

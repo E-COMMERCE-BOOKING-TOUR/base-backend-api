@@ -15,7 +15,7 @@ import TourImageSeeder from './12-tour-image.seeder';
 import TourVariantSeeder from './13-tour-variant.seeder';
 import TourVariantPaxPriceSeeder from './14-tour-variant-pax-price.seeder';
 import TourSessionSeeder from './15-tour-session.seeder';
-import TourPriceRuleSeeder from './16-tour-price-rule.seeder';
+
 import TourPolicySeeder from './17-tour-policy.seeder';
 import TourCategoryRelationSeeder from './18-tour-category-relation.seeder';
 import ReviewSeeder from './22-review.seeder';
@@ -51,7 +51,7 @@ export default class MainSeeder implements Seeder {
                     TourVariantSeeder,
                     TourVariantPaxPriceSeeder,
                     TourSessionSeeder,
-                    TourPriceRuleSeeder,
+
                     TourPolicySeeder,
                     TourCategoryRelationSeeder,
 

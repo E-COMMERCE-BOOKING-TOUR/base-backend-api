@@ -797,9 +797,6 @@ export class UserTourService {
                 'variants',
                 'variants.tour_variant_pax_type_prices',
                 'variants.tour_variant_pax_type_prices.pax_type',
-                'variants.tour_price_rules',
-                'variants.tour_price_rules.tour_rule_pax_type_prices',
-                'variants.tour_price_rules.tour_rule_pax_type_prices.pax_type',
             ],
         });
 

@@ -1,4 +1,5 @@
 import { UserEntity } from '../entity/user.entity';
+import { ArticleServiceProxy } from '../../article/service/article.service-proxy';
 import { randomUUID } from 'crypto';
 import { hashPassword } from '@/utils/bcrypt.util';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,16 +18,21 @@ import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
 import { comparePassword } from '@/utils/bcrypt.util';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '../dtos/notification.dto';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
+        @Inject(forwardRef(() => ArticleServiceProxy))
+        private readonly articleServiceProxy: ArticleServiceProxy,
         @InjectQueue('user-sync') private bgQueue: Queue,
+        private readonly notificationService: NotificationService,
     ) { }
 
     async getAllUsers(
@@ -114,6 +120,32 @@ export class UserService {
     async getUserById(id: number): Promise<UserDetailDTO | null> {
         const u = await this.userRepository.findOne({
             where: { id },
+            relations: ['country', 'supplier', 'role'],
+        });
+        if (!u) return null;
+        return new UserDetailDTO({
+            id: u.id,
+            uuid: u.uuid,
+            username: u.username,
+            full_name: u.full_name,
+            email: u.email ?? undefined,
+            phone: u.phone ?? undefined,
+            status: u.status as UserStatus,
+            login_type: u.login_type as LoginType,
+            country: u.country ?? undefined,
+            supplier: u.supplier ?? null,
+            role: u.role ?? undefined,
+            tours_favorites: [],
+            articles_like: [],
+            created_at: u.created_at,
+            updated_at: u.updated_at,
+            deleted_at: u.deleted_at ?? undefined,
+        } as Partial<UserDetailDTO>);
+    }
+
+    async getUserByUuid(uuid: string): Promise<UserDetailDTO | null> {
+        const u = await this.userRepository.findOne({
+            where: { uuid },
             relations: ['country', 'supplier', 'role'],
         });
         if (!u) return null;
@@ -253,5 +285,38 @@ export class UserService {
         await this.userRepository.save(user);
 
         return { success: true };
+    }
+
+    async follow(followerId: number, followingId: number) {
+        if (followerId === followingId) throw new BadRequestException('Cannot follow yourself');
+        const savedFollow = await this.articleServiceProxy.follow(followerId, followingId);
+
+        if (savedFollow) {
+            try {
+                const follower = await this.userRepository.findOne({ where: { id: followerId } });
+                await this.notificationService.create({
+                    title: follower?.full_name || 'Someone',
+                    description: `started following you`,
+                    type: NotificationType.follow,
+                    user_ids: [followingId],
+                    is_user: true,
+                });
+            } catch (error) {
+                console.error('Failed to send follow notification:', error);
+            }
+        }
+        return savedFollow;
+    }
+
+    async unfollow(followerId: number, followingId: number) {
+        return await this.articleServiceProxy.unfollow(followerId, followingId);
+    }
+
+    async getFollowedIds(followerId: number): Promise<number[]> {
+        return await this.articleServiceProxy.getFollowedIds(followerId);
+    }
+
+    async getFollowerIds(followingId: number): Promise<number[]> {
+        return await this.articleServiceProxy.getFollowerIds(followingId);
     }
 }

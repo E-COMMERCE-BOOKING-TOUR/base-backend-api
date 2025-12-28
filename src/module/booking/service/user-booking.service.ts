@@ -99,7 +99,7 @@ export class UserBookingService {
                 },
                 {
                     user: { uuid: userUuid },
-                    status: BookingStatus.confirmed,
+                    status: BookingStatus.waiting_supplier,
                     updated_at: MoreThan(new Date(Date.now() - 5 * 60 * 1000)),
                 },
             ],
@@ -125,6 +125,7 @@ export class UserBookingService {
             },
         });
 
+        console.log(booking);
         if (!booking) {
             throw new NotFoundException('No active booking found');
         }
@@ -179,6 +180,7 @@ export class UserBookingService {
             status: booking.status,
             payment_status: booking.payment_status,
             currency: booking.currency?.symbol || '',
+            tour_id: tour?.id || 0,
             tour_title: tour?.title || '',
             tour_image: tour?.images?.[0]?.image_url || '',
             tour_location:

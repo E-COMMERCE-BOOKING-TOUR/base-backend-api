@@ -13,7 +13,6 @@ import { CurrencyEntity } from '@/common/entity/currency.entity';
 import { TourSessionEntity } from './tourSession.entity';
 import { TourPolicyEntity } from './tourPolicy.entity';
 import { TourVariantPaxTypePriceEntity } from './tourVariantPaxTypePrice.entity';
-import { TourPriceRuleEntity } from './tourPriceRule.entity';
 import { BookingItemEntity } from '@/module/booking/entity/bookingItem.entity';
 
 @Entity('tour_variants')
@@ -117,16 +116,6 @@ export class TourVariantEntity extends BaseEntityTimestamp {
         type: () => [TourVariantPaxTypePriceEntity],
     })
     tour_variant_pax_type_prices: TourVariantPaxTypePriceEntity[];
-
-    @OneToMany(
-        () => TourPriceRuleEntity,
-        (tour_price_rule) => tour_price_rule.tour_variant,
-    )
-    @ApiProperty({
-        description: 'Quy tắc giá theo mùa/ngày trong tuần',
-        type: () => [TourPriceRuleEntity],
-    })
-    tour_price_rules: TourPriceRuleEntity[];
 
     @OneToMany(() => BookingItemEntity, (booking_item) => booking_item.variant)
     @ApiProperty({

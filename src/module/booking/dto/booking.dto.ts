@@ -365,6 +365,9 @@ export class UserBookingDetailDTO {
     cancel_reason?: string;
 
     @ApiProperty()
+    tour_id: number;
+
+    @ApiProperty()
     tour_title: string;
 
     @ApiProperty()

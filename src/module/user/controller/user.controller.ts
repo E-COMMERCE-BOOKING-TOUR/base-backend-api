@@ -15,6 +15,7 @@ import {
     ApiTags,
     ApiParam,
     ApiBearerAuth,
+    ApiOperation,
 } from '@nestjs/swagger';
 import {
     UserDTO,
@@ -33,7 +34,7 @@ import { User } from '../decorator/user.decorator';
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService) { }
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [UserSummaryDTO] })
@@ -128,5 +129,48 @@ export class UserController {
         @Body('data') data: ChangePasswordDTO,
     ) {
         return await this.userService.changePassword(user.id, data);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    @Post('follow/:id')
+    @ApiOperation({ summary: 'Follow a user' })
+    async follow(@User() user: UserEntity, @Param('id') id: number) {
+        return await this.userService.follow(user.id, id);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    @Post('unfollow/:id')
+    @ApiOperation({ summary: 'Unfollow a user' })
+    async unfollow(@User() user: UserEntity, @Param('id') id: number) {
+        return await this.userService.unfollow(user.id, id);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    @Get('following')
+    @ApiOperation({ summary: 'Get followed user IDs' })
+    async getFollowing(@User() user: UserEntity) {
+        return await this.userService.getFollowedIds(user.id);
+    }
+
+    @Get('followers/:id')
+    @ApiOperation({ summary: 'Get followers of a user' })
+    async getFollowerIds(@Param('id') id: number) {
+        return await this.userService.getFollowerIds(id);
+    }
+
+    @Get('following/:id')
+    @ApiOperation({ summary: 'Get following of a user' })
+    async getFollowingIds(@Param('id') id: number) {
+        return await this.userService.getFollowedIds(id);
+    }
+
+    @Get('getByUuid/:uuid')
+    @ApiOperation({ summary: 'Get user by UUID' })
+    @ApiParam({ name: 'uuid', type: String })
+    async getByUuid(@Param('uuid') uuid: string) {
+        return await this.userService.getUserByUuid(uuid);
     }
 }

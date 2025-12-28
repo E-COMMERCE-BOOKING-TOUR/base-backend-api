@@ -26,6 +26,9 @@ export enum NotificationType {
     reward = 'reward',
     maintenance = 'maintenance',
     policy = 'policy',
+    like = 'like',
+    comment = 'comment',
+    follow = 'follow',
 }
 
 export enum TargetGroup {
