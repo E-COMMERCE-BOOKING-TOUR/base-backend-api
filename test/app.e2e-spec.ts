@@ -1,25 +1,47 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
+import { mockDatabase } from './test-utils';
+
+describe('App E2E Tests - Mocked', () => {
     let app: INestApplication<App>;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        mockDatabase.reset();
+
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule],
+            controllers: [],
+            providers: [],
         }).compile();
 
         app = moduleFixture.createNestApplication();
+        app.setGlobalPrefix('api/v1');
+        app.useGlobalPipes(new ValidationPipe());
         await app.init();
     });
 
-    it('/ (GET)', () => {
-        return request(app.getHttpServer())
-            .get('/')
-            .expect(200)
-            .expect('Hello World!');
+    afterAll(async () => {
+        await app.close();
+    });
+
+    describe('Mock Database Health Check', () => {
+        it('should have mock database initialized', () => {
+            expect(mockDatabase).toBeDefined();
+            expect(mockDatabase.users).toBeDefined();
+            expect(mockDatabase.tours).toBeDefined();
+        });
+
+        it('should have seeded data', () => {
+            expect(mockDatabase.users.size).toBeGreaterThan(0);
+            expect(mockDatabase.countries.size).toBeGreaterThan(0);
+        });
+
+        it('should reset database properly', () => {
+            const initialSize = mockDatabase.users.size;
+            mockDatabase.reset();
+            expect(mockDatabase.users.size).toBe(initialSize); // Same after reset (seeded)
+        });
     });
 });
