@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    UploadedFiles,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { User } from '@/module/user/decorator/user.decorator';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import {
@@ -28,7 +37,7 @@ export class UserReviewController {
     constructor(
         private readonly userReviewService: UserReviewService,
         private readonly cloudinaryService: CloudinaryService,
-    ) { }
+    ) {}
 
     @Post('create')
     @UseGuards(AuthGuard('jwt'))
@@ -41,14 +50,19 @@ export class UserReviewController {
     async create(
         @User() user: UserEntity,
         @Body() dto: CreateReviewUserDTO,
-        @UploadedFiles() files?: Express.Multer.File[]
+        @UploadedFiles() files?: Express.Multer.File[],
     ) {
         if (files && files.length > 0) {
             const imageUrls = await Promise.all(
                 files.map(async (file) => {
                     // Compress image to ~1MB
                     const compressedBuffer = await sharp(file.buffer)
-                        .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
+                        .resize({
+                            width: 1920,
+                            height: 1080,
+                            fit: 'inside',
+                            withoutEnlargement: true,
+                        })
                         .jpeg({ quality: 80, progressive: true })
                         .toBuffer();
 
@@ -59,12 +73,15 @@ export class UserReviewController {
                         size: compressedBuffer.length,
                     };
 
-                    const result = await this.cloudinaryService.uploadFile(mockFile);
+                    const result =
+                        await this.cloudinaryService.uploadFile(mockFile);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return result.url;
                 }),
             );
 
-            dto.images = imageUrls.map(url => ({
+            dto.images = imageUrls.map((url) => ({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 image_url: url,
                 is_visible: true,
                 sort_no: 0,
@@ -79,7 +96,10 @@ export class UserReviewController {
     @ApiOperation({ summary: 'Lấy các đánh giá của một tour' })
     @ApiResponse({ status: 200, type: [ReviewSummaryDTO] })
     @ApiParam({ name: 'tourId', type: Number, example: 1 })
-    async getReviewsByTour(@Param('tourId') tourId: number, @User() user?: UserEntity) {
+    async getReviewsByTour(
+        @Param('tourId') tourId: number,
+        @User() user?: UserEntity,
+    ) {
         return this.userReviewService.getReviewsByTour(tourId, user?.id);
     }
     @Post('helpful/:id')

@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('site_settings')
 export class SiteSettingEntity {
@@ -33,7 +39,10 @@ export class SiteSettingEntity {
     banners_square: string[] | null;
 
     @Column({ type: 'simple-json', nullable: true })
-    @ApiPropertyOptional({ description: 'Rectangular banner URLs', type: [String] })
+    @ApiPropertyOptional({
+        description: 'Rectangular banner URLs',
+        type: [String],
+    })
     banners_rectangle: string[] | null;
 
     // Footer Information

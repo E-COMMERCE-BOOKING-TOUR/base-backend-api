@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BookingEntity } from '../entity/booking.entity';
@@ -49,7 +53,7 @@ export class BookingService {
         @InjectRepository(TourVariantPaxTypePriceEntity)
         private readonly priceRepository: Repository<TourVariantPaxTypePriceEntity>,
         private readonly userPaymentService: UserPaymentService,
-    ) { }
+    ) {}
 
     private toSummaryDTO(b: BookingEntity): BookingSummaryDTO {
         return new BookingSummaryDTO({
@@ -65,10 +69,13 @@ export class BookingService {
             currency: b.currency?.symbol,
             cancel_reason: b.cancel_reason,
             booking_payment_id: b.booking_payment?.id,
-            booking_payment: b.booking_payment ? {
-                id: b.booking_payment.id,
-                payment_method_name: b.booking_payment.payment_method_name,
-            } : undefined,
+            booking_payment: b.booking_payment
+                ? {
+                      id: b.booking_payment.id,
+                      payment_method_name:
+                          b.booking_payment.payment_method_name,
+                  }
+                : undefined,
             booking_items: (b.booking_items ?? []).map(
                 (item) =>
                     new BookingItemDetailDTO({
@@ -105,15 +112,20 @@ export class BookingService {
             currency: b.currency?.symbol,
             cancel_reason: b.cancel_reason,
             booking_payment_id: b.booking_payment?.id,
-            booking_payment: b.booking_payment ? {
-                id: b.booking_payment.id,
-                payment_method_name: b.booking_payment.payment_method_name,
-            } : undefined,
-            payment_information: b.payment_information ? {
-                brand: b.payment_information.brand,
-                last4: b.payment_information.last4,
-                account_holder: b.payment_information.account_holder,
-            } : undefined,
+            booking_payment: b.booking_payment
+                ? {
+                      id: b.booking_payment.id,
+                      payment_method_name:
+                          b.booking_payment.payment_method_name,
+                  }
+                : undefined,
+            payment_information: b.payment_information
+                ? {
+                      brand: b.payment_information.brand,
+                      last4: b.payment_information.last4,
+                      account_holder: b.payment_information.account_holder,
+                  }
+                : undefined,
             payment_information_id: b.payment_information?.id,
             tour_inventory_hold_id: b.tour_inventory_hold?.id,
             booking_items: (b.booking_items ?? []).map(
@@ -169,7 +181,7 @@ export class BookingService {
         } catch (error) {
             throw new Error(
                 'Fail getAllBooking: ' +
-                (error instanceof Error ? error.message : String(error)),
+                    (error instanceof Error ? error.message : String(error)),
             );
         }
     }
@@ -197,7 +209,7 @@ export class BookingService {
         } catch (error) {
             throw new Error(
                 'Fail getBookingById: ' +
-                (error instanceof Error ? error.message : String(error)),
+                    (error instanceof Error ? error.message : String(error)),
             );
         }
     }
@@ -222,7 +234,7 @@ export class BookingService {
         } catch (error) {
             throw new Error(
                 'Fail getBookingsByUser: ' +
-                (error instanceof Error ? error.message : String(error)),
+                    (error instanceof Error ? error.message : String(error)),
             );
         }
     }
@@ -706,7 +718,10 @@ export class BookingService {
         return this.updateStatus(id, BookingStatus.confirmed);
     }
 
-    async cancelBooking(id: number, reason?: string): Promise<BookingDetailDTO | null> {
+    async cancelBooking(
+        id: number,
+        reason?: string,
+    ): Promise<BookingDetailDTO | null> {
         const booking = await this.bookingRepository.findOne({
             where: { id },
             relations: [
@@ -723,7 +738,11 @@ export class BookingService {
         if (!booking) throw new NotFoundException('Booking not found');
 
         // Process refund if booking was confirmed/waiting_supplier and paid
-        if ((booking.status === BookingStatus.confirmed || booking.status === BookingStatus.waiting_supplier) && booking.payment_status === PaymentStatus.paid) {
+        if (
+            (booking.status === BookingStatus.confirmed ||
+                booking.status === BookingStatus.waiting_supplier) &&
+            booking.payment_status === PaymentStatus.paid
+        ) {
             let refundAmount = 0;
             if (booking.status === BookingStatus.waiting_supplier) {
                 refundAmount = Number(booking.total_amount);
@@ -732,7 +751,8 @@ export class BookingService {
                 refundAmount = result.refundAmount;
             }
 
-            const stripeChargeId = booking.payment_information?.stripe_charge_id;
+            const stripeChargeId =
+                booking.payment_information?.stripe_charge_id;
 
             if (refundAmount > 0 && stripeChargeId) {
                 await this.userPaymentService.refundCharge(
@@ -818,7 +838,8 @@ export class BookingService {
             }
         }
 
-        const feeAmount = (Number(booking.total_amount) * applicableFeePct) / 100;
+        const feeAmount =
+            (Number(booking.total_amount) * applicableFeePct) / 100;
         const refundAmount = Number(booking.total_amount) - feeAmount;
 
         return {
@@ -854,4 +875,3 @@ export class BookingService {
         return { success: true, refundAmount };
     }
 }
-

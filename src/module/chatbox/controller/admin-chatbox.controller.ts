@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards, Request, Patch } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    Query,
+    UseGuards,
+    Request,
+    Patch,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminChatboxService } from '../service/admin-chatbox.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -11,10 +21,10 @@ import { RolesGuard } from '@/module/user/guard/roles.guard';
 @Roles('admin')
 @Controller('admin/chatbox')
 export class AdminChatboxController {
-    constructor(private readonly adminChatboxService: AdminChatboxService) { }
+    constructor(private readonly adminChatboxService: AdminChatboxService) {}
 
     @Get('conversations')
-    async getAllConversations(
+    getAllConversations(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 20,
     ) {
@@ -22,37 +32,52 @@ export class AdminChatboxController {
     }
 
     @Get('conversation/:id')
-    async getConversationDetails(@Param('id') id: string) {
+    getConversationDetails(@Param('id') id: string) {
         return this.adminChatboxService.getConversationDetails(id);
     }
 
     @Post('reply')
-    async reply(@Body() body: { conversationId: string; content: string }) {
-        return this.adminChatboxService.reply(body.conversationId, body.content);
+    reply(@Body() body: { conversationId: string; content: string }) {
+        return this.adminChatboxService.reply(
+            body.conversationId,
+            body.content,
+        );
     }
 
     @Post('conversation/:id/read')
-    async markAsRead(@Param('id') id: string) {
+    markAsRead(@Param('id') id: string) {
         return this.adminChatboxService.markAsRead(id);
     }
 
     @Post('conversation/:id/category')
-    async updateCategory(@Param('id') id: string, @Body() body: { category: string }) {
+    updateCategory(
+        @Param('id') id: string,
+        @Body() body: { category: string },
+    ) {
         return this.adminChatboxService.updateCategory(id, body.category);
     }
 
     @Patch('conversation/:id/hide')
-    async updateHideStatus(@Param('id') id: string, @Body() body: { isHidden: boolean }) {
+    updateHideStatus(
+        @Param('id') id: string,
+        @Body() body: { isHidden: boolean },
+    ) {
         return this.adminChatboxService.toggleHide(id, body.isHidden);
     }
 
     @Patch('conversation/:id/ai')
-    async toggleAi(@Param('id') id: string, @Body() body: { isAiEnabled: boolean }) {
+    toggleAi(@Param('id') id: string, @Body() body: { isAiEnabled: boolean }) {
         return this.adminChatboxService.toggleAi(id, body.isAiEnabled);
     }
 
     @Patch('conversation/:id/human')
-    async toggleHumanTakeover(@Param('id') id: string, @Body() body: { isHumanTakeover: boolean }) {
-        return this.adminChatboxService.toggleHumanTakeover(id, body.isHumanTakeover);
+    toggleHumanTakeover(
+        @Param('id') id: string,
+        @Body() body: { isHumanTakeover: boolean },
+    ) {
+        return this.adminChatboxService.toggleHumanTakeover(
+            id,
+            body.isHumanTakeover,
+        );
     }
 }

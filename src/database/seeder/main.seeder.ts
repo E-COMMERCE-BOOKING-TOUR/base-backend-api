@@ -25,7 +25,6 @@ import NotificationSeeder from './26-notification.seeder';
 import SiteSettingSeeder from './27-site-setting.seeder';
 import StaticPageSeeder from './28-static-page.seeder';
 
-
 export default class MainSeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
         try {
@@ -70,7 +69,6 @@ export default class MainSeeder implements Seeder {
                     SiteSettingSeeder,
                     StaticPageSeeder,
                 ],
-
             });
         } catch (error) {
             console.error('Seeding failed:', error);

@@ -1,5 +1,11 @@
 import { ApiProperty, ApiSchema } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import {
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    Matches,
+    MinLength,
+} from 'class-validator';
 
 @ApiSchema({ name: 'CreateCatRequest' })
 export class RegisterDTO {

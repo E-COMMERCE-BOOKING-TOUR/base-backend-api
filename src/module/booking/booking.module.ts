@@ -43,7 +43,16 @@ import { BookingCleanupScheduler } from './scheduler/booking-cleanup.scheduler';
         TourModule,
         PurchaseModule.forRoot([]),
     ],
-    controllers: [AdminBookingController, UserBookingController, SupplierBookingController],
-    providers: [BookingService, UserBookingService, SupplierBookingService, BookingCleanupScheduler],
+    controllers: [
+        AdminBookingController,
+        UserBookingController,
+        SupplierBookingController,
+    ],
+    providers: [
+        BookingService,
+        UserBookingService,
+        SupplierBookingService,
+        BookingCleanupScheduler,
+    ],
 })
-export class BookingModule { }
+export class BookingModule {}

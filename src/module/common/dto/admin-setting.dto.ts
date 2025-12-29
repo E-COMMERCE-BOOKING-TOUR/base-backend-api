@@ -3,7 +3,10 @@ import { IsString, IsOptional, MaxLength, IsArray } from 'class-validator';
 
 export class UpdateSiteSettingDTO {
     // SEO Settings
-    @ApiPropertyOptional({ description: 'Site title', example: 'TripConnect - Travel Booking' })
+    @ApiPropertyOptional({
+        description: 'Site title',
+        example: 'TripConnect - Travel Booking',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(255)
@@ -38,14 +41,20 @@ export class UpdateSiteSettingDTO {
     @IsString({ each: true })
     banners_square?: string[];
 
-    @ApiPropertyOptional({ description: 'Rectangular banner URLs', type: [String] })
+    @ApiPropertyOptional({
+        description: 'Rectangular banner URLs',
+        type: [String],
+    })
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
     banners_rectangle?: string[];
 
     // Footer Information
-    @ApiPropertyOptional({ description: 'Company name', example: 'TripConnect Company' })
+    @ApiPropertyOptional({
+        description: 'Company name',
+        example: 'TripConnect Company',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(255)
@@ -56,13 +65,19 @@ export class UpdateSiteSettingDTO {
     @IsString()
     address?: string;
 
-    @ApiPropertyOptional({ description: 'Phone number', example: '+84 123 456 789' })
+    @ApiPropertyOptional({
+        description: 'Phone number',
+        example: '+84 123 456 789',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(50)
     phone?: string;
 
-    @ApiPropertyOptional({ description: 'Contact email', example: 'contact@tripconnect.com' })
+    @ApiPropertyOptional({
+        description: 'Contact email',
+        example: 'contact@tripconnect.com',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(255)
@@ -98,7 +113,10 @@ export class UpdateSiteSettingDTO {
     @IsString()
     footer_description?: string;
 
-    @ApiPropertyOptional({ description: 'Copyright text', example: '© 2024 TripConnect' })
+    @ApiPropertyOptional({
+        description: 'Copyright text',
+        example: '© 2024 TripConnect',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(100)

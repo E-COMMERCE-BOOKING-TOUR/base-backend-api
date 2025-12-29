@@ -12,14 +12,17 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminCurrencyService } from '../service/admin-currency.service';
-import { CreateCurrencyDTO, UpdateCurrencyDTO } from '../dto/admin-currency.dto';
+import {
+    CreateCurrencyDTO,
+    UpdateCurrencyDTO,
+} from '../dto/admin-currency.dto';
 
 @ApiTags('Admin - Currency')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('admin/currency')
 export class AdminCurrencyController {
-    constructor(private readonly adminCurrencyService: AdminCurrencyService) { }
+    constructor(private readonly adminCurrencyService: AdminCurrencyService) {}
 
     @Get('getAll')
     @ApiOperation({ summary: 'Lấy danh sách tất cả currency' })

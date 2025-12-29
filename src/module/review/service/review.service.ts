@@ -28,7 +28,7 @@ export class ReviewService {
         private readonly tourRepository: Repository<TourEntity>,
         @InjectRepository(ReviewHelpfulEntity)
         private readonly helpfulRepository: Repository<ReviewHelpfulEntity>,
-    ) { }
+    ) {}
 
     async getAllReviews(currentUserId?: number): Promise<ReviewSummaryDTO[]> {
         const reviews = await this.reviewRepository.find({
@@ -55,7 +55,11 @@ export class ReviewService {
                     },
                     helpful_count: r.helpful_count,
                     is_reported: r.is_reported,
-                    is_helpful: currentUserId ? r.helpful_votes?.some(v => v.user?.id === currentUserId) : false,
+                    is_helpful: currentUserId
+                        ? r.helpful_votes?.some(
+                              (v) => v.user?.id === currentUserId,
+                          )
+                        : false,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
                     deleted_at: r.deleted_at ?? undefined,
@@ -63,7 +67,10 @@ export class ReviewService {
         );
     }
 
-    async getReviewsByTour(tourId: number, currentUserId?: number): Promise<ReviewSummaryDTO[]> {
+    async getReviewsByTour(
+        tourId: number,
+        currentUserId?: number,
+    ): Promise<ReviewSummaryDTO[]> {
         const reviews = await this.reviewRepository.find({
             where: { tour: { id: tourId } },
             relations: ['user', 'tour', 'helpful_votes', 'helpful_votes.user'],
@@ -89,7 +96,11 @@ export class ReviewService {
                     },
                     helpful_count: r.helpful_count,
                     is_reported: r.is_reported,
-                    is_helpful: currentUserId ? r.helpful_votes?.some(v => v.user?.id === currentUserId) : false,
+                    is_helpful: currentUserId
+                        ? r.helpful_votes?.some(
+                              (v) => v.user?.id === currentUserId,
+                          )
+                        : false,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
                     deleted_at: r.deleted_at ?? undefined,
@@ -97,7 +108,10 @@ export class ReviewService {
         );
     }
 
-    async getReviewsByUser(userId: number, currentUserId?: number): Promise<ReviewSummaryDTO[]> {
+    async getReviewsByUser(
+        userId: number,
+        currentUserId?: number,
+    ): Promise<ReviewSummaryDTO[]> {
         const reviews = await this.reviewRepository.find({
             where: { user: { id: userId } },
             relations: ['user', 'tour', 'helpful_votes', 'helpful_votes.user'],
@@ -123,7 +137,11 @@ export class ReviewService {
                     },
                     helpful_count: r.helpful_count,
                     is_reported: r.is_reported,
-                    is_helpful: currentUserId ? r.helpful_votes?.some(v => v.user?.id === currentUserId) : false,
+                    is_helpful: currentUserId
+                        ? r.helpful_votes?.some(
+                              (v) => v.user?.id === currentUserId,
+                          )
+                        : false,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
                     deleted_at: r.deleted_at ?? undefined,
@@ -131,10 +149,19 @@ export class ReviewService {
         );
     }
 
-    async getReviewById(id: number, currentUserId?: number): Promise<ReviewDetailDTO | null> {
+    async getReviewById(
+        id: number,
+        currentUserId?: number,
+    ): Promise<ReviewDetailDTO | null> {
         const r = await this.reviewRepository.findOne({
             where: { id },
-            relations: ['user', 'tour', 'images', 'helpful_votes', 'helpful_votes.user'],
+            relations: [
+                'user',
+                'tour',
+                'images',
+                'helpful_votes',
+                'helpful_votes.user',
+            ],
         });
         if (!r) return null;
         return new ReviewDetailDTO({
@@ -147,7 +174,9 @@ export class ReviewService {
             content: r.content,
             helpful_count: r.helpful_count,
             is_reported: r.is_reported,
-            is_helpful: currentUserId ? r.helpful_votes?.some(v => v.user?.id === currentUserId) : false,
+            is_helpful: currentUserId
+                ? r.helpful_votes?.some((v) => v.user?.id === currentUserId)
+                : false,
             sort_no: r.sort_no ?? 0,
             created_at: r.created_at,
             updated_at: r.updated_at,
@@ -164,7 +193,10 @@ export class ReviewService {
         } as Partial<ReviewDetailDTO>);
     }
 
-    async create(userId: number, dto: CreateReviewUserDTO): Promise<ReviewDetailDTO> {
+    async create(
+        userId: number,
+        dto: CreateReviewUserDTO,
+    ): Promise<ReviewDetailDTO> {
         const user = await this.userRepository.findOne({
             where: { id: userId },
         });

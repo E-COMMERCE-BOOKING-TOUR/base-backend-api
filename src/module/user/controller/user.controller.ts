@@ -34,7 +34,7 @@ import { User } from '../decorator/user.decorator';
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService: UserService) { }
+    constructor(private readonly userService: UserService) {}
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [UserSummaryDTO] })
@@ -144,6 +144,7 @@ export class UserController {
     @Post('unfollow/:id')
     @ApiOperation({ summary: 'Unfollow a user' })
     async unfollow(@User() user: UserEntity, @Param('id') id: number) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await this.userService.unfollow(user.id, id);
     }
 

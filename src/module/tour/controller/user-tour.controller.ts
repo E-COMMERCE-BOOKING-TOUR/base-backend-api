@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Param,
+    Post,
+    Query,
+    Req,
+    UseGuards,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
     ApiOperation,
@@ -20,12 +30,19 @@ import {
     UserTourSessionDTO,
 } from '../dto/tour.dto';
 
+interface AuthenticatedRequest {
+    user?: {
+        id: number;
+    };
+}
+
 @ApiTags('User Tour')
 @Controller('user/tour')
 export class UserTourController {
     constructor(
         private readonly userTourService: UserTourService,
-        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
+        @Inject('RECOMMEND_SERVICE')
+        private readonly recommendClient: ClientProxy,
     ) { }
     @Get('search/list')
     @ApiOperation({ summary: 'Search tours with filters' })
@@ -44,9 +61,7 @@ export class UserTourController {
             },
         },
     })
-    async searchTours(
-        @Query() query: UserTourSearchQueryDTO,
-    ): Promise<any> {
+    async searchTours(@Query() query: UserTourSearchQueryDTO): Promise<any> {
         return this.userTourService.searchTours(query);
     }
 
@@ -86,19 +101,22 @@ export class UserTourController {
     })
     async getTourDetailBySlug(
         @Param('slug') slug: string,
-        @Req() req: any,
+        @Req() req: AuthenticatedRequest,
         @Query('guest_id') guestId?: string,
     ): Promise<UserTourDetailDTO> {
         const tour = await this.userTourService.getTourDetailBySlug(slug);
-
+        console.log(tour);
         // Track view interaction
         const userId = req.user?.id?.toString();
-        this.recommendClient.emit({ cmd: 'track_interaction' }, {
-            userId,
-            guestId,
-            tourId: tour.id,
-            type: 'view',
-        });
+        this.recommendClient.emit(
+            { cmd: 'track_interaction' },
+            {
+                userId,
+                guestId,
+                tourId: tour.id,
+                type: 'view',
+            },
+        );
 
         return tour;
     }
@@ -106,16 +124,19 @@ export class UserTourController {
     @Post('favorite/toggle')
     @UseGuards(JwtOptionalGuard)
     @ApiOperation({ summary: 'Toggle favorite status of a tour' })
-    async toggleFavorite(
+    toggleFavorite(
         @Body() data: { tour_id: number; guest_id?: string },
-        @Req() req: any,
-    ): Promise<any> {
+        @Req() req: AuthenticatedRequest,
+    ) {
         const userId = req.user?.id?.toString();
-        return this.recommendClient.send({ cmd: 'toggle_favorite' }, {
-            userId,
-            guestId: data.guest_id,
-            tourId: data.tour_id,
-        });
+        return this.recommendClient.send(
+            { cmd: 'toggle_favorite' },
+            {
+                userId,
+                guestId: data.guest_id,
+                tourId: data.tour_id,
+            },
+        );
     }
 
     @Get('recommend/list')
@@ -123,7 +144,7 @@ export class UserTourController {
     @ApiOperation({ summary: 'Get recommended tours for user' })
     @ApiQuery({ name: 'guest_id', required: false })
     async getRecommendations(
-        @Req() req: any,
+        @Req() req: AuthenticatedRequest,
         @Query('guest_id') guestId?: string,
     ): Promise<UserTourPopularDTO[]> {
         const userId = req.user?.id?.toString();

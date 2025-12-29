@@ -4,12 +4,12 @@ import { TourPolicyEntity } from '@/module/tour/entity/tourPolicy.entity';
 import { TourPolicyRuleEntity } from '@/module/tour/entity/tourPolicyRule.entity';
 import { TourVariantEntity } from '@/module/tour/entity/tourVariant.entity';
 import { SupplierEntity } from '@/module/user/entity/supplier.entity';
-import { TourStatus } from '@/module/tour/dto/tour.dto';
 
 export default class TourPolicySeeder implements Seeder {
     async run(dataSource: DataSource): Promise<void> {
         const policyRepository = dataSource.getRepository(TourPolicyEntity);
-        const policyRuleRepository = dataSource.getRepository(TourPolicyRuleEntity);
+        const policyRuleRepository =
+            dataSource.getRepository(TourPolicyRuleEntity);
         const supplierRepository = dataSource.getRepository(SupplierEntity);
         const variantRepository = dataSource.getRepository(TourVariantEntity);
 
@@ -18,7 +18,9 @@ export default class TourPolicySeeder implements Seeder {
         });
 
         if (suppliers.length === 0) {
-            console.log('⚠️ No active suppliers found, skipping tour policy seeder');
+            console.log(
+                '⚠️ No active suppliers found, skipping tour policy seeder',
+            );
             return;
         }
 
@@ -66,7 +68,10 @@ export default class TourPolicySeeder implements Seeder {
         ];
 
         // Store policies in a map for quick lookup: supplierId -> { typeKey -> PolicyEntity }
-        const supplierPoliciesMap = new Map<number, Map<string, TourPolicyEntity>>();
+        const supplierPoliciesMap = new Map<
+            number,
+            Map<string, TourPolicyEntity>
+        >();
 
         for (const supplier of suppliers) {
             const supplierMap = new Map<string, TourPolicyEntity>();
@@ -108,12 +113,17 @@ export default class TourPolicySeeder implements Seeder {
         for (const variant of variants) {
             if (!variant.tour?.supplier) continue;
 
-            const supplierMap = supplierPoliciesMap.get(variant.tour.supplier.id);
+            const supplierMap = supplierPoliciesMap.get(
+                variant.tour.supplier.id,
+            );
             if (!supplierMap) continue;
 
             let targetPolicy: TourPolicyEntity | undefined;
 
-            if (variant.name.includes('VIP') || variant.name.includes('Luxury')) {
+            if (
+                variant.name.includes('VIP') ||
+                variant.name.includes('Luxury')
+            ) {
                 targetPolicy = supplierMap.get('Flexible');
             } else if (variant.name.includes('Private')) {
                 targetPolicy = supplierMap.get('Private');

@@ -18,7 +18,7 @@ export class DivisionService {
     constructor(
         @InjectRepository(DivisionEntity)
         private readonly divisionRepository: Repository<DivisionEntity>,
-    ) { }
+    ) {}
 
     async getTrendingDestinations(
         limit: number = 6,
@@ -59,7 +59,9 @@ export class DivisionService {
                 const title: string = division.name.toUpperCase();
                 const toursCount: number = parseInt(division.toursCount) || 0;
                 // Use database image or fallback to generated path
-                const image: string = division.imageUrl || `/assets/images/${division.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+                const image: string =
+                    division.imageUrl ||
+                    `/assets/images/${division.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
 
                 return new UserDivisionTrendingDTO({
                     id: division.id,

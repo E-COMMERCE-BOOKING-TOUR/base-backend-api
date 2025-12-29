@@ -25,4 +25,4 @@ import { UserReviewService } from './service/user-review.service';
     controllers: [AdminReviewController, UserReviewController],
     providers: [ReviewService, UserReviewService],
 })
-export class ReviewModule { }
+export class ReviewModule {}

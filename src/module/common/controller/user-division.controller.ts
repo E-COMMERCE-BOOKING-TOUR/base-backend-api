@@ -16,7 +16,7 @@ export class UserDivisionController {
         private readonly countryRepository: Repository<CountryEntity>,
         @InjectRepository(DivisionEntity)
         private readonly divisionRepository: Repository<DivisionEntity>,
-    ) { }
+    ) {}
 
     @Get('trending')
     @ApiOperation({ summary: 'Get trending destinations' })

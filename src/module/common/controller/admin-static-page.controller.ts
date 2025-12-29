@@ -12,14 +12,19 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminStaticPageService } from '../service/admin-static-page.service';
-import { CreateStaticPageDTO, UpdateStaticPageDTO } from '../dto/static-page.dto';
+import {
+    CreateStaticPageDTO,
+    UpdateStaticPageDTO,
+} from '../dto/static-page.dto';
 
 @ApiTags('Admin - Static Pages')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('admin/static-pages')
 export class AdminStaticPageController {
-    constructor(private readonly adminStaticPageService: AdminStaticPageService) { }
+    constructor(
+        private readonly adminStaticPageService: AdminStaticPageService,
+    ) {}
 
     @Get()
     @ApiOperation({ summary: 'Lấy danh sách tất cả các trang tĩnh' })
@@ -41,7 +46,10 @@ export class AdminStaticPageController {
 
     @Put(':id')
     @ApiOperation({ summary: 'Cập nhật một trang tĩnh' })
-    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStaticPageDTO) {
+    async update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateStaticPageDTO,
+    ) {
         return this.adminStaticPageService.update(id, dto);
     }
 

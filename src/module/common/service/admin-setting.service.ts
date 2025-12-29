@@ -9,11 +9,13 @@ export class AdminSettingService {
     constructor(
         @InjectRepository(SiteSettingEntity)
         private readonly settingRepository: Repository<SiteSettingEntity>,
-    ) { }
+    ) {}
 
     async getSettings(): Promise<SiteSettingEntity> {
         // Get the first (and only) settings record, or create default if not exists
-        let settings = await this.settingRepository.findOne({ where: { id: 1 } });
+        let settings = await this.settingRepository.findOne({
+            where: { id: 1 },
+        });
 
         if (!settings) {
             settings = this.settingRepository.create({
@@ -29,12 +31,15 @@ export class AdminSettingService {
         return settings;
     }
 
-    async updateSettings(dto: UpdateSiteSettingDTO): Promise<SiteSettingEntity> {
-        let settings = await this.getSettings();
+    async updateSettings(
+        dto: UpdateSiteSettingDTO,
+    ): Promise<SiteSettingEntity> {
+        const settings = await this.getSettings();
 
         // Update all provided fields
-        Object.keys(dto).forEach(key => {
+        Object.keys(dto).forEach((key) => {
             if (dto[key as keyof UpdateSiteSettingDTO] !== undefined) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (settings as any)[key] = dto[key as keyof UpdateSiteSettingDTO];
             }
         });

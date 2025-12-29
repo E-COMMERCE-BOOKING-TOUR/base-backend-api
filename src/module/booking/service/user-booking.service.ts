@@ -125,7 +125,6 @@ export class UserBookingService {
             },
         });
 
-        console.log(booking);
         if (!booking) {
             throw new NotFoundException('No active booking found');
         }
@@ -729,7 +728,8 @@ export class UserBookingService {
             }
         }
 
-        const feeAmount = (Number(booking.total_amount) * applicableFeePct) / 100;
+        const feeAmount =
+            (Number(booking.total_amount) * applicableFeePct) / 100;
         const refundAmount = Number(booking.total_amount) - feeAmount;
 
         return {
@@ -752,7 +752,11 @@ export class UserBookingService {
         });
 
         if (!booking) throw new NotFoundException('Booking not found');
-        if (![BookingStatus.confirmed, BookingStatus.waiting_supplier].includes(booking.status)) {
+        if (
+            ![BookingStatus.confirmed, BookingStatus.waiting_supplier].includes(
+                booking.status,
+            )
+        ) {
             throw new BadRequestException(
                 'Only confirmed or waiting bookings can be cancelled here',
             );

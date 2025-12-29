@@ -8,19 +8,23 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             {
                 name: 'RECOMMEND_SERVICE',
                 imports: [ConfigModule],
-                useFactory: async (configService: ConfigService) => ({
+                useFactory: (configService: ConfigService) => ({
                     transport: Transport.TCP,
                     options: {
-                        host: configService.get('RECOMMEND_SERVICE_HOST'),
-                        port: configService.get('RECOMMEND_SERVICE_PORT'),
+                        host: configService.get<string>(
+                            'RECOMMEND_SERVICE_HOST',
+                        ),
+                        port: configService.get<number>(
+                            'RECOMMEND_SERVICE_PORT',
+                        ),
                     },
                 }),
                 inject: [ConfigService],
-            }
+            },
         ]),
     ],
     controllers: [],
     providers: [],
     exports: [ClientsModule],
 })
-export class RecommendModule { }
+export class RecommendModule {}

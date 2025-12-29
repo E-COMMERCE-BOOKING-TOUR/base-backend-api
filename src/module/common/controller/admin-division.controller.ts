@@ -11,12 +11,22 @@ import {
     UseInterceptors,
     UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiBearerAuth,
+    ApiConsumes,
+    ApiBody,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminDivisionService } from '../service/admin-division.service';
-import { CreateDivisionDTO, UpdateDivisionDTO } from '../dto/admin-division.dto';
+import {
+    CreateDivisionDTO,
+    UpdateDivisionDTO,
+} from '../dto/admin-division.dto';
 import { CloudinaryService } from '@/module/cloudinary/cloudinary.service';
+import { CloudinaryResponse } from '@/module/cloudinary/cloudinary-response';
 
 @ApiTags('Admin - Division')
 @ApiBearerAuth()
@@ -26,7 +36,7 @@ export class AdminDivisionController {
     constructor(
         private readonly adminDivisionService: AdminDivisionService,
         private readonly cloudinaryService: CloudinaryService,
-    ) { }
+    ) {}
 
     @Get('getAll')
     @ApiOperation({ summary: 'Lấy danh sách tất cả division' })
@@ -93,8 +103,13 @@ export class AdminDivisionController {
         @Param('id', ParseIntPipe) id: number,
         @UploadedFile() file: Express.Multer.File,
     ) {
-        const result = await this.cloudinaryService.uploadFile(file);
-        await this.adminDivisionService.update(id, { image_url: result.secure_url });
+        const result: CloudinaryResponse =
+            await this.cloudinaryService.uploadFile(file);
+        await this.adminDivisionService.update(id, {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            image_url: result.secure_url,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         return { image_url: result.secure_url };
     }
 }

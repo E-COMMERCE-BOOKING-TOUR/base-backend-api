@@ -12,19 +12,25 @@ import { AdminChatboxService } from './service/admin-chatbox.service';
             {
                 name: 'CHATBOX_SERVICE',
                 imports: [ConfigModule],
-                useFactory: async (configService: ConfigService) => ({
+                useFactory: (configService: ConfigService) => ({
                     transport: Transport.TCP,
                     options: {
-                        host: configService.get('CHATBOX_HOST', 'chatbox'),
-                        port: configService.get('CHATBOX_TCP_PORT', 8877),
+                        host: configService.get<string>(
+                            'CHATBOX_HOST',
+                            'chatbox',
+                        ),
+                        port: configService.get<number>(
+                            'CHATBOX_TCP_PORT',
+                            8877,
+                        ),
                     },
                 }),
                 inject: [ConfigService],
-            }
+            },
         ]),
     ],
     controllers: [UserChatboxController, AdminChatboxController],
     providers: [UserChatboxService, AdminChatboxService],
     exports: [UserChatboxService, AdminChatboxService],
 })
-export class ChatboxModule { }
+export class ChatboxModule {}

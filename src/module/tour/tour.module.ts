@@ -25,7 +25,10 @@ import { TourAssemblePriceStep } from '../pricing/steps/tour-assemble-price.step
 import { AdminTourService } from './service/admin-tour.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { PriceCacheService } from './service/price-cache.service';
-import { PriceCacheProcessor, PRICE_CACHE_QUEUE } from './queue/price-cache.processor';
+import {
+    PriceCacheProcessor,
+    PRICE_CACHE_QUEUE,
+} from './queue/price-cache.processor';
 import { RecommendModule } from '../recommend/recommend.module';
 
 @Module({
@@ -50,15 +53,23 @@ import { RecommendModule } from '../recommend/recommend.module';
             TourCategoryEntity,
             ReviewEntity,
         ]),
-        PricingModule.forRoot([
-            TourBasePriceStep,
-            TourAssemblePriceStep,
-        ]),
+        PricingModule.forRoot([TourBasePriceStep, TourAssemblePriceStep]),
         CloudinaryModule,
         RecommendModule,
     ],
     controllers: [AdminTourController, UserTourController],
-    providers: [TourService, UserTourService, AdminTourService, PriceCacheService, PriceCacheProcessor],
-    exports: [TourService, UserTourService, AdminTourService, PriceCacheService],
+    providers: [
+        TourService,
+        UserTourService,
+        AdminTourService,
+        PriceCacheService,
+        PriceCacheProcessor,
+    ],
+    exports: [
+        TourService,
+        UserTourService,
+        AdminTourService,
+        PriceCacheService,
+    ],
 })
-export class TourModule { }
+export class TourModule {}

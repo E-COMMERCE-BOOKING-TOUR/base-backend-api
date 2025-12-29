@@ -4,9 +4,12 @@ import { CreateReviewUserDTO, ReviewDetailDTO } from '../dto/review.dto';
 
 @Injectable()
 export class UserReviewService {
-    constructor(private readonly reviewService: ReviewService) { }
+    constructor(private readonly reviewService: ReviewService) {}
 
-    async create(userId: number, dto: CreateReviewUserDTO): Promise<ReviewDetailDTO> {
+    async create(
+        userId: number,
+        dto: CreateReviewUserDTO,
+    ): Promise<ReviewDetailDTO> {
         return this.reviewService.create(userId, dto);
     }
 

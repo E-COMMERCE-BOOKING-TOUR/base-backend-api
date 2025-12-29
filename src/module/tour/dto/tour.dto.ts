@@ -263,14 +263,14 @@ export class TourVariantDTO {
     })
     prices?: TourVariantPaxTypePriceDTO[];
 
-    @IsOptional()
     @IsInt()
+    @Min(1)
     @ApiProperty({
         description: 'ID chính sách hủy/fee',
-        required: false,
+        required: true,
         example: 1,
     })
-    tour_policy_id?: number;
+    tour_policy_id: number;
 
     @IsOptional()
     @IsDate()

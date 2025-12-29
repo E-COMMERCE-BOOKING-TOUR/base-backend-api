@@ -14,7 +14,10 @@ export class CreateCurrencyDTO {
 }
 
 export class UpdateCurrencyDTO {
-    @ApiPropertyOptional({ description: 'Tên tiền tệ', example: 'Việt Nam Đồng' })
+    @ApiPropertyOptional({
+        description: 'Tên tiền tệ',
+        example: 'Việt Nam Đồng',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(255)

@@ -6,21 +6,31 @@ import { lastValueFrom } from 'rxjs';
 export class AdminArticleServiceProxy {
     constructor(
         @Inject('ARTICLE_SERVICE') private readonly client: ClientProxy,
-    ) { }
+    ) {}
 
-    async getArticles(limit: number = 20, page: number = 1, filter: any = {}) {
-        return lastValueFrom(this.client.send('admin_get_articles', { limit, page, filter }));
+    async getArticles(
+        limit: number = 20,
+        page: number = 1,
+        filter: Record<string, unknown> = {},
+    ) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return lastValueFrom(
+            this.client.send('admin_get_articles', { limit, page, filter }),
+        );
     }
 
     async deleteArticle(id: string) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return lastValueFrom(this.client.send('admin_delete_article', id));
     }
 
     async toggleVisibility(id: string) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return lastValueFrom(this.client.send('admin_toggle_visibility', id));
     }
 
     async getStats() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return lastValueFrom(this.client.send('admin_get_social_stats', {}));
     }
 }

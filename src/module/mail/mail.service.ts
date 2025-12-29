@@ -17,7 +17,11 @@ export class MailService {
         }
     }
 
-    async sendForgotPasswordEmail(to: string, fullName: string, resetLink: string) {
+    async sendForgotPasswordEmail(
+        to: string,
+        fullName: string,
+        resetLink: string,
+    ) {
         const html = forgotPasswordTemplate(fullName, resetLink);
         await this.sendMail(to, 'Hướng dẫn đặt lại mật khẩu', html);
     }
@@ -37,7 +41,10 @@ export class MailService {
             });
             this.logger.log(`Email sent to ${to}`);
         } catch (error) {
-            this.logger.error(`Failed to send email to ${to}`, error.stack);
+            this.logger.error(
+                `Failed to send email to ${to}`,
+                (error as Error).stack,
+            );
             throw error;
         }
     }

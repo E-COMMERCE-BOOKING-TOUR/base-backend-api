@@ -91,4 +91,4 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
         NotificationService,
     ],
 })
-export class UserModule { }
+export class UserModule {}

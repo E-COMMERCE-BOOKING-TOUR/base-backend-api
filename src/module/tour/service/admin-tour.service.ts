@@ -25,8 +25,12 @@ import {
     PaginatedTourResponse,
     TourStatus,
     TourPolicyDTO,
-    TourPolicyRuleDTO,
 } from '../dto/tour.dto';
+
+interface VectorResponse {
+    vector?: number[];
+    insights?: unknown;
+}
 
 @Injectable()
 export class AdminTourService {
@@ -52,8 +56,9 @@ export class AdminTourService {
         @InjectRepository(TourCategoryEntity)
         private readonly categoryRepository: Repository<TourCategoryEntity>,
         private readonly dataSource: DataSource,
-        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
-    ) { }
+        @Inject('RECOMMEND_SERVICE')
+        private readonly recommendClient: ClientProxy,
+    ) {}
 
     async getAllTours(
         query: AdminTourQueryDTO,
@@ -120,16 +125,11 @@ export class AdminTourService {
     async getPoliciesBySupplier(
         supplierId: number,
     ): Promise<TourPolicyEntity[]> {
-        const policies = await this.dataSource.getRepository(TourPolicyEntity).find({
+        return this.dataSource.getRepository(TourPolicyEntity).find({
             where: { supplier: { id: supplierId } },
             relations: ['tour_policy_rules'],
             order: { name: 'ASC' },
         });
-
-        return policies.map(p => ({
-            ...p,
-            rules: p.tour_policy_rules
-        })) as any;
     }
 
     private slugify(text: string): string {
@@ -182,7 +182,7 @@ export class AdminTourService {
                 'variants',
                 'variants.tour_sessions',
                 'variants.tour_variant_pax_type_prices',
-            ]
+            ],
         });
 
         if (!tour) throw new NotFoundException(`Tour with ID ${id} not found`);
@@ -193,18 +193,23 @@ export class AdminTourService {
             is_visible: tour.is_visible,
             has_images: tour.images && tour.images.length > 0,
             has_variants: tour.variants && tour.variants.length > 0,
-            has_active_variants: tour.variants?.some(v => v.status === 'active'),
-            has_pricing: tour.variants?.some(v =>
-                v.tour_variant_pax_type_prices?.some(p => p.price > 0)
+            has_active_variants: tour.variants?.some(
+                (v) => v.status === 'active',
             ),
-            has_upcoming_sessions: false
+            has_pricing: tour.variants?.some((v) =>
+                v.tour_variant_pax_type_prices?.some((p) => p.price > 0),
+            ),
+            has_upcoming_sessions: false,
         };
 
-        if (tour.status !== TourStatus.active) issues.push('Tour status is not set to ACTIVE');
+        if (tour.status !== TourStatus.active)
+            issues.push('Tour status is not set to ACTIVE');
         if (!tour.is_visible) issues.push('Tour visibility is turned OFF');
         if (!checks.has_images) issues.push('No images uploaded for this tour');
-        if (!checks.has_variants) issues.push('No variants defined for this tour');
-        else if (!checks.has_active_variants) issues.push('No active variants found');
+        if (!checks.has_variants)
+            issues.push('No variants defined for this tour');
+        else if (!checks.has_active_variants)
+            issues.push('No active variants found');
 
         if (checks.has_variants && !checks.has_pricing) {
             issues.push('No valid prices (>0) found in any variant');
@@ -214,10 +219,10 @@ export class AdminTourService {
         const now = new Date();
         const dStr = now.toISOString().split('T')[0];
 
-        checks.has_upcoming_sessions = tour.variants?.some(v =>
-            v.tour_sessions?.some(s =>
-                s.status === 'open' && (s.session_date.toString() >= dStr)
-            )
+        checks.has_upcoming_sessions = tour.variants?.some((v) =>
+            v.tour_sessions?.some(
+                (s) => s.status === 'open' && s.session_date.toString() >= dStr,
+            ),
         );
 
         if (!checks.has_upcoming_sessions) {
@@ -228,9 +233,10 @@ export class AdminTourService {
             id: tour.id,
             title: tour.title,
             slug: tour.slug,
-            isVisiblePublic: checks.status && checks.is_visible && issues.length === 0, // Simplified but accurate for the modal
+            isVisiblePublic:
+                checks.status && checks.is_visible && issues.length === 0, // Simplified but accurate for the modal
             checks,
-            issues
+            issues,
         };
     }
 
@@ -249,8 +255,8 @@ export class AdminTourService {
         return await this.dataSource.transaction(async (manager) => {
             const categories = tour_category_ids?.length
                 ? await manager.find(TourCategoryEntity, {
-                    where: { id: In(tour_category_ids) },
-                })
+                      where: { id: In(tour_category_ids) },
+                  })
                 : [];
 
             const slug =
@@ -291,8 +297,8 @@ export class AdminTourService {
                         ...(vRest as any),
                         tour: savedTour,
                         currency: { id: vCurrencyId || currency_id },
-                        tour_policy: vDto.tour_policy_id ? { id: vDto.tour_policy_id } : undefined,
-                    } as any);
+                        tour_policy: { id: vDto.tour_policy_id },
+                    });
 
                     const savedVariant = await manager.save(variant);
 
@@ -346,8 +352,11 @@ export class AdminTourService {
                 throw new Error('Failed to create and reload tour');
 
             // Trigger vector generation in background
-            this.triggerTourVectorGeneration(reloadedTour.id).catch(err =>
-                console.error(`Auto vector generation failed for tour ${reloadedTour.id}:`, err)
+            this.triggerTourVectorGeneration(reloadedTour.id).catch((err) =>
+                console.error(
+                    `Auto vector generation failed for tour ${reloadedTour.id}:`,
+                    err,
+                ),
             );
 
             return reloadedTour;
@@ -460,13 +469,17 @@ export class AdminTourService {
                         variant.currency = {
                             id: vCurrencyId || tour.currency.id,
                         } as CurrencyEntity;
-                        variant.tour_policy = vDtoAny.tour_policy_id ? ({ id: vDtoAny.tour_policy_id } as any) : undefined;
+                        variant.tour_policy = {
+                            id: vDtoAny.tour_policy_id,
+                        } as TourPolicyEntity;
                     } else {
                         variant = manager.create(TourVariantEntity, {
                             ...vRest,
                             tour: savedTour,
                             currency: { id: vCurrencyId || tour.currency.id },
-                            tour_policy: vDtoAny.tour_policy_id ? { id: vDtoAny.tour_policy_id } : undefined,
+                            tour_policy: vDtoAny.tour_policy_id
+                                ? { id: vDtoAny.tour_policy_id }
+                                : undefined,
                         } as any);
                     }
 
@@ -505,11 +518,11 @@ export class AdminTourService {
                             const tStr =
                                 t instanceof Date
                                     ? t.toLocaleTimeString('en-GB', {
-                                        hour12: false,
-                                    })
+                                          hour12: false,
+                                      })
                                     : typeof t === 'string'
-                                        ? t
-                                        : '00:00:00';
+                                      ? t
+                                      : '00:00:00';
                             // Normalize to HH:mm:ss if it's HH:mm
                             const normalizedTime =
                                 tStr.length === 5 ? `${tStr}:00` : tStr;
@@ -580,8 +593,8 @@ export class AdminTourService {
             }
 
             // Trigger vector generation in background
-            this.triggerTourVectorGeneration(id).catch(err =>
-                console.error(`Auto vector update failed for tour ${id}:`, err)
+            this.triggerTourVectorGeneration(id).catch((err) =>
+                console.error(`Auto vector update failed for tour ${id}:`, err),
             );
 
             return this.getTourById(id);
@@ -621,27 +634,35 @@ export class AdminTourService {
         if (!tour) return;
 
         try {
-            const response: any = await firstValueFrom(
-                this.recommendClient.send({ cmd: 'generate_tour_vector' }, {
-                    title: tour.title,
-                    description: tour.description,
-                    summary: tour.summary,
-                    address: tour.address,
-                    imageUrls: tour.images.map(img => img.image_url),
-                    numeric: {
-                        price: tour.cached_min_price || 0,
-                        duration_days: tour.duration_days || 0
-                    }
-                })
+            const response: VectorResponse = await firstValueFrom(
+                this.recommendClient.send(
+                    { cmd: 'generate_tour_vector' },
+                    {
+                        title: tour.title,
+                        description: tour.description,
+                        summary: tour.summary,
+                        address: tour.address,
+                        imageUrls: tour.images.map((img) => img.image_url),
+                        numeric: {
+                            price: tour.cached_min_price || 0,
+                            duration_days: tour.duration_days || 0,
+                        },
+                    },
+                ),
             );
 
             if (response && response.vector) {
                 tour.vector = response.vector;
-                tour.insight_data = response.insights ? JSON.stringify(response.insights) : `Generated insight.`;
+                tour.insight_data = response.insights
+                    ? JSON.stringify(response.insights)
+                    : `Generated insight.`;
                 await this.tourRepository.save(tour);
             }
         } catch (error) {
-            console.error(`Error in triggerTourVectorGeneration for tour ${tourId}:`, error);
+            console.error(
+                `Error in triggerTourVectorGeneration for tour ${tourId}:`,
+                error,
+            );
         }
     }
 
@@ -650,20 +671,25 @@ export class AdminTourService {
             relations: ['images', 'tour_categories'],
         });
 
-        const maxPrice = Math.max(...tours.map(t => t.cached_min_price || 0), 1);
-        const maxDays = Math.max(...tours.map(t => t.duration_days || 0), 1);
-
         const results: any[] = [];
         for (const tour of tours) {
             try {
                 await this.triggerTourVectorGeneration(tour.id);
                 results.push({ id: tour.id, status: 'success' });
             } catch (error) {
-                results.push({ id: tour.id, status: 'error', message: error.message });
+                results.push({
+                    id: tour.id,
+                    status: 'error',
+                    message: (error as Error).message,
+                });
             }
         }
 
-        return { total: tours.length, processed: results.length, details: results };
+        return {
+            total: tours.length,
+            processed: results.length,
+            details: results,
+        };
     }
     async removeVariant(id: number): Promise<void> {
         await this.variantRepository.delete(id);
@@ -699,7 +725,9 @@ export class AdminTourService {
                 where: { id: savedPolicy.id },
                 relations: ['tour_policy_rules'],
             });
-            return { ...result, rules: result?.tour_policy_rules } as any;
+
+            if (!result) throw new Error('Failed to create policy');
+            return result;
         });
     }
 
@@ -735,7 +763,9 @@ export class AdminTourService {
                 where: { id: policy.id },
                 relations: ['tour_policy_rules'],
             });
-            return { ...result, rules: result?.tour_policy_rules } as any;
+
+            if (!result) throw new Error('Failed to update policy');
+            return result;
         });
     }
 

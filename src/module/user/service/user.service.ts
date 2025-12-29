@@ -18,7 +18,12 @@ import { CountryEntity } from '@/common/entity/country.entity';
 import { SupplierEntity } from '../entity/supplier.entity';
 import { RoleEntity } from '../entity/role.entity';
 import { comparePassword } from '@/utils/bcrypt.util';
-import { BadRequestException, Injectable, Inject, forwardRef } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    Inject,
+    forwardRef,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { NotificationService } from './notification.service';
@@ -33,7 +38,7 @@ export class UserService {
         private readonly articleServiceProxy: ArticleServiceProxy,
         @InjectQueue('user-sync') private bgQueue: Queue,
         private readonly notificationService: NotificationService,
-    ) { }
+    ) {}
 
     async getAllUsers(
         page: number = 1,
@@ -221,9 +226,9 @@ export class UserService {
         await this.userRepository.save(user);
 
         if (dto.full_name) {
-            this.bgQueue.add('update-info', {
+            void this.bgQueue.add('update-info', {
                 userId: user.id.toString(),
-                name: user.full_name
+                name: user.full_name,
             });
         }
 
@@ -257,9 +262,9 @@ export class UserService {
 
         // Sync to chatbox if name changed
         if (dto.full_name) {
-            this.bgQueue.add('update-info', {
+            void this.bgQueue.add('update-info', {
                 userId: user.id.toString(), // Assuming userId in chatbox is string(id)
-                name: user.full_name
+                name: user.full_name,
             });
         }
 
@@ -288,12 +293,18 @@ export class UserService {
     }
 
     async follow(followerId: number, followingId: number) {
-        if (followerId === followingId) throw new BadRequestException('Cannot follow yourself');
-        const savedFollow = await this.articleServiceProxy.follow(followerId, followingId);
+        if (followerId === followingId)
+            throw new BadRequestException('Cannot follow yourself');
+        const savedFollow = (await this.articleServiceProxy.follow(
+            followerId,
+            followingId,
+        )) as unknown;
 
         if (savedFollow) {
             try {
-                const follower = await this.userRepository.findOne({ where: { id: followerId } });
+                const follower = await this.userRepository.findOne({
+                    where: { id: followerId },
+                });
                 await this.notificationService.create({
                     title: follower?.full_name || 'Someone',
                     description: `started following you`,
@@ -305,10 +316,12 @@ export class UserService {
                 console.error('Failed to send follow notification:', error);
             }
         }
+
         return savedFollow;
     }
 
     async unfollow(followerId: number, followingId: number) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await this.articleServiceProxy.unfollow(followerId, followingId);
     }
 

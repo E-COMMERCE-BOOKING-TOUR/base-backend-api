@@ -45,7 +45,7 @@ export class AdminTourController {
         private readonly adminTourService: AdminTourService,
         private readonly cloudinaryService: CloudinaryService,
         private readonly priceCacheService: PriceCacheService,
-    ) { }
+    ) {}
 
     @Post('refresh-price-cache')
     @ApiOperation({ summary: 'Manually refresh price cache for all tours' })
@@ -55,8 +55,8 @@ export class AdminTourController {
         schema: {
             properties: {
                 message: { type: 'string' },
-            }
-        }
+            },
+        },
     })
     async refreshPriceCache() {
         return this.priceCacheService.updateAllTourPriceCache();
@@ -162,7 +162,10 @@ export class AdminTourController {
     @Put('policy/:id')
     @ApiParam({ name: 'id', type: Number })
     @ApiBody({ type: TourPolicyDTO })
-    async updatePolicy(@Param('id') id: number, @Body() dto: Partial<TourPolicyDTO>) {
+    async updatePolicy(
+        @Param('id') id: number,
+        @Body() dto: Partial<TourPolicyDTO>,
+    ) {
         return this.adminTourService.updatePolicy(id, dto);
     }
 

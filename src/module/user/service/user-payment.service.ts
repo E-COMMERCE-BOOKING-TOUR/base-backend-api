@@ -25,7 +25,6 @@ export class UserPaymentService {
     }
 
     async addPaymentCard(user: UserEntity, token: string) {
-        console.log(user, token);
         try {
             // Create a Customer in Stripe to save the card
             // Note: In a real system, we should check if user already has a stripe_customer_id in DB

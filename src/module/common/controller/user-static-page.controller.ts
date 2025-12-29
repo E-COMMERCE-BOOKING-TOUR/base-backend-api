@@ -5,7 +5,9 @@ import { AdminStaticPageService } from '../service/admin-static-page.service';
 @ApiTags('Settings')
 @Controller('settings/pages')
 export class UserStaticPageController {
-    constructor(private readonly adminStaticPageService: AdminStaticPageService) { }
+    constructor(
+        private readonly adminStaticPageService: AdminStaticPageService,
+    ) {}
 
     @Get(':slug')
     @ApiOperation({ summary: 'Lấy nội dung trang tĩnh theo slug' })

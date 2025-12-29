@@ -55,5 +55,4 @@ import { RecommendModule } from './module/recommend/recommend.module';
     controllers: [AppController],
     providers: [],
 })
-export class AppModule { }
-
+export class AppModule {}

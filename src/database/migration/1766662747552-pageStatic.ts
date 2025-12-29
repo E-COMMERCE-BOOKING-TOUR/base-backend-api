@@ -1,7 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class PageStatic1766662747552 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             INSERT INTO \`static_pages\` (\`title\`, \`slug\`, \`content\`, \`meta_title\`, \`meta_description\`) VALUES
@@ -37,7 +36,8 @@ export class PageStatic1766662747552 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DELETE FROM \`static_pages\` WHERE \`slug\` IN ('about-us', 'faqs', 'privacy-policy', 'terms-of-use');`);
+        await queryRunner.query(
+            `DELETE FROM \`static_pages\` WHERE \`slug\` IN ('about-us', 'faqs', 'privacy-policy', 'terms-of-use');`,
+        );
     }
-
 }

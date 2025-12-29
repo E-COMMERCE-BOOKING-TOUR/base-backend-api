@@ -34,16 +34,14 @@ export class AuthService {
         private readonly dataSource: DataSource,
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
-        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
-    ) { }
+        @Inject('RECOMMEND_SERVICE')
+        private readonly recommendClient: ClientProxy,
+    ) {}
 
     async register(dto: RegisterDTO) {
         // Check if username or email already exists
         const existingUser = await this.userRepository.findOne({
-            where: [
-                { username: dto.username },
-                { email: dto.email },
-            ],
+            where: [{ username: dto.username }, { email: dto.email }],
         });
 
         if (existingUser) {
@@ -65,7 +63,9 @@ export class AuthService {
         };
 
         try {
-            const userInstance = await this.userRepository.save(this.userRepository.create(data));
+            const userInstance = await this.userRepository.save(
+                this.userRepository.create(data),
+            );
 
             // create token with payload
             const token = await this.getToken({
@@ -90,7 +90,9 @@ export class AuthService {
     async forgotPassword(email: string) {
         const user = await this.userRepository.findOne({ where: { email } });
         if (!user) {
-            throw new UnauthorizedException('Email không tồn tại trong hệ thống!');
+            throw new UnauthorizedException(
+                'Email không tồn tại trong hệ thống!',
+            );
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
@@ -101,10 +103,16 @@ export class AuthService {
         await this.userRepository.save(user);
 
         // Send Email using external template and dynamic link
-        const frontendUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL');
+        const frontendUrl = this.configService.get<string>(
+            'NEXT_PUBLIC_APP_URL',
+        );
         const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-        await this.mailService.sendForgotPasswordEmail(user.email, user.full_name, resetLink);
+        await this.mailService.sendForgotPasswordEmail(
+            user.email,
+            user.full_name,
+            resetLink,
+        );
 
         return new MessageResponseDTO({
             error: false,
@@ -140,10 +148,13 @@ export class AuthService {
 
         // Merge guest data if guest_id is provided
         if (dto.guest_id) {
-            this.recommendClient.emit({ cmd: 'merge_guest_data' }, {
-                guestId: dto.guest_id,
-                userId: user.id.toString(),
-            });
+            this.recommendClient.emit(
+                { cmd: 'merge_guest_data' },
+                {
+                    guestId: dto.guest_id,
+                    userId: user.id.toString(),
+                },
+            );
         }
 
         return new AuthResponseDTO({

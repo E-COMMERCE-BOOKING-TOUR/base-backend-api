@@ -3,11 +3,11 @@ import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UserChatboxService {
-    constructor(
-        @Inject('CHATBOX_SERVICE') private client: ClientProxy,
-    ) { }
+    constructor(@Inject('CHATBOX_SERVICE') private client: ClientProxy) {}
 
-    createConversation(participants: { userId: string; role: string; name?: string }[]) {
+    createConversation(
+        participants: { userId: string; role: string; name?: string }[],
+    ) {
         return this.client.send({ cmd: 'create_conversation' }, participants);
     }
 
@@ -24,10 +24,16 @@ export class UserChatboxService {
     }
 
     toggleAi(conversationId: string, isAiEnabled: boolean) {
-        return this.client.send({ cmd: 'toggle_ai' }, { conversationId, isAiEnabled });
+        return this.client.send(
+            { cmd: 'toggle_ai' },
+            { conversationId, isAiEnabled },
+        );
     }
 
     toggleHumanTakeover(conversationId: string, isHumanTakeover: boolean) {
-        return this.client.send({ cmd: 'toggle_human_takeover' }, { conversationId, isHumanTakeover });
+        return this.client.send(
+            { cmd: 'toggle_human_takeover' },
+            { conversationId, isHumanTakeover },
+        );
     }
 }

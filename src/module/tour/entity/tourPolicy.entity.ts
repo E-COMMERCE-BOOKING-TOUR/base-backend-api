@@ -33,15 +33,19 @@ export class TourPolicyEntity extends BaseEntityTimestamp {
     })
     tour_policy_rules: TourPolicyRuleEntity[];
 
+    // Alias for frontend compatibility
+    get rules(): TourPolicyRuleEntity[] {
+        return this.tour_policy_rules;
+    }
+
     @Column()
     @ApiProperty({ description: 'ID nhà cung cấp' })
     supplier_id: number;
 
-    @ManyToOne(
-        () => SupplierEntity,
-        (supplier) => supplier.tour_policies,
-        { nullable: false, onDelete: 'CASCADE' },
-    )
+    @ManyToOne(() => SupplierEntity, (supplier) => supplier.tour_policies, {
+        nullable: false,
+        onDelete: 'CASCADE',
+    })
     @JoinColumn({ name: 'supplier_id', referencedColumnName: 'id' })
     @ApiProperty({
         description: 'Nhà cung cấp sở hữu chính sách',

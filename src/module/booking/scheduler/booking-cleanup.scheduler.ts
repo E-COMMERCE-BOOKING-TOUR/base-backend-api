@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, IsNull } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { BookingEntity } from '../entity/booking.entity';
 import { BookingStatus, PaymentStatus } from '../dto/booking.dto';
 import { UserPaymentService } from '@/module/user/service/user-payment.service';
 import { TourInventoryHoldEntity } from '@/module/tour/entity/tourInventoryHold.entity';
 import { NotificationService } from '@/module/user/service/notification.service';
-import { TargetGroup, NotificationType } from '@/module/user/dtos/notification.dto';
+import {
+    TargetGroup,
+    NotificationType,
+} from '@/module/user/dtos/notification.dto';
 
 @Injectable()
 export class BookingCleanupScheduler {
@@ -20,7 +23,7 @@ export class BookingCleanupScheduler {
         private readonly inventoryHoldRepository: Repository<TourInventoryHoldEntity>,
         private readonly userPaymentService: UserPaymentService,
         private readonly notificationService: NotificationService,
-    ) { }
+    ) {}
 
     @Cron(CronExpression.EVERY_10_MINUTES) // Check every 10 minutes
     async handleExpiredBookings() {
@@ -57,11 +60,17 @@ export class BookingCleanupScheduler {
                     is_supplier_notified: true,
                     supplier_notified_at: LessThan(sixHoursAgo),
                 },
-                relations: ['payment_information', 'currency', 'tour_inventory_hold'],
+                relations: [
+                    'payment_information',
+                    'currency',
+                    'tour_inventory_hold',
+                ],
             });
 
             if (bookingsToCancel.length > 0) {
-                this.logger.log(`Found ${bookingsToCancel.length} expired bookings to auto-cancel (Stage 2).`);
+                this.logger.log(
+                    `Found ${bookingsToCancel.length} expired bookings to auto-cancel (Stage 2).`,
+                );
                 for (const booking of bookingsToCancel) {
                     await this.processRefundAndCancel(booking);
                 }
@@ -73,7 +82,9 @@ export class BookingCleanupScheduler {
 
     private async notifySupplier(booking: BookingEntity) {
         try {
-            this.logger.log(`Notifying supplier for booking ${booking.id} (Stage 1 timeout)`);
+            this.logger.log(
+                `Notifying supplier for booking ${booking.id} (Stage 1 timeout)`,
+            );
 
             // Get supplier user IDs
             const userIds: number[] = [];
@@ -104,19 +115,24 @@ export class BookingCleanupScheduler {
 
             // TODO: Send Email
             // this.mailService.sendSupplierWarningEmail(booking);
-
         } catch (error) {
-            this.logger.error(`Failed to notify supplier for booking ${booking.id}`, error);
+            this.logger.error(
+                `Failed to notify supplier for booking ${booking.id}`,
+                error,
+            );
         }
     }
 
     private async processRefundAndCancel(booking: BookingEntity) {
         try {
-            this.logger.log(`Processing Stage 2 timeout for booking ${booking.id}`);
+            this.logger.log(
+                `Processing Stage 2 timeout for booking ${booking.id}`,
+            );
 
             // 1. Process Refund
             const refundAmount = Number(booking.total_amount);
-            const stripeChargeId = booking.payment_information?.stripe_charge_id;
+            const stripeChargeId =
+                booking.payment_information?.stripe_charge_id;
 
             if (refundAmount > 0 && stripeChargeId) {
                 try {
@@ -128,26 +144,34 @@ export class BookingCleanupScheduler {
                     booking.payment_status = PaymentStatus.refunded;
                     booking.refund_amount = refundAmount;
                 } catch (paymentError) {
-                    this.logger.error(`Failed to refund booking ${booking.id}`, paymentError);
+                    this.logger.error(
+                        `Failed to refund booking ${booking.id}`,
+                        paymentError,
+                    );
                 }
             }
 
             // 2. Update Status
             booking.status = BookingStatus.cancelled;
-            booking.cancel_reason = 'System Auto-Cancel: Supplier confirmation timeout (12 hours total)';
+            booking.cancel_reason =
+                'System Auto-Cancel: Supplier confirmation timeout (12 hours total)';
 
             // 3. Release Inventory
             if (booking.tour_inventory_hold) {
                 booking.tour_inventory_hold.expires_at = new Date(0);
-                await this.inventoryHoldRepository.save(booking.tour_inventory_hold);
+                await this.inventoryHoldRepository.save(
+                    booking.tour_inventory_hold,
+                );
             }
 
             // 4. Save
             await this.bookingRepository.save(booking);
             this.logger.log(`Auto-cancelled booking ${booking.id}`);
-
         } catch (error) {
-            this.logger.error(`Failed to process auto-cancel for booking ${booking.id}`, error);
+            this.logger.error(
+                `Failed to process auto-cancel for booking ${booking.id}`,
+                error,
+            );
         }
     }
 }

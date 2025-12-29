@@ -40,4 +40,4 @@ import { AdminArticleController } from './controller/admin-article.controller';
     providers: [ArticleServiceProxy, AdminArticleServiceProxy],
     exports: [ArticleServiceProxy, AdminArticleServiceProxy],
 })
-export class ArticleModule { }
+export class ArticleModule {}

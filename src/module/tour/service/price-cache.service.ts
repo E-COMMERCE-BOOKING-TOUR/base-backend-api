@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { TourEntity } from '../entity/tour.entity';
-import { TourStatus } from '../dto/tour.dto';
 import { PRICE_CACHE_QUEUE } from '../queue/price-cache.processor';
 
 @Injectable()
@@ -16,7 +15,7 @@ export class PriceCacheService {
         @InjectRepository(TourEntity)
         private readonly tourRepository: Repository<TourEntity>,
         @InjectQueue(PRICE_CACHE_QUEUE) private priceCacheQueue: Queue,
-    ) { }
+    ) {}
 
     /**
      * Calculate and cache min/max prices for a single tour (Async via Queue)
@@ -41,7 +40,9 @@ export class PriceCacheService {
     async updateTourPriceCacheByIds(tourIds: number[]): Promise<void> {
         if (tourIds.length === 0) return;
         await this.priceCacheQueue.add('update-batch', { tourIds });
-        this.logger.log(`Queued price cache update for ${tourIds.length} tours`);
+        this.logger.log(
+            `Queued price cache update for ${tourIds.length} tours`,
+        );
     }
 
     /**

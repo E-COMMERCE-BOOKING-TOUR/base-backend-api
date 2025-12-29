@@ -1,11 +1,4 @@
-import {
-    Body,
-    Controller,
-    Get,
-    Param,
-    Post,
-    UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiBody,
@@ -28,7 +21,9 @@ import { UnauthorizedResponseDto } from '@/module/user/dtos';
 @Roles('provider', 'admin') // Allow admin to act as provider too, or strict 'provider'
 @Controller('supplier/booking')
 export class SupplierBookingController {
-    constructor(private readonly supplierBookingService: SupplierBookingService) { }
+    constructor(
+        private readonly supplierBookingService: SupplierBookingService,
+    ) {}
 
     @Get('getAll')
     @ApiResponse({ status: 200, type: [BookingSummaryDTO] })
@@ -47,12 +42,18 @@ export class SupplierBookingController {
     @Post('reject/:id')
     @ApiResponse({ status: 200, type: BookingSummaryDTO })
     @ApiParam({ name: 'id', type: Number })
-    @ApiBody({ schema: { type: 'object', properties: { reason: { type: 'string' } } } })
+    @ApiBody({
+        schema: { type: 'object', properties: { reason: { type: 'string' } } },
+    })
     async rejectBooking(
         @User() user: UserEntity,
         @Param('id') id: number,
         @Body() payload: { reason: string },
     ) {
-        return await this.supplierBookingService.rejectBooking(id, user, payload.reason);
+        return await this.supplierBookingService.rejectBooking(
+            id,
+            user,
+            payload.reason,
+        );
     }
 }

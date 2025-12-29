@@ -18,7 +18,6 @@ import { User } from '@/module/user/decorator/user.decorator';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import { ReviewService } from '../service/review.service';
 import {
-    CreateReviewUserDTO,
     AdminReviewDTO,
     ReviewImageDTO,
     ReviewSummaryDTO,
@@ -38,7 +37,7 @@ import { Roles } from '@/module/user/decorator/roles.decorator';
 @Roles('admin')
 @Controller('admin/review')
 export class AdminReviewController {
-    constructor(private readonly reviewService: ReviewService) { }
+    constructor(private readonly reviewService: ReviewService) {}
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
@@ -51,7 +50,10 @@ export class AdminReviewController {
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'tourId', type: Number, example: 1 })
-    async getReviewsByTour(@Param('tourId') tourId: number, @User() user: UserEntity) {
+    async getReviewsByTour(
+        @Param('tourId') tourId: number,
+        @User() user: UserEntity,
+    ) {
         return await this.reviewService.getReviewsByTour(tourId, user.id);
     }
 
@@ -59,7 +61,10 @@ export class AdminReviewController {
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'userId', type: Number, example: 1 })
-    async getReviewsByUser(@Param('userId') userId: number, @User() user: UserEntity) {
+    async getReviewsByUser(
+        @Param('userId') userId: number,
+        @User() user: UserEntity,
+    ) {
         return await this.reviewService.getReviewsByUser(userId, user.id);
     }
 
@@ -84,7 +89,10 @@ export class AdminReviewController {
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
     @ApiBody({ type: AdminReviewDTO })
-    async update(@Param('id') id: number, @Body() payload: Partial<AdminReviewDTO>) {
+    async update(
+        @Param('id') id: number,
+        @Body() payload: Partial<AdminReviewDTO>,
+    ) {
         return await this.reviewService.update(id, payload);
     }
 

@@ -1,5 +1,19 @@
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Query, Post, Body, Param, UseGuards } from '@nestjs/common';
+import {
+    ApiBearerAuth,
+    ApiOperation,
+    ApiQuery,
+    ApiResponse,
+    ApiTags,
+} from '@nestjs/swagger';
+import {
+    Controller,
+    Get,
+    Query,
+    Post,
+    Body,
+    Param,
+    UseGuards,
+} from '@nestjs/common';
 import { ArticleDetailDTO, ArticleDTO } from '../dto/article.dto';
 import { ArticleServiceProxy } from '../service/article.service-proxy';
 import { User } from 'src/module/user/decorator/user.decorator';
@@ -11,7 +25,7 @@ import { AuthGuard } from '@nestjs/passport';
 @ApiTags('User Article')
 @Controller('user/article')
 export class UserArticleController {
-    constructor(private readonly articleServiceProxy: ArticleServiceProxy) { }
+    constructor(private readonly articleServiceProxy: ArticleServiceProxy) {}
 
     @Get('popular')
     @ApiOperation({ summary: 'Get popular articles' })
@@ -21,10 +35,17 @@ export class UserArticleController {
         status: 200,
         description: 'List of popular articles',
     })
-    async getPopularArticles(@Query('limit') limit?: string, @Query('page') page?: string) {
+    async getPopularArticles(
+        @Query('limit') limit?: string,
+        @Query('page') page?: string,
+    ) {
         const limitNum = limit ? parseInt(limit, 10) : 10;
         const pageNum = page ? parseInt(page, 10) : 1;
-        return await this.articleServiceProxy.getPopularArticles(limitNum, pageNum);
+
+        return await this.articleServiceProxy.getPopularArticles(
+            limitNum,
+            pageNum,
+        );
     }
 
     @Get('tag/:tag')
@@ -35,10 +56,18 @@ export class UserArticleController {
         status: 200,
         description: 'List of articles by tag',
     })
-    async getArticlesByTag(@Param('tag') tag: string, @Query('limit') limit?: string, @Query('page') page?: string) {
+    async getArticlesByTag(
+        @Param('tag') tag: string,
+        @Query('limit') limit?: string,
+        @Query('page') page?: string,
+    ) {
         const limitNum = limit ? parseInt(limit, 10) : 10;
         const pageNum = page ? parseInt(page, 10) : 1;
-        return await this.articleServiceProxy.getArticlesByTag(tag, limitNum, pageNum);
+        return await this.articleServiceProxy.getArticlesByTag(
+            tag,
+            limitNum,
+            pageNum,
+        );
     }
 
     @Get('mine')
@@ -83,10 +112,19 @@ export class UserArticleController {
     @ApiOperation({ summary: 'Get articles from followed users' })
     @ApiQuery({ name: 'limit', required: false, type: Number })
     @ApiQuery({ name: 'page', required: false, type: Number })
-    async getFollowingArticles(@User() user: UserEntity, @Query('limit') limit?: string, @Query('page') page?: string) {
+    async getFollowingArticles(
+        @User() user: UserEntity,
+        @Query('limit') limit?: string,
+        @Query('page') page?: string,
+    ) {
         const limitNum = limit ? parseInt(limit, 10) : 10;
         const pageNum = page ? parseInt(page, 10) : 1;
-        return await this.articleServiceProxy.getFollowingArticles(user.id, limitNum, pageNum);
+
+        return await this.articleServiceProxy.getFollowingArticles(
+            user.id,
+            limitNum,
+            pageNum,
+        );
     }
 
     @Post('create')
@@ -98,6 +136,7 @@ export class UserArticleController {
         @User() user: UserEntity,
         @Body() dto: ArticleDetailDTO,
     ) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.articleServiceProxy.createArticle(user.uuid, dto);
     }
 
@@ -162,7 +201,10 @@ export class UserArticleController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Bookmark article' })
-    @ApiResponse({ status: 200, description: 'Article bookmarked successfully' })
+    @ApiResponse({
+        status: 200,
+        description: 'Article bookmarked successfully',
+    })
     async bookmarkArticle(@User() user: UserEntity, @Param('id') id: string) {
         await this.articleServiceProxy.bookmarkArticle(id, user.uuid);
         return { success: true, message: 'Article bookmarked successfully' };
@@ -172,7 +214,10 @@ export class UserArticleController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Unbookmark article' })
-    @ApiResponse({ status: 200, description: 'Article unbookmarked successfully' })
+    @ApiResponse({
+        status: 200,
+        description: 'Article unbookmarked successfully',
+    })
     async unbookmarkArticle(@User() user: UserEntity, @Param('id') id: string) {
         await this.articleServiceProxy.unbookmarkArticle(id, user.uuid);
         return { success: true, message: 'Article unbookmarked successfully' };
@@ -184,9 +229,18 @@ export class UserArticleController {
     @ApiOperation({ summary: 'Get bookmarked articles' })
     @ApiQuery({ name: 'limit', required: false, type: Number })
     @ApiQuery({ name: 'page', required: false, type: Number })
-    async getBookmarkedArticles(@User() user: UserEntity, @Query('limit') limit?: string, @Query('page') page?: string) {
+    async getBookmarkedArticles(
+        @User() user: UserEntity,
+        @Query('limit') limit?: string,
+        @Query('page') page?: string,
+    ) {
         const limitNum = limit ? parseInt(limit, 10) : 10;
         const pageNum = page ? parseInt(page, 10) : 1;
-        return await this.articleServiceProxy.getBookmarkedArticles(user.uuid, limitNum, pageNum);
+
+        return await this.articleServiceProxy.getBookmarkedArticles(
+            user.uuid,
+            limitNum,
+            pageNum,
+        );
     }
 }

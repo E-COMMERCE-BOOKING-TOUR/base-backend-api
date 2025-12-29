@@ -7,7 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BookingEntity } from '../entity/booking.entity';
-import { BookingStatus, PaymentStatus, BookingSummaryDTO, BookingItemDetailDTO } from '../dto/booking.dto';
+import {
+    BookingStatus,
+    PaymentStatus,
+    BookingSummaryDTO,
+    BookingItemDetailDTO,
+} from '../dto/booking.dto';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import { UserPaymentService } from '@/module/user/service/user-payment.service';
 import { BookingService } from './booking.service';
@@ -19,7 +24,7 @@ export class SupplierBookingService {
         private readonly bookingRepository: Repository<BookingEntity>,
         private readonly userPaymentService: UserPaymentService,
         private readonly bookingService: BookingService, // Use existing logic where possible
-    ) { }
+    ) {}
 
     private toSummaryDTO(b: BookingEntity): BookingSummaryDTO {
         // Reuse logic from BookingService or duplicate helper
@@ -38,9 +43,10 @@ export class SupplierBookingService {
             booking_payment_id: b.booking_payment?.id,
             booking_payment: b.booking_payment
                 ? {
-                    id: b.booking_payment.id,
-                    payment_method_name: b.booking_payment.payment_method_name,
-                }
+                      id: b.booking_payment.id,
+                      payment_method_name:
+                          b.booking_payment.payment_method_name,
+                  }
                 : undefined,
             created_at: b.created_at,
             updated_at: b.updated_at,
@@ -56,7 +62,7 @@ export class SupplierBookingService {
                         tour_session_id: item.tour_session?.id,
                         tour_title: item.variant?.tour?.title,
                         session_date: item.tour_session?.session_date,
-                    } as any),
+                    } as Partial<BookingItemDetailDTO>),
             ),
         });
     }
@@ -92,7 +98,10 @@ export class SupplierBookingService {
         return bookings.map((b) => this.toSummaryDTO(b));
     }
 
-    async confirmBooking(id: number, user: UserEntity): Promise<BookingSummaryDTO> {
+    async confirmBooking(
+        id: number,
+        user: UserEntity,
+    ): Promise<BookingSummaryDTO> {
         const booking = await this.bookingRepository.findOne({
             where: { id },
             relations: [
@@ -107,10 +116,11 @@ export class SupplierBookingService {
         if (!booking) throw new NotFoundException('Booking not found');
 
         // Verify ownership
-        const isOwner = booking.booking_items.some(
-            (item) => item.variant?.tour?.supplier?.users?.some(u => u.id === user.id),
+        const isOwner = booking.booking_items.some((item) =>
+            item.variant?.tour?.supplier?.users?.some((u) => u.id === user.id),
         );
-        if (!isOwner) throw new ForbiddenException('You do not own this booking');
+        if (!isOwner)
+            throw new ForbiddenException('You do not own this booking');
 
         if (booking.status !== BookingStatus.waiting_supplier) {
             throw new BadRequestException(
@@ -150,10 +160,11 @@ export class SupplierBookingService {
         if (!booking) throw new NotFoundException('Booking not found');
 
         // Verify ownership
-        const isOwner = booking.booking_items.some(
-            (item) => item.variant?.tour?.supplier?.users?.some(u => u.id === user.id),
+        const isOwner = booking.booking_items.some((item) =>
+            item.variant?.tour?.supplier?.users?.some((u) => u.id === user.id),
         );
-        if (!isOwner) throw new ForbiddenException('You do not own this booking');
+        if (!isOwner)
+            throw new ForbiddenException('You do not own this booking');
 
         if (booking.status !== BookingStatus.waiting_supplier) {
             throw new BadRequestException(
@@ -182,10 +193,12 @@ export class SupplierBookingService {
         if (booking.tour_inventory_hold) {
             // Assuming we just expire it or clear it
             // Using logic similar to service
-            await this.bookingRepository.manager.getRepository('tour_inventory_hold').update(
-                { id: booking.tour_inventory_hold.id },
-                { expires_at: new Date(0) }
-            );
+            await this.bookingRepository.manager
+                .getRepository('tour_inventory_hold')
+                .update(
+                    { id: booking.tour_inventory_hold.id },
+                    { expires_at: new Date(0) },
+                );
         }
 
         await this.bookingRepository.save(booking);

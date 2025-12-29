@@ -34,7 +34,7 @@ import { Roles } from '@/module/user/decorator/roles.decorator';
 @Roles('admin')
 @Controller('admin/booking')
 export class AdminBookingController {
-    constructor(private readonly bookingService: BookingService) { }
+    constructor(private readonly bookingService: BookingService) {}
 
     @Get('getAll')
     @ApiResponse({ status: 201, type: [BookingSummaryDTO] })
@@ -203,6 +203,7 @@ export class AdminBookingController {
         @Body() payload: { amount?: number },
     ) {
         // Admin refund logic (to be implemented in BookingService)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await this.bookingService.processAdminRefund(id, payload.amount);
     }
 }

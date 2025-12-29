@@ -23,7 +23,10 @@ export class CreateDivisionDTO {
     @MaxLength(100)
     code?: string;
 
-    @ApiPropertyOptional({ description: 'URL hình ảnh đại diện', example: 'https://res.cloudinary.com/...' })
+    @ApiPropertyOptional({
+        description: 'URL hình ảnh đại diện',
+        example: 'https://res.cloudinary.com/...',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(500)
@@ -63,7 +66,10 @@ export class UpdateDivisionDTO {
     @MaxLength(100)
     code?: string;
 
-    @ApiPropertyOptional({ description: 'URL hình ảnh đại diện', example: 'https://res.cloudinary.com/...' })
+    @ApiPropertyOptional({
+        description: 'URL hình ảnh đại diện',
+        example: 'https://res.cloudinary.com/...',
+    })
     @IsOptional()
     @IsString()
     @MaxLength(500)

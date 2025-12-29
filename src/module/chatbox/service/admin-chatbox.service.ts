@@ -3,12 +3,13 @@ import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class AdminChatboxService {
-    constructor(
-        @Inject('CHATBOX_SERVICE') private client: ClientProxy,
-    ) { }
+    constructor(@Inject('CHATBOX_SERVICE') private client: ClientProxy) {}
 
     getAllConversations(page: number, limit: number) {
-        return this.client.send({ cmd: 'get_all_conversations' }, { page, limit });
+        return this.client.send(
+            { cmd: 'get_all_conversations' },
+            { page, limit },
+        );
     }
 
     getConversationDetails(conversationId: string) {
@@ -28,11 +29,17 @@ export class AdminChatboxService {
     }
 
     updateCategory(conversationId: string, category: string) {
-        return this.client.send({ cmd: 'update_category' }, { conversationId, category });
+        return this.client.send(
+            { cmd: 'update_category' },
+            { conversationId, category },
+        );
     }
 
     toggleHide(conversationId: string, isHidden: boolean) {
-        return this.client.send({ cmd: 'toggle_hide' }, { conversationId, isHidden });
+        return this.client.send(
+            { cmd: 'toggle_hide' },
+            { conversationId, isHidden },
+        );
     }
 
     markAsRead(conversationId: string) {
@@ -40,10 +47,16 @@ export class AdminChatboxService {
     }
 
     toggleAi(conversationId: string, isAiEnabled: boolean) {
-        return this.client.send({ cmd: 'toggle_ai' }, { conversationId, isAiEnabled });
+        return this.client.send(
+            { cmd: 'toggle_ai' },
+            { conversationId, isAiEnabled },
+        );
     }
 
     toggleHumanTakeover(conversationId: string, isHumanTakeover: boolean) {
-        return this.client.send({ cmd: 'toggle_human_takeover' }, { conversationId, isHumanTakeover });
+        return this.client.send(
+            { cmd: 'toggle_human_takeover' },
+            { conversationId, isHumanTakeover },
+        );
     }
 }

@@ -56,4 +56,4 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
         AdminStaticPageService,
     ],
 })
-export class CommonModule { }
+export class CommonModule {}

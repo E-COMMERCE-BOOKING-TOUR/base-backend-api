@@ -2,14 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
-import { CreateCurrencyDTO, UpdateCurrencyDTO } from '../dto/admin-currency.dto';
+import {
+    CreateCurrencyDTO,
+    UpdateCurrencyDTO,
+} from '../dto/admin-currency.dto';
 
 @Injectable()
 export class AdminCurrencyService {
     constructor(
         @InjectRepository(CurrencyEntity)
         private readonly currencyRepository: Repository<CurrencyEntity>,
-    ) { }
+    ) {}
 
     async getAll(): Promise<CurrencyEntity[]> {
         return this.currencyRepository.find({

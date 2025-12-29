@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DivisionEntity } from '@/common/entity/division.entity';
 import { CountryEntity } from '@/common/entity/country.entity';
-import { CreateDivisionDTO, UpdateDivisionDTO } from '../dto/admin-division.dto';
+import {
+    CreateDivisionDTO,
+    UpdateDivisionDTO,
+} from '../dto/admin-division.dto';
 
 @Injectable()
 export class AdminDivisionService {
@@ -12,7 +15,7 @@ export class AdminDivisionService {
         private readonly divisionRepository: Repository<DivisionEntity>,
         @InjectRepository(CountryEntity)
         private readonly countryRepository: Repository<CountryEntity>,
-    ) { }
+    ) {}
 
     async getAll(): Promise<DivisionEntity[]> {
         return this.divisionRepository.find({

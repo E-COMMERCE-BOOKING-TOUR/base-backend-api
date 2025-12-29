@@ -40,7 +40,8 @@ export class UserTourService {
         private readonly divisionRepository: Repository<DivisionEntity>,
         private readonly pricingService: PricingService,
         private readonly priceCacheService: PriceCacheService,
-        @Inject('RECOMMEND_SERVICE') private readonly recommendClient: ClientProxy,
+        @Inject('RECOMMEND_SERVICE')
+        private readonly recommendClient: ClientProxy,
     ) { }
 
     private createBaseTourQuery(): SelectQueryBuilder<TourEntity> {
@@ -281,7 +282,8 @@ export class UserTourService {
         }
 
         if (query.startDate || query.endDate || query.travelers) {
-            const hasStartDate = query.startDate && query.startDate.trim() !== '';
+            const hasStartDate =
+                query.startDate && query.startDate.trim() !== '';
             const hasEndDate = query.endDate && query.endDate.trim() !== '';
 
             const sessionFilter = `
@@ -927,11 +929,20 @@ export class UserTourService {
         });
     }
 
-    async getRecommendations(userId?: string, guestId?: string): Promise<UserTourPopularDTO[]> {
+    async getRecommendations(
+        userId?: string,
+        guestId?: string,
+    ): Promise<UserTourPopularDTO[]> {
         try {
             // 1. Get user behavior (interacted tour IDs)
-            const behavior: any = await firstValueFrom(
-                this.recommendClient.send({ cmd: 'get_user_behavior' }, { userId, guestId })
+            interface UserBehavior {
+                interactedTourIds: number[];
+            }
+            const behavior: UserBehavior = await firstValueFrom(
+                this.recommendClient.send(
+                    { cmd: 'get_user_behavior' },
+                    { userId, guestId },
+                ),
             );
 
             if (!behavior || behavior.interactedTourIds.length === 0) {
@@ -942,19 +953,20 @@ export class UserTourService {
             // 2. Fetch vectors for interacted tours
             const interactedTours = await this.tourRepository.find({
                 where: { id: In(behavior.interactedTourIds) },
-                select: ['id', 'vector']
+                select: ['id', 'vector'],
             });
 
             const userVectors = interactedTours
-                .filter(t => t.vector)
-                .map(t => t.vector);
+                .filter((t) => t.vector)
+                .map((t) => t.vector);
 
             if (userVectors.length === 0) {
                 return this.getPopularTours(8);
             }
 
             // 3. Fetch candidate tours (recent 100 tours with vectors)
-            const candidates = await this.tourRepository.createQueryBuilder('tour')
+            const candidates = await this.tourRepository
+                .createQueryBuilder('tour')
                 .where('tour.vector IS NOT NULL')
                 .andWhere('tour.is_visible = :visible', { visible: true })
                 .select(['tour.id', 'tour.vector'])
@@ -963,10 +975,16 @@ export class UserTourService {
 
             // 4. Calculate similarity via microservice
             const recommendations: any[] = await firstValueFrom(
-                this.recommendClient.send({ cmd: 'calculate_recommendations' }, {
-                    userInteractedVectors: userVectors,
-                    candidateTours: candidates.map(c => ({ id: c.id, vector: c.vector }))
-                })
+                this.recommendClient.send(
+                    { cmd: 'calculate_recommendations' },
+                    {
+                        userInteractedVectors: userVectors,
+                        candidateTours: candidates.map((c) => ({
+                            id: c.id,
+                            vector: c.vector,
+                        })),
+                    },
+                ),
             );
 
             if (!recommendations || recommendations.length === 0) {
@@ -974,16 +992,24 @@ export class UserTourService {
             }
 
             // 5. Fetch full tour data for top recommendations
-            const recommendedIds = recommendations.map(r => r.id);
+            interface RecommendedTour {
+                id: number;
+            }
+            const recommendedIds = recommendations.map(
+                (r: RecommendedTour) => r.id,
+            );
             const fullTours = await this.createBaseTourQuery()
                 .andWhere('tour.id IN (:...ids)', { ids: recommendedIds })
                 .getMany();
 
             // Sort by recommendation score
             return fullTours
-                .sort((a, b) => recommendedIds.indexOf(a.id) - recommendedIds.indexOf(b.id))
-                .map(tour => this.mapToPopularDTO(tour));
-
+                .sort(
+                    (a, b) =>
+                        recommendedIds.indexOf(a.id) -
+                        recommendedIds.indexOf(b.id),
+                )
+                .map((tour) => this.mapToPopularDTO(tour));
         } catch (error) {
             console.error('Error getting recommendations:', error);
             return this.getPopularTours(8);

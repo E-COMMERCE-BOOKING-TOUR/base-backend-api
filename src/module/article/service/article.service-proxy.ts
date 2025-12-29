@@ -19,17 +19,28 @@ export interface ArticleResponse {
     count_likes: number;
     count_comments: number;
     user?: { name: string; avatar: string };
+    user_id?: string | number;
+    tour_id?: string | number;
+    tags?: string[];
+    users_like?: string[];
+    users_bookmark?: string[];
+    is_visible?: boolean;
+    updated_at?: string;
+    deleted_at?: string;
+    comments?: ArticleCommentDetailDTO[];
 }
 
 @Injectable()
 export class ArticleServiceProxy {
     constructor(
         @Inject('ARTICLE_SERVICE') private readonly client: ClientProxy,
-        @InjectRepository(TourEntity) private readonly tourRepository: Repository<TourEntity>,
-        @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(TourEntity)
+        private readonly tourRepository: Repository<TourEntity>,
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>,
         @Inject(forwardRef(() => NotificationService))
         private readonly notificationService: NotificationService,
-    ) { }
+    ) {}
 
     async getArticleBySlug(slug: string): Promise<ArticleResponse> {
         return lastValueFrom(this.client.send('getArticleBySlug', slug));
@@ -54,7 +65,12 @@ export class ArticleServiceProxy {
             images: dto.images || [],
             is_visible: true,
         };
-        console.log('Creating article with user_id (UUID):', userUuid, 'Article:', JSON.stringify(article));
+        console.log(
+            'Creating article with user_id (UUID):',
+            userUuid,
+            'Article:',
+            JSON.stringify(article),
+        );
         return lastValueFrom(this.client.send('create_article', article));
     }
 
@@ -86,18 +102,28 @@ export class ArticleServiceProxy {
         content: string,
     ): Promise<void> {
         await lastValueFrom(
-            this.client.send('add_comment', { article_id: articleId, user_id: userId, content }),
+            this.client.send('add_comment', {
+                article_id: articleId,
+                user_id: userId,
+                content,
+            }),
         );
 
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const article = await this.getArticleById(articleId);
-            const user = await this.userRepository.findOne({ where: { id: userId } });
+            const user = await this.userRepository.findOne({
+                where: { id: userId },
+            });
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (article && article.user_id && article.user_id !== userId) {
                 await this.notificationService.create({
                     title: user?.full_name || 'Someone',
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     description: `commented on your article: ${article.title}`,
                     type: NotificationType.comment,
-                    user_ids: [article.user_id],
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    user_ids: [article.user_id as number],
                     is_user: true,
                 });
             }
@@ -107,19 +133,30 @@ export class ArticleServiceProxy {
     }
 
     async likeArticle(id: string, userId: string): Promise<void> {
-        console.log('[likeArticle] Sending to microservice:', { articleId: id, userId });
-        await lastValueFrom(this.client.send('like_article', { articleId: id, userId }));
+        console.log('[likeArticle] Sending to microservice:', {
+            articleId: id,
+            userId,
+        });
+        await lastValueFrom(
+            this.client.send('like_article', { articleId: id, userId }),
+        );
         console.log('[likeArticle] Microservice response received');
 
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const article = await this.getArticleById(id);
-            const user = await this.userRepository.findOne({ where: { uuid: userId } });
+            const user = await this.userRepository.findOne({
+                where: { uuid: userId },
+            });
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (article && article.user_id && article.user_id !== userId) {
                 await this.notificationService.create({
                     title: user?.full_name || 'Someone',
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     description: `liked your article: ${article.title}`,
                     type: NotificationType.like,
-                    user_ids: [article.user_id],
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    user_ids: [article.user_id as number],
                     is_user: true,
                 });
             }
@@ -138,32 +175,44 @@ export class ArticleServiceProxy {
     }
 
     async bookmarkArticle(articleId: string, userId: string): Promise<void> {
-        await lastValueFrom(this.client.send('bookmark_article', { articleId, userId }));
+        await lastValueFrom(
+            this.client.send('bookmark_article', { articleId, userId }),
+        );
     }
 
     async unbookmarkArticle(articleId: string, userId: string): Promise<void> {
-        await lastValueFrom(this.client.send('unbookmark_article', { articleId, userId }));
-    }
-
-    async getBookmarkedArticles(userId: string, limit: number = 10, page: number = 1): Promise<any[]> {
-        const response: any[] = await lastValueFrom(
-            this.client.send('get_bookmarked_articles', { userId, limit, page }),
+        await lastValueFrom(
+            this.client.send('unbookmark_article', { articleId, userId }),
         );
-        return this.mapArticlesWithTourInfo(response);
     }
 
-    async getPopularArticles(limit: number, page: number = 1): Promise<any[]> {
-        const response: any[] = await lastValueFrom(
+    async getPopularArticles(
+        limit: number,
+        page: number = 1,
+    ): Promise<ArticleResponse[]> {
+        const response: ArticleResponse[] = await lastValueFrom(
             this.client.send('get_popular_articles', { limit, page }),
         );
-        console.log('[getPopularArticles proxy] Raw response users_like:', response[0]?.users_like);
+        console.log(
+            '[getPopularArticles proxy] Raw response users_like:',
+            response[0]?.users_like,
+        );
         const mapped = await this.mapArticlesWithTourInfo(response);
-        console.log('[getPopularArticles proxy] Mapped response users_like:', mapped[0]?.users_like);
+        console.log(
+            '[getPopularArticles proxy] Mapped response users_like:',
+            mapped[0]?.users_like,
+        );
         return mapped;
     }
 
-    async getArticlesByTag(tag: string, limit: number, page: number = 1): Promise<ArticleResponse[]> {
-        return lastValueFrom(this.client.send('get_articles_by_tag', { tag, limit, page }));
+    async getArticlesByTag(
+        tag: string,
+        limit: number,
+        page: number = 1,
+    ): Promise<ArticleResponse[]> {
+        return lastValueFrom(
+            this.client.send('get_articles_by_tag', { tag, limit, page }),
+        );
     }
 
     async getArticlesByUser(userId: string): Promise<ArticleResponse[]> {
@@ -171,19 +220,29 @@ export class ArticleServiceProxy {
     }
 
     async getArticlesLikedByUser(userId: string): Promise<ArticleResponse[]> {
-        return lastValueFrom(this.client.send('get_articles_liked_by_user', userId));
+        return lastValueFrom(
+            this.client.send('get_articles_liked_by_user', userId),
+        );
     }
 
-    async getTrendingTags(limit: number): Promise<{ _id: string, count: number }[]> {
+    async getTrendingTags(
+        limit: number,
+    ): Promise<{ _id: string; count: number }[]> {
         return lastValueFrom(this.client.send('get_trending_tags', limit));
     }
 
     async follow(followerId: number, followingId: number) {
-        return lastValueFrom(this.client.send('follow_user', { followerId, followingId }));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return lastValueFrom(
+            this.client.send('follow_user', { followerId, followingId }),
+        );
     }
 
     async unfollow(followerId: number, followingId: number) {
-        return lastValueFrom(this.client.send('unfollow_user', { followerId, followingId }));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return lastValueFrom(
+            this.client.send('unfollow_user', { followerId, followingId }),
+        );
     }
 
     async getFollowedIds(followerId: number): Promise<number[]> {
@@ -194,54 +253,91 @@ export class ArticleServiceProxy {
         return lastValueFrom(this.client.send('get_follower_ids', followingId));
     }
 
-    async getFollowingArticles(userId: number, limit: number, page: number = 1): Promise<any[]> {
+    async getFollowingArticles(
+        userId: number,
+        limit: number,
+        page: number = 1,
+    ): Promise<ArticleResponse[]> {
         const followingIds = await this.getFollowedIds(userId);
         if (followingIds.length === 0) return [];
 
-        const response: any[] = await lastValueFrom(
-            this.client.send('get_following_articles', { userIds: followingIds, limit, page }),
+        const response: ArticleResponse[] = await lastValueFrom(
+            this.client.send('get_following_articles', {
+                userIds: followingIds,
+                limit,
+                page,
+            }),
         );
         return this.mapArticlesWithTourInfo(response);
     }
 
-    private async mapArticlesWithTourInfo(articles: any[]): Promise<any[]> {
-        const tourIds = articles.map(a => a.tour_id).filter(id => !!id).map(id => Number(id));
-        const tours = tourIds.length > 0 ? await this.tourRepository.find({
-            where: { id: In(tourIds) },
-            select: ['id', 'title', 'slug']
-        }) : [];
+    private async mapArticlesWithTourInfo(
+        articles: ArticleResponse[],
+    ): Promise<ArticleResponse[]> {
+        const tourIds = articles
+            .map((a) => a.tour_id)
+            .filter((id): id is string | number => !!id)
+            .map((id) => Number(id));
+        const tours =
+            tourIds.length > 0
+                ? await this.tourRepository.find({
+                      where: { id: In(tourIds) },
+                      select: ['id', 'title', 'slug'],
+                  })
+                : [];
 
-        const tourMap = new Map(tours.map((t: any) => [t.id, t]));
+        const tourMap = new Map(tours.map((t) => [t.id, t]));
 
-        return articles.map((article) => ({
-            id: article?._id,
-            title: article?.title,
-            content: article?.content
-                ? article.content.substring(0, 100) + '...'
-                : '',
-            images: article?.images || [],
-            tags: article?.tags || [],
-            count_views: article?.count_views,
-            count_likes: article?.count_likes,
-            count_comments: article?.count_comments,
-            tour_id: article?.tour_id,
-            tour: tourMap.get(Number(article.tour_id)),
-            user_id: article?.user_id,
-            users_like: article?.users_like || [],
-            users_bookmark: article?.users_bookmark || [],
-            is_visible: article?.is_visible,
-            comments:
-                article?.comments?.map((comment: ArticleCommentDetailDTO) => ({
-                    id: comment.id,
-                    content: comment.content,
-                    parent_id: comment.parent_id,
-                    user_id: comment.user_id,
-                    created_at: comment.created_at,
-                    updated_at: comment.updated_at,
-                })) || [],
-            created_at: article?.created_at,
-            updated_at: article?.updated_at,
-            deleted_at: article?.deleted_at,
-        }));
+        return articles.map(
+            (article): ArticleResponse =>
+                ({
+                    _id: article?._id,
+                    title: article?.title,
+                    content: article?.content
+                        ? article.content.substring(0, 100) + '...'
+                        : '',
+                    images: article?.images || [],
+                    tags: article?.tags || [],
+                    count_views: article?.count_views,
+                    count_likes: article?.count_likes,
+                    count_comments: article?.count_comments,
+                    tour_id: article?.tour_id,
+
+                    tour: tourMap.get(Number(article.tour_id)) as unknown,
+                    user_id: article?.user_id,
+                    users_like: article?.users_like || [],
+                    users_bookmark: article?.users_bookmark || [],
+                    is_visible: article?.is_visible,
+                    comments:
+                        article?.comments?.map(
+                            (comment: ArticleCommentDetailDTO) => ({
+                                id: comment.id,
+                                content: comment.content,
+                                parent_id: comment.parent_id,
+                                user_id: comment.user_id,
+                                created_at: comment.created_at,
+                                updated_at: comment.updated_at,
+                            }),
+                        ) || [],
+                    created_at: article?.created_at,
+                    updated_at: article?.updated_at,
+                    deleted_at: article?.deleted_at,
+                }) as ArticleResponse,
+        );
+    }
+
+    async getBookmarkedArticles(
+        userId: string,
+        limit: number = 10,
+        page: number = 1,
+    ): Promise<ArticleResponse[]> {
+        const response: ArticleResponse[] = await lastValueFrom(
+            this.client.send('get_bookmarked_articles', {
+                userId,
+                limit,
+                page,
+            }),
+        );
+        return this.mapArticlesWithTourInfo(response);
     }
 }
