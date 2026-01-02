@@ -12,6 +12,10 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminCurrencyService } from '../service/admin-currency.service';
+import { RolesGuard } from '@/module/user/guard/roles.guard';
+import { PermissionsGuard } from '@/module/user/guard/permissions.guard';
+import { Permissions } from '@/module/user/decorator/permissions.decorator';
+import { Roles } from '@/module/user/decorator/roles.decorator';
 import {
     CreateCurrencyDTO,
     UpdateCurrencyDTO,
@@ -19,30 +23,34 @@ import {
 
 @ApiTags('Admin - Currency')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/currency')
 export class AdminCurrencyController {
-    constructor(private readonly adminCurrencyService: AdminCurrencyService) {}
+    constructor(private readonly adminCurrencyService: AdminCurrencyService) { }
 
     @Get('getAll')
+    @Permissions('currency:read')
     @ApiOperation({ summary: 'Lấy danh sách tất cả currency' })
     async getAll() {
         return this.adminCurrencyService.getAll();
     }
 
     @Get('getById/:id')
+    @Permissions('currency:read')
     @ApiOperation({ summary: 'Lấy chi tiết currency' })
     async getById(@Param('id', ParseIntPipe) id: number) {
         return this.adminCurrencyService.getById(id);
     }
 
     @Post('create')
+    @Permissions('currency:create')
     @ApiOperation({ summary: 'Tạo currency mới' })
     async create(@Body() dto: CreateCurrencyDTO) {
         return this.adminCurrencyService.create(dto);
     }
 
     @Put('update/:id')
+    @Permissions('currency:update')
     @ApiOperation({ summary: 'Cập nhật currency' })
     async update(
         @Param('id', ParseIntPipe) id: number,
@@ -52,6 +60,7 @@ export class AdminCurrencyController {
     }
 
     @Delete('remove/:id')
+    @Permissions('currency:delete')
     @ApiOperation({ summary: 'Xóa currency' })
     async remove(@Param('id', ParseIntPipe) id: number) {
         await this.adminCurrencyService.remove(id);

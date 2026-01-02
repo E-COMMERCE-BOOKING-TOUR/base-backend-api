@@ -59,3 +59,4 @@ src/database/migration/*
 
 !src/database/migration/1766662747552-pageStatic.ts
 !src/database/migration/1766929943000-FollowTable.ts
+!src/database/migration/1766662747554-SyncRolePermissions.ts

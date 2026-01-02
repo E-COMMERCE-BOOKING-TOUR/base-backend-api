@@ -14,17 +14,19 @@ import { NotificationService } from '../service/notification.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../guard/roles.guard';
 import { Roles } from '../decorator/roles.decorator';
+import { Permissions } from '../decorator/permissions.decorator';
+import { PermissionsGuard } from '../guard/permissions.guard';
 import { NotificationDTO } from '../dtos/notification.dto';
 
 @ApiTags('Admin Notification')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('admin')
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/notification')
 export class AdminNotificationController {
-    constructor(private readonly notificationService: NotificationService) {}
+    constructor(private readonly notificationService: NotificationService) { }
 
     @Get()
+    @Permissions('notification:read')
     @ApiResponse({
         status: 200,
         description: 'Lấy danh sách thông báo (Admin)',
@@ -46,24 +48,28 @@ export class AdminNotificationController {
     }
 
     @Get(':id')
+    @Permissions('notification:read')
     @ApiResponse({ status: 200, description: 'Lấy chi tiết thông báo' })
     async findOne(@Param('id') id: string) {
         return await this.notificationService.findOne(+id);
     }
 
     @Post()
+    @Permissions('notification:create')
     @ApiResponse({ status: 201, description: 'Tạo thông báo mới' })
     async create(@Body() dto: NotificationDTO) {
         return await this.notificationService.create(dto);
     }
 
     @Put(':id')
+    @Permissions('notification:update')
     @ApiResponse({ status: 200, description: 'Cập nhật thông báo' })
     async update(@Param('id') id: string, @Body() dto: NotificationDTO) {
         return await this.notificationService.update(+id, dto);
     }
 
     @Delete(':id')
+    @Permissions('notification:delete')
     @ApiResponse({ status: 200, description: 'Xóa thông báo' })
     async remove(@Param('id') id: string) {
         return await this.notificationService.remove(+id);

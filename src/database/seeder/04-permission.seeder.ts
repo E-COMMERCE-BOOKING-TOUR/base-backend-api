@@ -104,6 +104,39 @@ export default class PermissionSeeder implements Seeder {
                 permission_name: 'system:config',
                 description: 'Cấu hình hệ thống',
             },
+
+            // Supplier management
+            { permission_name: 'supplier:read', description: 'Xem nhà cung cấp' },
+            { permission_name: 'supplier:create', description: 'Tạo nhà cung cấp' },
+            { permission_name: 'supplier:update', description: 'Cập nhật nhà cung cấp' },
+            { permission_name: 'supplier:delete', description: 'Xóa nhà cung cấp' },
+
+            // Role management
+            { permission_name: 'role:read', description: 'Xem chức vụ' },
+            { permission_name: 'role:create', description: 'Tạo chức vụ' },
+            { permission_name: 'role:update', description: 'Cập nhật chức vụ' },
+            { permission_name: 'role:delete', description: 'Xóa chức vụ' },
+
+            // Permission management
+            { permission_name: 'permission:read', description: 'Xem danh sách quyền' },
+
+            // Notification management
+            { permission_name: 'notification:read', description: 'Xem thông báo' },
+            { permission_name: 'notification:create', description: 'Tạo thông báo' },
+            { permission_name: 'notification:update', description: 'Cập nhật thông báo' },
+            { permission_name: 'notification:delete', description: 'Xóa thông báo' },
+
+            // Division management
+            { permission_name: 'division:read', description: 'Xem đơn vị hành chính' },
+            { permission_name: 'division:create', description: 'Tạo đơn vị hành chính' },
+            { permission_name: 'division:update', description: 'Cập nhật đơn vị hành chính' },
+            { permission_name: 'division:delete', description: 'Xóa đơn vị hành chính' },
+
+            // Currency management
+            { permission_name: 'currency:read', description: 'Xem tiền tệ' },
+            { permission_name: 'currency:create', description: 'Tạo tiền tệ' },
+            { permission_name: 'currency:update', description: 'Cập nhật tiền tệ' },
+            { permission_name: 'currency:delete', description: 'Xóa tiền tệ' },
         ];
 
         for (const permission of permissions) {

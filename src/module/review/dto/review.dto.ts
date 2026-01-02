@@ -13,6 +13,7 @@ import {
     ValidateNested,
     IsNumber,
     IsDate,
+    IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -232,4 +233,28 @@ export class ReviewStatsDTO {
     constructor(partial: Partial<ReviewStatsDTO>) {
         Object.assign(this, partial);
     }
+}
+
+export class AdminReviewQueryDTO {
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    keyword?: string;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @ApiProperty({ required: false })
+    tour_id?: number;
+
+    @IsOptional()
+    @IsEnum(ReviewStatus)
+    @ApiProperty({ required: false, enum: ReviewStatus })
+    status?: ReviewStatus;
+
+    @IsOptional()
+    @IsString()
+    @IsIn(['ASC', 'DESC'])
+    @ApiProperty({ required: false, enum: ['ASC', 'DESC'], default: 'DESC' })
+    sortOrder?: 'ASC' | 'DESC';
 }

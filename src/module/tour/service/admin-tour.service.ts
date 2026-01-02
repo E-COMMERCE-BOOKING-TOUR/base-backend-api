@@ -12,6 +12,7 @@ import { DivisionEntity } from '@/common/entity/division.entity';
 import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { TourCategoryEntity } from '../entity/tourCategory.entity';
 import { TourPolicyEntity } from '../entity/tourPolicy.entity';
+import { UserEntity } from '@/module/user/entity/user.entity';
 import { TourPolicyRuleEntity } from '../entity/tourPolicyRule.entity';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -58,10 +59,11 @@ export class AdminTourService {
         private readonly dataSource: DataSource,
         @Inject('RECOMMEND_SERVICE')
         private readonly recommendClient: ClientProxy,
-    ) {}
+    ) { }
 
     async getAllTours(
         query: AdminTourQueryDTO,
+        user?: UserEntity,
     ): Promise<PaginatedTourResponse> {
         const {
             keyword,
@@ -94,6 +96,12 @@ export class AdminTourService {
 
         if (status) {
             queryBuilder.andWhere('tour.status = :status', { status });
+        }
+
+        if (user?.supplier) {
+            queryBuilder.andWhere('tour.supplier_id = :supplierId', {
+                supplierId: user.supplier.id,
+            });
         }
 
         const [data, total] = await queryBuilder.getManyAndCount();
@@ -152,9 +160,14 @@ export class AdminTourService {
             .substring(2, 2 + length);
     }
 
-    async getTourById(id: number): Promise<TourEntity> {
+    async getTourById(id: number, user?: UserEntity): Promise<TourEntity> {
+        const where: any = { id };
+        if (user?.supplier) {
+            where.supplier = { id: user.supplier.id };
+        }
+
         const tour = await this.tourRepository.findOne({
-            where: { id },
+            where: where,
             relations: [
                 'country',
                 'division',
@@ -174,9 +187,14 @@ export class AdminTourService {
         return tour;
     }
 
-    async getVisibilityReport(id: number) {
+    async getVisibilityReport(id: number, user?: UserEntity) {
+        const where: any = { id };
+        if (user?.supplier) {
+            where.supplier = { id: user.supplier.id };
+        }
+
         const tour = await this.tourRepository.findOne({
-            where: { id },
+            where: where,
             relations: [
                 'images',
                 'variants',
@@ -240,8 +258,8 @@ export class AdminTourService {
         };
     }
 
-    async createTour(dto: TourDTO): Promise<TourEntity> {
-        const {
+    async createTour(dto: TourDTO, user?: UserEntity): Promise<TourEntity> {
+        let {
             tour_category_ids,
             images,
             variants,
@@ -252,11 +270,15 @@ export class AdminTourService {
             ...rest
         } = dto;
 
+        if (user?.supplier) {
+            supplier_id = user.supplier.id;
+        }
+
         return await this.dataSource.transaction(async (manager) => {
             const categories = tour_category_ids?.length
                 ? await manager.find(TourCategoryEntity, {
-                      where: { id: In(tour_category_ids) },
-                  })
+                    where: { id: In(tour_category_ids) },
+                })
                 : [];
 
             const slug =
@@ -363,10 +385,19 @@ export class AdminTourService {
         });
     }
 
-    async updateTour(id: number, dto: Partial<TourDTO>): Promise<TourEntity> {
+    async updateTour(
+        id: number,
+        dto: Partial<TourDTO>,
+        user?: UserEntity,
+    ): Promise<TourEntity> {
         return await this.dataSource.transaction(async (manager) => {
+            const where: any = { id };
+            if (user?.supplier) {
+                where.supplier = { id: user.supplier.id };
+            }
+
             const tour = await manager.findOne(TourEntity, {
-                where: { id },
+                where: where,
                 relations: [
                     'variants',
                     'images',
@@ -518,11 +549,11 @@ export class AdminTourService {
                             const tStr =
                                 t instanceof Date
                                     ? t.toLocaleTimeString('en-GB', {
-                                          hour12: false,
-                                      })
+                                        hour12: false,
+                                    })
                                     : typeof t === 'string'
-                                      ? t
-                                      : '00:00:00';
+                                        ? t
+                                        : '00:00:00';
                             // Normalize to HH:mm:ss if it's HH:mm
                             const normalizedTime =
                                 tStr.length === 5 ? `${tStr}:00` : tStr;
@@ -601,15 +632,19 @@ export class AdminTourService {
         });
     }
 
-    async updateStatus(id: number, status: string): Promise<TourEntity> {
-        const tour = await this.tourRepository.findOne({ where: { id } });
-        if (!tour) throw new NotFoundException(`Tour with ID ${id} not found`);
+    async updateStatus(
+        id: number,
+        status: string,
+        user?: UserEntity,
+    ): Promise<TourEntity> {
+        const tour = await this.getTourById(id, user);
         tour.status = status as TourStatus;
         return this.tourRepository.save(tour);
     }
 
-    async removeTour(id: number): Promise<void> {
-        await this.tourRepository.softDelete(id);
+    async removeTour(id: number, user?: UserEntity): Promise<void> {
+        const tour = await this.getTourById(id, user);
+        await this.tourRepository.softDelete(tour.id);
     }
 
     // --- Variant Management ---
@@ -703,11 +738,19 @@ export class AdminTourService {
 
     // --- Policy Management ---
 
-    async createPolicy(dto: TourPolicyDTO): Promise<TourPolicyEntity> {
+    async createPolicy(
+        dto: TourPolicyDTO,
+        user?: UserEntity,
+    ): Promise<TourPolicyEntity> {
+        let { supplier_id } = dto;
+        if (user?.supplier) {
+            supplier_id = user.supplier.id;
+        }
+
         return await this.dataSource.transaction(async (manager) => {
             const policy = manager.create(TourPolicyEntity, {
                 name: dto.name,
-                supplier: { id: dto.supplier_id },
+                supplier: { id: supplier_id },
             });
             const savedPolicy = await manager.save(policy);
 
@@ -734,10 +777,16 @@ export class AdminTourService {
     async updatePolicy(
         id: number,
         dto: Partial<TourPolicyDTO>,
+        user?: UserEntity,
     ): Promise<TourPolicyEntity> {
         return await this.dataSource.transaction(async (manager) => {
+            const where: any = { id };
+            if (user?.supplier) {
+                where.supplier = { id: user.supplier.id };
+            }
+
             const policy = await manager.findOne(TourPolicyEntity, {
-                where: { id },
+                where: where,
                 relations: ['tour_policy_rules'],
             });
             if (!policy) throw new NotFoundException(`Policy ${id} not found`);
@@ -769,7 +818,16 @@ export class AdminTourService {
         });
     }
 
-    async removePolicy(id: number): Promise<void> {
+    async removePolicy(id: number, user?: UserEntity): Promise<void> {
+        const where: any = { id };
+        if (user?.supplier) {
+            where.supplier = { id: user.supplier.id };
+        }
+        const policy = await this.dataSource
+            .getRepository(TourPolicyEntity)
+            .findOne({ where });
+        if (!policy) throw new NotFoundException(`Policy ${id} not found`);
+
         await this.dataSource.getRepository(TourPolicyEntity).delete(id);
     }
 }

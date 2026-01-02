@@ -11,9 +11,9 @@ export default class RoleSeeder implements Seeder {
         // Get all permissions
         const allPermissions = await permissionRepository.find();
 
-        // Admin role - all permissions
         let adminRole = await roleRepository.findOne({
             where: { name: 'admin' },
+            relations: ['permissions'],
         });
         if (!adminRole) {
             adminRole = roleRepository.create({
@@ -22,88 +22,108 @@ export default class RoleSeeder implements Seeder {
                 permissions: allPermissions,
             });
             await roleRepository.save(adminRole);
+        } else {
+            // Update permissions for existing admin role
+            adminRole.permissions = allPermissions;
+            await roleRepository.save(adminRole);
         }
 
         // Supplier role - tour and booking management
         let supplierRole = await roleRepository.findOne({
             where: { name: 'supplier' },
+            relations: ['permissions'],
         });
+        const supplierPermissions = allPermissions.filter(
+            (p) =>
+                p.permission_name.startsWith('tour:') ||
+                p.permission_name.startsWith('booking:') ||
+                p.permission_name === 'review:read' ||
+                p.permission_name === 'report:read',
+        );
         if (!supplierRole) {
-            const supplierPermissions = allPermissions.filter(
-                (p) =>
-                    p.permission_name.startsWith('tour:') ||
-                    p.permission_name.startsWith('booking:') ||
-                    p.permission_name === 'review:read' ||
-                    p.permission_name === 'report:read',
-            );
             supplierRole = roleRepository.create({
                 name: 'supplier',
                 desciption: 'Nhà cung cấp tour - quản lý tour và đơn đặt',
                 permissions: supplierPermissions,
             });
             await roleRepository.save(supplierRole);
+        } else {
+            supplierRole.permissions = supplierPermissions;
+            await roleRepository.save(supplierRole);
         }
 
         // Customer role - basic user
         let customerRole = await roleRepository.findOne({
             where: { name: 'customer' },
+            relations: ['permissions'],
         });
+        const customerPermissions = allPermissions.filter(
+            (p) =>
+                p.permission_name === 'tour:read' ||
+                p.permission_name === 'booking:read' ||
+                p.permission_name === 'booking:create' ||
+                p.permission_name === 'booking:cancel' ||
+                p.permission_name === 'article:read' ||
+                p.permission_name === 'review:read' ||
+                p.permission_name === 'review:create' ||
+                p.permission_name === 'payment:read',
+        );
         if (!customerRole) {
-            const customerPermissions = allPermissions.filter(
-                (p) =>
-                    p.permission_name === 'tour:read' ||
-                    p.permission_name === 'booking:read' ||
-                    p.permission_name === 'booking:create' ||
-                    p.permission_name === 'booking:cancel' ||
-                    p.permission_name === 'article:read' ||
-                    p.permission_name === 'review:read' ||
-                    p.permission_name === 'review:create' ||
-                    p.permission_name === 'payment:read',
-            );
             customerRole = roleRepository.create({
                 name: 'customer',
                 desciption: 'Khách hàng - đặt tour và viết đánh giá',
                 permissions: customerPermissions,
             });
             await roleRepository.save(customerRole);
+        } else {
+            customerRole.permissions = customerPermissions;
+            await roleRepository.save(customerRole);
         }
 
         // Content Manager role - article management
         let contentRole = await roleRepository.findOne({
             where: { name: 'content_manager' },
+            relations: ['permissions'],
         });
+        const contentPermissions = allPermissions.filter(
+            (p) =>
+                p.permission_name.startsWith('article:') ||
+                p.permission_name.startsWith('review:'),
+        );
         if (!contentRole) {
-            const contentPermissions = allPermissions.filter(
-                (p) =>
-                    p.permission_name.startsWith('article:') ||
-                    p.permission_name.startsWith('review:'),
-            );
             contentRole = roleRepository.create({
                 name: 'content_manager',
                 desciption: 'Quản lý nội dung - quản lý bài viết và đánh giá',
                 permissions: contentPermissions,
             });
             await roleRepository.save(contentRole);
+        } else {
+            contentRole.permissions = contentPermissions;
+            await roleRepository.save(contentRole);
         }
 
         // Moderator role - review and article approval
         let moderatorRole = await roleRepository.findOne({
             where: { name: 'moderator' },
+            relations: ['permissions'],
         });
+        const moderatorPermissions = allPermissions.filter(
+            (p) =>
+                p.permission_name === 'article:read' ||
+                p.permission_name === 'article:publish' ||
+                p.permission_name === 'review:read' ||
+                p.permission_name === 'review:approve' ||
+                p.permission_name === 'review:reject',
+        );
         if (!moderatorRole) {
-            const moderatorPermissions = allPermissions.filter(
-                (p) =>
-                    p.permission_name === 'article:read' ||
-                    p.permission_name === 'article:publish' ||
-                    p.permission_name === 'review:read' ||
-                    p.permission_name === 'review:approve' ||
-                    p.permission_name === 'review:reject',
-            );
             moderatorRole = roleRepository.create({
                 name: 'moderator',
                 desciption: 'Người kiểm duyệt - phê duyệt bài viết và đánh giá',
                 permissions: moderatorPermissions,
             });
+            await roleRepository.save(moderatorRole);
+        } else {
+            moderatorRole.permissions = moderatorPermissions;
             await roleRepository.save(moderatorRole);
         }
 

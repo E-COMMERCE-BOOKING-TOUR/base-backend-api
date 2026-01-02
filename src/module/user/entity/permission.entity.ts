@@ -20,4 +20,12 @@ export class PermissionEntity extends BaseEntityTimestamp {
     })
     @ApiProperty({ description: 'Mô tả permission' })
     description: string;
+
+    toJSON() {
+        return {
+            id: this.id,
+            permission_name: this.permission_name,
+            description: this.description,
+        };
+    }
 }

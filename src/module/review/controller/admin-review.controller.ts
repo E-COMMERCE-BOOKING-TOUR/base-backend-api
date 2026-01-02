@@ -5,6 +5,7 @@ import {
     Get,
     Param,
     Post,
+    Query,
     UseGuards,
 } from '@nestjs/common';
 import {
@@ -25,28 +26,34 @@ import {
     ReviewImageDetailDTO,
     ReviewStatus,
     ReviewStatsDTO,
+    AdminReviewQueryDTO,
 } from '../dto/review.dto';
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/module/user/guard/roles.guard';
-import { Roles } from '@/module/user/decorator/roles.decorator';
+import { Permissions } from '@/module/user/decorator/permissions.decorator';
+import { PermissionsGuard } from '@/module/user/guard/permissions.guard';
 
 @ApiTags('Admin Review')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('admin')
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/review')
 export class AdminReviewController {
-    constructor(private readonly reviewService: ReviewService) {}
+    constructor(private readonly reviewService: ReviewService) { }
 
     @Get('getAll')
+    @Permissions('review:read')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getAllReviews(@User() user: UserEntity) {
-        return await this.reviewService.getAllReviews(user.id);
+    async getAllReviews(
+        @Query() query: AdminReviewQueryDTO,
+        @User() user: UserEntity,
+    ) {
+        return await this.reviewService.getAllReviews(query, user);
     }
 
     @Post('getAllByTour/:tourId')
+    @Permissions('review:read')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'tourId', type: Number, example: 1 })
@@ -58,6 +65,7 @@ export class AdminReviewController {
     }
 
     @Post('getAllByUser/:userId')
+    @Permissions('review:read')
     @ApiResponse({ status: 201, type: [ReviewSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'userId', type: Number, example: 1 })
@@ -69,6 +77,7 @@ export class AdminReviewController {
     }
 
     @Post('getById/:id')
+    @Permissions('review:read')
     @ApiResponse({ status: 201, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -97,11 +106,12 @@ export class AdminReviewController {
     }
 
     @Post('remove/:id')
+    @Permissions('review:delete')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
-    async remove(@Param('id') id: number) {
-        return await this.reviewService.remove(id);
+    async remove(@Param('id') id: number, @User() user: UserEntity) {
+        return await this.reviewService.remove(id, user);
     }
 
     @Post('addImages/:id')
@@ -138,27 +148,29 @@ export class AdminReviewController {
         return await this.reviewService.updateStatus(id, payload.status);
     }
     @Post('toggleVisibility/:id')
+    @Permissions('review:delete')
     @ApiResponse({ status: 200, type: ReviewDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
-    async toggleVisibility(@Param('id') id: number) {
+    async toggleVisibility(@Param('id') id: number, @User() user: UserEntity) {
         // Toggle visibility by checking current status then switching
         // For simplicity, let's assume 'approved' is visible and 'pending'/'rejected' is hidden or just use a specific logic.
         // However, user asked for Hide/Show, which usually implies a separate flag or specific status.
         // Let's use status: approved = visible, rejected = hidden.
-        const review = await this.reviewService.getReviewById(id);
+        const review = await this.reviewService.getReviewById(id, user.id);
         if (!review) return null;
         const newStatus =
             review.status === ReviewStatus.approved
                 ? ReviewStatus.rejected
                 : ReviewStatus.approved;
-        return await this.reviewService.updateStatus(id, newStatus);
+        return await this.reviewService.updateStatus(id, newStatus, user);
     }
 
     @Get('stats')
+    @Permissions('review:read')
     @ApiResponse({ status: 200, type: ReviewStatsDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getStats() {
-        return await this.reviewService.getStats();
+    async getStats(@User() user: UserEntity) {
+        return await this.reviewService.getStats(user);
     }
 }

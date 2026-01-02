@@ -26,24 +26,28 @@ import {
 import { UnauthorizedResponseDto } from '@/module/user/dtos';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/module/user/guard/roles.guard';
-import { Roles } from '@/module/user/decorator/roles.decorator';
+import { Permissions } from '@/module/user/decorator/permissions.decorator';
+import { PermissionsGuard } from '@/module/user/guard/permissions.guard';
+import { User } from '@/module/user/decorator/user.decorator';
+import { UserEntity } from '@/module/user/entity/user.entity';
 
 @ApiTags('Admin Booking')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('admin')
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/booking')
 export class AdminBookingController {
-    constructor(private readonly bookingService: BookingService) {}
+    constructor(private readonly bookingService: BookingService) { }
 
     @Get('getAll')
+    @Permissions('booking:read')
     @ApiResponse({ status: 201, type: [BookingSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
-    async getAllBooking() {
-        return await this.bookingService.getAllBooking();
+    async getAllBooking(@User() user: UserEntity) {
+        return await this.bookingService.getAllBooking(user);
     }
 
     @Post('getById/:id')
+    @Permissions('booking:read')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -52,6 +56,7 @@ export class AdminBookingController {
     }
 
     @Post('getByUser/:userId')
+    @Permissions('booking:read')
     @ApiResponse({ status: 201, type: [BookingSummaryDTO] })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'userId', type: Number, example: 1 })
@@ -60,6 +65,7 @@ export class AdminBookingController {
     }
 
     @Post('create')
+    @Permissions('booking:create')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiBody({ type: BookingDTO })
@@ -68,6 +74,7 @@ export class AdminBookingController {
     }
 
     @Post('updateContact/:id')
+    @Permissions('booking:update')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -89,6 +96,7 @@ export class AdminBookingController {
     }
 
     @Post('updateStatus/:id')
+    @Permissions('booking:update')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -101,6 +109,7 @@ export class AdminBookingController {
     }
 
     @Post('updatePaymentStatus/:id')
+    @Permissions('booking:update')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -116,6 +125,7 @@ export class AdminBookingController {
     }
 
     @Post('addItem/:id')
+    @Permissions('booking:update')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -128,6 +138,7 @@ export class AdminBookingController {
     }
 
     @Delete('removeItem/:id')
+    @Permissions('booking:update')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 17 })
@@ -136,6 +147,7 @@ export class AdminBookingController {
     }
 
     @Post('changeItemQuantity/:id')
+    @Permissions('booking:update')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -151,6 +163,7 @@ export class AdminBookingController {
     }
 
     @Delete('remove/:id')
+    @Permissions('booking:delete')
     @ApiResponse({ status: 201, type: Boolean })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -160,6 +173,7 @@ export class AdminBookingController {
     }
 
     @Post('confirm/:id')
+    @Permissions('booking:confirm')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -169,6 +183,7 @@ export class AdminBookingController {
     }
 
     @Get('calculate-refund/:id')
+    @Permissions('booking:read')
     @ApiResponse({ status: 200, description: 'Calculate refund for booking' })
     @ApiParam({ name: 'id', type: Number })
     async calculateRefund(@Param('id') id: number) {
@@ -176,6 +191,7 @@ export class AdminBookingController {
     }
 
     @Post('cancel/:id')
+    @Permissions('booking:cancel')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -187,6 +203,7 @@ export class AdminBookingController {
     }
 
     @Post('expire/:id')
+    @Permissions('booking:expire')
     @ApiResponse({ status: 201, type: BookingDetailDTO })
     @ApiResponse({ status: 401, type: UnauthorizedResponseDto })
     @ApiParam({ name: 'id', type: Number, example: 1 })
@@ -196,6 +213,7 @@ export class AdminBookingController {
     }
 
     @Post('refund/:id')
+    @Permissions('booking:refund')
     @ApiResponse({ status: 200, description: 'Process manual refund' })
     @ApiParam({ name: 'id', type: Number })
     async refund(

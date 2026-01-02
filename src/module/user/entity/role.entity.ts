@@ -51,4 +51,14 @@ export class RoleEntity extends BaseEntityTimestamp {
         description: 'Danh sách các phân quyền',
     })
     permissions: PermissionEntity[];
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            desciption: this.desciption,
+            permissions: (this.permissions || []).map(p =>
+                typeof p === 'string' ? p : p.permission_name
+            ),
+        };
+    }
 }

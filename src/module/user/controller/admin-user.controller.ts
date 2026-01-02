@@ -15,19 +15,21 @@ import { UserService } from '../service/user.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../guard/roles.guard';
 import { Roles } from '../decorator/roles.decorator';
+import { Permissions } from '../decorator/permissions.decorator';
+import { PermissionsGuard } from '../guard/permissions.guard';
 import { CreateUserAdminDTO } from '../dtos/admin/create-user-admin.dto';
 import { UpdateUserAdminDTO } from '../dtos/admin/update-user-admin.dto';
 import { hashPassword } from '@/utils/bcrypt.util';
 
 @ApiTags('Admin User')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('admin')
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/user')
 export class AdminUserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService) { }
 
     @Get('getAll')
+    @Permissions('user:read')
     @ApiOperation({ summary: 'Lấy danh sách tất cả người dùng' })
     async getAll(
         @Query('page') page: number = 1,
@@ -48,12 +50,14 @@ export class AdminUserController {
     }
 
     @Get('getById/:id')
+    @Permissions('user:read')
     @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
     async getById(@Param('id', ParseIntPipe) id: number) {
         return this.userService.getUserById(id);
     }
 
     @Post('create')
+    @Permissions('user:create')
     @ApiOperation({ summary: 'Tạo người dùng mới' })
     async create(@Body() dto: CreateUserAdminDTO) {
         // Hash password before creating user
@@ -67,6 +71,7 @@ export class AdminUserController {
     }
 
     @Put('update/:id')
+    @Permissions('user:update')
     @ApiOperation({ summary: 'Cập nhật thông tin người dùng' })
     async update(
         @Param('id', ParseIntPipe) id: number,
@@ -81,6 +86,7 @@ export class AdminUserController {
     }
 
     @Delete('remove/:id')
+    @Permissions('user:delete')
     @ApiOperation({ summary: 'Xóa người dùng' })
     async remove(@Param('id', ParseIntPipe) id: number) {
         const success = await this.userService.removeUser(id);

@@ -19,9 +19,12 @@ export class DashboardService {
         private readonly userRepository: Repository<UserEntity>,
         @InjectRepository(BookingItemEntity)
         private readonly bookingItemRepository: Repository<BookingItemEntity>,
-    ) {}
+    ) { }
 
-    async getStats() {
+    async getStats(user: UserEntity) {
+        const isAdmin = user.role?.name === 'admin';
+        const supplierId = user.supplier?.id;
+
         const now = new Date();
         const startOfDay = new Date(
             now.getFullYear(),
@@ -31,20 +34,44 @@ export class DashboardService {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         // Basic Counts
-        const totalBookings = await this.bookingRepository.count();
+        let totalBookingsQuery = this.bookingRepository.createQueryBuilder('booking');
+        if (!isAdmin && supplierId) {
+            totalBookingsQuery = totalBookingsQuery
+                .innerJoin('booking.booking_items', 'item')
+                .innerJoin('item.variant', 'variant')
+                .innerJoin('variant.tour', 'tour')
+                .where('tour.supplier_id = :supplierId', { supplierId });
+        }
+        const totalBookings = await totalBookingsQuery.getCount();
+
+        const activeToursWhere: any = { status: TourStatus.active };
+        if (!isAdmin && supplierId) {
+            activeToursWhere.supplier = { id: supplierId };
+        }
         const activeToursCount = await this.tourRepository.count({
-            where: { status: TourStatus.active },
+            where: activeToursWhere,
         });
-        const totalUsers = await this.userRepository.count();
+
+        // Suppliers shouldn't see total platform users
+        const totalUsers = isAdmin ? await this.userRepository.count() : 0;
 
         // Revenue Calculations
-        const confirmedBookings = await this.bookingRepository.find({
-            where: [
-                { status: BookingStatus.confirmed },
-                { payment_status: PaymentStatus.paid },
-            ],
-            select: ['total_amount', 'created_at'],
-        });
+        let confirmedBookingsQuery = this.bookingRepository.createQueryBuilder('booking')
+            .where('(booking.status = :status OR booking.payment_status = :paymentStatus)', {
+                status: BookingStatus.confirmed,
+                paymentStatus: PaymentStatus.paid,
+            })
+            .select(['booking.total_amount', 'booking.created_at', 'booking.id']);
+
+        if (!isAdmin && supplierId) {
+            confirmedBookingsQuery = confirmedBookingsQuery
+                .innerJoin('booking.booking_items', 'item')
+                .innerJoin('item.variant', 'variant')
+                .innerJoin('variant.tour', 'tour')
+                .andWhere('tour.supplier_id = :supplierId', { supplierId });
+        }
+
+        const confirmedBookings = await confirmedBookingsQuery.getMany();
 
         let totalRevenue = 0;
         let todayRevenue = 0;
@@ -72,15 +99,20 @@ export class DashboardService {
         }
 
         // Trending Tours (Top 5)
-        const items = await this.bookingItemRepository.find({
-            relations: ['variant', 'variant.tour', 'booking'],
-            where: {
-                booking: [
-                    { status: BookingStatus.confirmed },
-                    { payment_status: PaymentStatus.paid },
-                ],
-            },
-        });
+        let trendingQuery = this.bookingItemRepository.createQueryBuilder('item')
+            .innerJoinAndSelect('item.variant', 'variant')
+            .innerJoinAndSelect('variant.tour', 'tour')
+            .innerJoin('item.booking', 'booking')
+            .where('(booking.status = :status OR booking.payment_status = :paymentStatus)', {
+                status: BookingStatus.confirmed,
+                paymentStatus: PaymentStatus.paid,
+            });
+
+        if (!isAdmin && supplierId) {
+            trendingQuery = trendingQuery.andWhere('tour.supplier_id = :supplierId', { supplierId });
+        }
+
+        const items = await trendingQuery.getMany();
 
         const tourMap: Record<
             number,
@@ -101,18 +133,27 @@ export class DashboardService {
             .slice(0, 5);
 
         // Recent Transactions
-        const recentBookings = await this.bookingRepository.find({
-            order: { created_at: 'DESC' },
-            take: 10,
-            select: [
-                'id',
-                'contact_name',
-                'contact_email',
-                'status',
-                'total_amount',
-                'created_at',
-            ],
-        });
+        let recentBookingsQuery = this.bookingRepository.createQueryBuilder('booking')
+            .orderBy('booking.created_at', 'DESC')
+            .take(10)
+            .select([
+                'booking.id',
+                'booking.contact_name',
+                'booking.contact_email',
+                'booking.status',
+                'booking.total_amount',
+                'booking.created_at',
+            ]);
+
+        if (!isAdmin && supplierId) {
+            recentBookingsQuery = recentBookingsQuery
+                .innerJoin('booking.booking_items', 'item')
+                .innerJoin('item.variant', 'variant')
+                .innerJoin('variant.tour', 'tour')
+                .where('tour.supplier_id = :supplierId', { supplierId });
+        }
+
+        const recentBookings = await recentBookingsQuery.getMany();
 
         return {
             kpis: {

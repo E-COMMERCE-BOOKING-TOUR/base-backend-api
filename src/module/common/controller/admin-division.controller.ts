@@ -21,6 +21,10 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminDivisionService } from '../service/admin-division.service';
+import { RolesGuard } from '@/module/user/guard/roles.guard';
+import { PermissionsGuard } from '@/module/user/guard/permissions.guard';
+import { Permissions } from '@/module/user/decorator/permissions.decorator';
+import { Roles } from '@/module/user/decorator/roles.decorator';
 import {
     CreateDivisionDTO,
     UpdateDivisionDTO,
@@ -30,45 +34,51 @@ import { CloudinaryResponse } from '@/module/cloudinary/cloudinary-response';
 
 @ApiTags('Admin - Division')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/division')
 export class AdminDivisionController {
     constructor(
         private readonly adminDivisionService: AdminDivisionService,
         private readonly cloudinaryService: CloudinaryService,
-    ) {}
+    ) { }
 
     @Get('getAll')
+    @Permissions('division:read')
     @ApiOperation({ summary: 'Lấy danh sách tất cả division' })
     async getAll() {
         return this.adminDivisionService.getAll();
     }
 
     @Get('getByCountry/:countryId')
+    @Permissions('division:read')
     @ApiOperation({ summary: 'Lấy danh sách division theo country' })
     async getByCountry(@Param('countryId', ParseIntPipe) countryId: number) {
         return this.adminDivisionService.getByCountry(countryId);
     }
 
     @Get('countries')
+    @Permissions('division:read')
     @ApiOperation({ summary: 'Lấy danh sách countries' })
     async getCountries() {
         return this.adminDivisionService.getCountries();
     }
 
     @Get('getById/:id')
+    @Permissions('division:read')
     @ApiOperation({ summary: 'Lấy chi tiết division' })
     async getById(@Param('id', ParseIntPipe) id: number) {
         return this.adminDivisionService.getById(id);
     }
 
     @Post('create')
+    @Permissions('division:create')
     @ApiOperation({ summary: 'Tạo division mới' })
     async create(@Body() dto: CreateDivisionDTO) {
         return this.adminDivisionService.create(dto);
     }
 
     @Put('update/:id')
+    @Permissions('division:update')
     @ApiOperation({ summary: 'Cập nhật division' })
     async update(
         @Param('id', ParseIntPipe) id: number,
@@ -78,6 +88,7 @@ export class AdminDivisionController {
     }
 
     @Delete('remove/:id')
+    @Permissions('division:delete')
     @ApiOperation({ summary: 'Xóa division' })
     async remove(@Param('id', ParseIntPipe) id: number) {
         await this.adminDivisionService.remove(id);
@@ -85,6 +96,7 @@ export class AdminDivisionController {
     }
 
     @Post(':id/upload-image')
+    @Permissions('division:create', 'division:update')
     @ApiOperation({ summary: 'Upload hình ảnh cho division' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({

@@ -10,6 +10,7 @@ import {
     ReviewImageDetailDTO,
     ReviewStatus,
     ReviewStatsDTO,
+    AdminReviewQueryDTO,
 } from '../dto/review.dto';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
@@ -28,13 +29,52 @@ export class ReviewService {
         private readonly tourRepository: Repository<TourEntity>,
         @InjectRepository(ReviewHelpfulEntity)
         private readonly helpfulRepository: Repository<ReviewHelpfulEntity>,
-    ) {}
+    ) { }
 
-    async getAllReviews(currentUserId?: number): Promise<ReviewSummaryDTO[]> {
-        const reviews = await this.reviewRepository.find({
-            relations: ['user', 'tour', 'helpful_votes', 'helpful_votes.user'],
-            order: { created_at: 'DESC' },
-        });
+    async getAllReviews(
+        query: AdminReviewQueryDTO,
+        user?: UserEntity,
+    ): Promise<ReviewSummaryDTO[]> {
+        const queryBuilder = this.reviewRepository
+            .createQueryBuilder('review')
+            .leftJoinAndSelect('review.user', 'user')
+            .leftJoinAndSelect('review.tour', 'tour')
+            .leftJoinAndSelect('tour.supplier', 'supplier')
+            .leftJoinAndSelect('review.helpful_votes', 'helpful_votes')
+            .leftJoinAndSelect('helpful_votes.user', 'helpful_user');
+
+        if (user?.supplier) {
+            queryBuilder.andWhere('supplier.id = :supplierId', {
+                supplierId: user.supplier.id,
+            });
+        }
+
+        if (query.tour_id) {
+            queryBuilder.andWhere('tour.id = :tourId', {
+                tourId: query.tour_id,
+            });
+        }
+
+        if (query.status) {
+            queryBuilder.andWhere('review.status = :status', {
+                status: query.status,
+            });
+        }
+
+        if (query.keyword) {
+            queryBuilder.andWhere(
+                '(review.title LIKE :keyword OR review.content LIKE :keyword)',
+                { keyword: `%${query.keyword}%` },
+            );
+        }
+
+        queryBuilder.orderBy(
+            'review.created_at',
+            query.sortOrder || 'DESC',
+        );
+
+        const reviews = await queryBuilder.getMany();
+
         return reviews.map(
             (r) =>
                 new ReviewSummaryDTO({
@@ -55,10 +95,8 @@ export class ReviewService {
                     },
                     helpful_count: r.helpful_count,
                     is_reported: r.is_reported,
-                    is_helpful: currentUserId
-                        ? r.helpful_votes?.some(
-                              (v) => v.user?.id === currentUserId,
-                          )
+                    is_helpful: user?.id
+                        ? r.helpful_votes?.some((v) => v.user?.id === user.id)
                         : false,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
@@ -98,8 +136,8 @@ export class ReviewService {
                     is_reported: r.is_reported,
                     is_helpful: currentUserId
                         ? r.helpful_votes?.some(
-                              (v) => v.user?.id === currentUserId,
-                          )
+                            (v) => v.user?.id === currentUserId,
+                        )
                         : false,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
@@ -139,8 +177,8 @@ export class ReviewService {
                     is_reported: r.is_reported,
                     is_helpful: currentUserId
                         ? r.helpful_votes?.some(
-                              (v) => v.user?.id === currentUserId,
-                          )
+                            (v) => v.user?.id === currentUserId,
+                        )
                         : false,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
@@ -245,8 +283,15 @@ export class ReviewService {
         return this.getReviewById(id);
     }
 
-    async remove(id: number): Promise<boolean> {
-        const res = await this.reviewRepository.delete({ id });
+    async remove(id: number, user?: UserEntity): Promise<boolean> {
+        const where: any = { id };
+        if (user?.supplier) {
+            where.tour = { supplier: { id: user.supplier.id } };
+        }
+        const review = await this.reviewRepository.findOne({ where, relations: ['tour', 'tour.supplier'] });
+        if (!review) return false;
+
+        const res = await this.reviewRepository.delete({ id: review.id });
         return (res.affected ?? 0) > 0;
     }
 
@@ -286,12 +331,17 @@ export class ReviewService {
     async updateStatus(
         id: number,
         status: ReviewStatus,
+        user?: UserEntity,
     ): Promise<ReviewDetailDTO | null> {
-        const review = await this.reviewRepository.findOne({ where: { id } });
+        const where: any = { id };
+        if (user?.supplier) {
+            where.tour = { supplier: { id: user.supplier.id } };
+        }
+        const review = await this.reviewRepository.findOne({ where, relations: ['tour', 'tour.supplier'] });
         if (!review) return null;
         review.status = status as string;
         await this.reviewRepository.save(review);
-        return this.getReviewById(id);
+        return this.getReviewById(id, user?.id);
     }
     async findOne(id: number): Promise<ReviewEntity> {
         const review = await this.reviewRepository.findOne({ where: { id } });
@@ -326,8 +376,12 @@ export class ReviewService {
         return this.reviewRepository.save(review);
     }
 
-    async getStats(): Promise<ReviewStatsDTO> {
-        const reviews = await this.reviewRepository.find();
+    async getStats(user?: UserEntity): Promise<ReviewStatsDTO> {
+        const where: any = {};
+        if (user?.supplier) {
+            where.tour = { supplier: { id: user.supplier.id } };
+        }
+        const reviews = await this.reviewRepository.find({ where, relations: ['tour', 'tour.supplier'] });
         const total = reviews.length;
         const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
         const avg = total > 0 ? sum / total : 0;

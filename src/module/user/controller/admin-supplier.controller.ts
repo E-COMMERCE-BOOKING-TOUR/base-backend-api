@@ -14,19 +14,21 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../guard/roles.guard';
 import { Roles } from '../decorator/roles.decorator';
+import { Permissions } from '../decorator/permissions.decorator';
+import { PermissionsGuard } from '../guard/permissions.guard';
 import { AdminSupplierService } from '../service/admin-supplier.service';
 import { CreateSupplierDTO } from '../dtos/admin/create-supplier.dto';
 import { UpdateSupplierDTO } from '../dtos/admin/update-supplier.dto';
 
 @ApiTags('Admin Supplier')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('admin')
+@UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
 @Controller('admin/supplier')
 export class AdminSupplierController {
-    constructor(private readonly adminSupplierService: AdminSupplierService) {}
+    constructor(private readonly adminSupplierService: AdminSupplierService) { }
 
     @Get('getAll')
+    @Permissions('supplier:read')
     @ApiOperation({ summary: 'Lấy danh sách tất cả nhà cung cấp' })
     async getAll(
         @Query('page') page: number = 1,
@@ -36,18 +38,21 @@ export class AdminSupplierController {
     }
 
     @Get('getById/:id')
+    @Permissions('supplier:read')
     @ApiOperation({ summary: 'Lấy thông tin nhà cung cấp theo ID' })
     async getById(@Param('id', ParseIntPipe) id: number) {
         return this.adminSupplierService.getById(id);
     }
 
     @Post('create')
+    @Permissions('supplier:create')
     @ApiOperation({ summary: 'Tạo nhà cung cấp mới' })
     async create(@Body() dto: CreateSupplierDTO) {
         return this.adminSupplierService.create(dto);
     }
 
     @Put('update/:id')
+    @Permissions('supplier:update')
     @ApiOperation({ summary: 'Cập nhật thông tin nhà cung cấp' })
     async update(
         @Param('id', ParseIntPipe) id: number,
@@ -57,6 +62,7 @@ export class AdminSupplierController {
     }
 
     @Delete('remove/:id')
+    @Permissions('supplier:delete')
     @ApiOperation({ summary: 'Xóa nhà cung cấp' })
     async remove(@Param('id', ParseIntPipe) id: number) {
         const success = await this.adminSupplierService.remove(id);

@@ -80,7 +80,7 @@ export class UserEntity extends BaseEntityTimestamp {
 
     @Exclude()
     @ApiProperty({ description: 'Role', type: () => RoleEntity })
-    @ManyToOne(() => RoleEntity, (role) => role.users, { eager: true })
+    @ManyToOne(() => RoleEntity, (role) => role.users)
     @JoinColumn({ name: 'role_id', referencedColumnName: 'id' })
     role: RoleEntity;
 
@@ -132,7 +132,8 @@ export class UserEntity extends BaseEntityTimestamp {
             full_name: this.full_name,
             email: this.email,
             phone: this.phone,
-            role: this.role,
+            role: this.role ? (typeof this.role.toJSON === 'function' ? this.role.toJSON() : this.role) : null,
+            supplier: this.supplier,
         };
     }
 }
