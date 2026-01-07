@@ -137,7 +137,7 @@ export class TourSessionDTO {
 
     @IsDateString()
     @ApiProperty({ description: 'Ngày chạy' })
-    session_date: Date;
+    session_date: string;
 
     @IsOptional()
     @IsString()
