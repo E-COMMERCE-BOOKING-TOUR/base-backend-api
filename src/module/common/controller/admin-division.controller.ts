@@ -6,6 +6,7 @@ import {
     Delete,
     Body,
     Param,
+    Query,
     ParseIntPipe,
     UseGuards,
     UseInterceptors,
@@ -17,10 +18,11 @@ import {
     ApiBearerAuth,
     ApiConsumes,
     ApiBody,
+    ApiQuery,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AdminDivisionService } from '../service/admin-division.service';
+import { AdminDivisionService, DivisionQueryDTO } from '../service/admin-division.service';
 import { RolesGuard } from '@/module/user/guard/roles.guard';
 import { PermissionsGuard } from '@/module/user/guard/permissions.guard';
 import { Permissions } from '@/module/user/decorator/permissions.decorator';
@@ -44,9 +46,27 @@ export class AdminDivisionController {
 
     @Get('getAll')
     @Permissions('division:read')
-    @ApiOperation({ summary: 'Lấy danh sách tất cả division' })
-    async getAll() {
-        return this.adminDivisionService.getAll();
+    @ApiOperation({ summary: 'Lấy danh sách tất cả division với phân trang' })
+    @ApiQuery({ name: 'page', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'keyword', required: false, type: String })
+    @ApiQuery({ name: 'country_id', required: false, type: Number })
+    @ApiQuery({ name: 'parent_id', required: false, type: Number, description: 'Filter by parent. Use 0 for root divisions.' })
+    async getAll(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('keyword') keyword?: string,
+        @Query('country_id') country_id?: string,
+        @Query('parent_id') parent_id?: string,
+    ) {
+        const query: DivisionQueryDTO = {
+            page: page ? parseInt(page, 10) : undefined,
+            limit: limit ? parseInt(limit, 10) : undefined,
+            keyword,
+            country_id: country_id ? parseInt(country_id, 10) : undefined,
+            parent_id: parent_id !== undefined ? (parent_id === '0' ? null : parseInt(parent_id, 10)) : undefined,
+        };
+        return this.adminDivisionService.getAll(query);
     }
 
     @Get('getByCountry/:countryId')
@@ -93,6 +113,29 @@ export class AdminDivisionController {
     async remove(@Param('id', ParseIntPipe) id: number) {
         await this.adminDivisionService.remove(id);
         return { message: 'Xóa division thành công' };
+    }
+
+    @Post('upload')
+    @Permissions('division:create', 'division:update')
+    @ApiOperation({ summary: 'Upload generic image for division' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async upload(@UploadedFile() file: Express.Multer.File) {
+        const result: CloudinaryResponse =
+            await this.cloudinaryService.uploadFile(file);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        return { image_url: result.secure_url };
     }
 
     @Post(':id/upload-image')

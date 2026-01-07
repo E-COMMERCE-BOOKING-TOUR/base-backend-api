@@ -206,9 +206,14 @@ export class AdminTourService {
         if (!tour) throw new NotFoundException(`Tour with ID ${id} not found`);
 
         const issues: string[] = [];
+        const now = new Date();
+        const isPublished = !tour.published_at || new Date(tour.published_at) <= now;
+
         const checks = {
             status: tour.status === TourStatus.active,
             is_visible: tour.is_visible,
+            is_published: isPublished,
+            published_at: tour.published_at ? new Date(tour.published_at).toISOString() : null,
             has_images: tour.images && tour.images.length > 0,
             has_variants: tour.variants && tour.variants.length > 0,
             has_active_variants: tour.variants?.some(
@@ -223,6 +228,11 @@ export class AdminTourService {
         if (tour.status !== TourStatus.active)
             issues.push('Tour status is not set to ACTIVE');
         if (!tour.is_visible) issues.push('Tour visibility is turned OFF');
+        if (!isPublished) {
+            const publishDate = new Date(tour.published_at!);
+            const daysUntilPublish = Math.ceil((publishDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            issues.push(`Tour is scheduled to publish on ${publishDate.toLocaleDateString()} (in ${daysUntilPublish} days)`);
+        }
         if (!checks.has_images) issues.push('No images uploaded for this tour');
         if (!checks.has_variants)
             issues.push('No variants defined for this tour');
@@ -234,7 +244,6 @@ export class AdminTourService {
         }
 
         // Check for upcoming open sessions
-        const now = new Date();
         const dStr = now.toISOString().split('T')[0];
 
         checks.has_upcoming_sessions = tour.variants?.some((v) =>
@@ -252,7 +261,7 @@ export class AdminTourService {
             title: tour.title,
             slug: tour.slug,
             isVisiblePublic:
-                checks.status && checks.is_visible && issues.length === 0, // Simplified but accurate for the modal
+                checks.status && checks.is_visible && checks.is_published && issues.length === 0,
             checks,
             issues,
         };

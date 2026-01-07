@@ -1,12 +1,28 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like, IsNull } from 'typeorm';
 import { DivisionEntity } from '@/common/entity/division.entity';
 import { CountryEntity } from '@/common/entity/country.entity';
 import {
     CreateDivisionDTO,
     UpdateDivisionDTO,
 } from '../dto/admin-division.dto';
+
+export interface DivisionQueryDTO {
+    page?: number;
+    limit?: number;
+    keyword?: string;
+    country_id?: number;
+    parent_id?: number | null;
+}
+
+export interface PaginatedDivisionsResponse {
+    data: DivisionEntity[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
 
 @Injectable()
 export class AdminDivisionService {
@@ -15,13 +31,50 @@ export class AdminDivisionService {
         private readonly divisionRepository: Repository<DivisionEntity>,
         @InjectRepository(CountryEntity)
         private readonly countryRepository: Repository<CountryEntity>,
-    ) {}
+    ) { }
 
-    async getAll(): Promise<DivisionEntity[]> {
-        return this.divisionRepository.find({
-            relations: ['country', 'parent'],
-            order: { name: 'ASC' },
-        });
+    async getAll(query: DivisionQueryDTO = {}): Promise<PaginatedDivisionsResponse> {
+        const { page = 1, limit = 20, keyword, country_id, parent_id } = query;
+        const skip = (page - 1) * limit;
+
+        const qb = this.divisionRepository
+            .createQueryBuilder('division')
+            .leftJoinAndSelect('division.country', 'country')
+            .leftJoinAndSelect('division.parent', 'parent')
+            .orderBy('division.name', 'ASC');
+
+        if (keyword) {
+            qb.andWhere(
+                '(division.name LIKE :keyword OR division.name_local LIKE :keyword OR division.code LIKE :keyword)',
+                { keyword: `%${keyword}%` },
+            );
+        }
+
+        if (country_id) {
+            qb.andWhere('division.country_id = :country_id', { country_id });
+        }
+
+        // parent_id can be: undefined (no filter), null (get root divisions), or number (get children of parent)
+        if (parent_id !== undefined) {
+            if (parent_id === null || parent_id === 0) {
+                qb.andWhere('division.parent_id IS NULL');
+            } else {
+                qb.andWhere('division.parent_id = :parent_id', { parent_id });
+            }
+        }
+
+        const [data, total] = await qb
+            .skip(skip)
+            .take(limit)
+            .getManyAndCount();
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     }
 
     async getByCountry(countryId: number): Promise<DivisionEntity[]> {

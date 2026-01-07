@@ -66,7 +66,8 @@ export class UserTourService {
             .where('tour.status = :tourStatus', {
                 tourStatus: TourStatus.active,
             })
-            .andWhere('tour.is_visible = :isVisible', { isVisible: true });
+            .andWhere('tour.is_visible = :isVisible', { isVisible: true })
+            .andWhere('(tour.published_at IS NULL OR tour.published_at <= NOW())');
     }
 
     private mapToPopularDTO(tour: TourEntity): UserTourPopularDTO {
@@ -381,6 +382,7 @@ export class UserTourService {
             .where('tour.slug = :slug', { slug })
             .andWhere('tour.status = :status', { status: TourStatus.active })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true })
+            .andWhere('(tour.published_at IS NULL OR tour.published_at <= NOW())')
             .getOne();
 
         if (!tour) {
@@ -594,6 +596,11 @@ export class UserTourService {
             where: { slug, status: TourStatus.active, is_visible: true },
         });
 
+        // Additional check for published_at
+        if (tour && tour.published_at && new Date(tour.published_at) > new Date()) {
+            throw new NotFoundException(`Tour with slug "${slug}" not found`);
+        }
+
         if (!tour) {
             throw new NotFoundException(`Tour with slug "${slug}" not found`);
         }
@@ -637,6 +644,11 @@ export class UserTourService {
             where: { slug, status: TourStatus.active, is_visible: true },
             relations: ['reviews'],
         });
+
+        // Additional check for published_at
+        if (tour && tour.published_at && new Date(tour.published_at) > new Date()) {
+            throw new NotFoundException(`Tour with slug "${slug}" not found`);
+        }
 
         if (!tour) {
             throw new NotFoundException(`Tour with slug "${slug}" not found`);
@@ -706,6 +718,7 @@ export class UserTourService {
             .leftJoinAndSelect('tour.tour_categories', 'categories')
             .where('tour.status = :status', { status: TourStatus.active })
             .andWhere('tour.is_visible = :isVisible', { isVisible: true })
+            .andWhere('(tour.published_at IS NULL OR tour.published_at <= NOW())')
             .andWhere('tour.id != :currentTourId', {
                 currentTourId: currentTour.id,
             });
