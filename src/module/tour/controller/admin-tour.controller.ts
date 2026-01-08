@@ -8,11 +8,13 @@ import {
     Post,
     Put,
     Query,
+    Res,
     UploadedFile,
     UseInterceptors,
     UseGuards,
     Req,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { User } from '@/module/user/decorator/user.decorator';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import {
@@ -82,6 +84,88 @@ export class AdminTourController {
     @UseInterceptors(FileInterceptor('file'))
     async uploadImage(@UploadedFile() file: Express.Multer.File) {
         return this.cloudinaryService.uploadFile(file);
+    }
+
+    @Get('csv-template')
+    @Permissions('tour:create')
+    @ApiOperation({ summary: 'Download CSV template for tour import' })
+    @ApiResponse({ status: 200, description: 'CSV template file' })
+    async getCsvTemplate(@Res() res: Response) {
+        const csvContent = this.adminTourService.generateCsvTemplate();
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="tour_import_template.csv"');
+        return res.send(csvContent);
+    }
+
+    @Post('import-csv')
+    @Permissions('tour:create')
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiOperation({ summary: 'Import tours from CSV file' })
+    @ApiResponse({ status: 201, description: 'Import results with success count and errors' })
+    async importCsv(
+        @UploadedFile() file: Express.Multer.File,
+        @User() user: UserEntity,
+    ) {
+        if (!file) {
+            return { success: 0, errors: [{ row: 0, reason: 'No file uploaded' }] };
+        }
+
+        const content = file.buffer.toString('utf-8');
+        const rows = this.parseCsv(content);
+
+        return this.adminTourService.importFromCsv(rows, user);
+    }
+
+    private parseCsv(content: string): Record<string, string>[] {
+        const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        if (lines.length < 2) return [];
+
+        const headers = this.parseCsvLine(lines[0]);
+        const rows: Record<string, string>[] = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = this.parseCsvLine(lines[i]);
+            const row: Record<string, string> = {};
+            headers.forEach((header, idx) => {
+                row[header] = values[idx] || '';
+            });
+            rows.push(row);
+        }
+
+        return rows;
+    }
+
+    private parseCsvLine(line: string): string[] {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+
+            if (inQuotes) {
+                if (char === '"' && nextChar === '"') {
+                    current += '"';
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = false;
+                } else {
+                    current += char;
+                }
+            } else {
+                if (char === '"') {
+                    inQuotes = true;
+                } else if (char === ',') {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+        }
+        result.push(current);
+        return result;
     }
 
     @Get('getAll')

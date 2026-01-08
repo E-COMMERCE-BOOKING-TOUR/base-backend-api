@@ -30,6 +30,7 @@ import {
     PRICE_CACHE_QUEUE,
 } from './queue/price-cache.processor';
 import { RecommendModule } from '../recommend/recommend.module';
+import { BookingItemEntity } from '../booking/entity/bookingItem.entity';
 
 @Module({
     imports: [
@@ -52,6 +53,7 @@ import { RecommendModule } from '../recommend/recommend.module';
             SupplierEntity,
             TourCategoryEntity,
             ReviewEntity,
+            BookingItemEntity,
         ]),
         PricingModule.forRoot([TourBasePriceStep, TourAssemblePriceStep]),
         CloudinaryModule,
@@ -72,4 +74,4 @@ import { RecommendModule } from '../recommend/recommend.module';
         PriceCacheService,
     ],
 })
-export class TourModule {}
+export class TourModule { }

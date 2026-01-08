@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DeepPartial } from 'typeorm';
 import { TourEntity } from '../entity/tour.entity';
@@ -18,6 +18,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { BookingItemEntity } from '@/module/booking/entity/bookingItem.entity';
 import {
     TourDTO,
     TourVariantDTO,
@@ -25,6 +26,7 @@ import {
     AdminTourQueryDTO,
     PaginatedTourResponse,
     TourStatus,
+    TourVariantStatus,
     TourPolicyDTO,
 } from '../dto/tour.dto';
 
@@ -56,6 +58,8 @@ export class AdminTourService {
         private readonly supplierRepository: Repository<SupplierEntity>,
         @InjectRepository(TourCategoryEntity)
         private readonly categoryRepository: Repository<TourCategoryEntity>,
+        @InjectRepository(BookingItemEntity)
+        private readonly bookingItemRepository: Repository<BookingItemEntity>,
         private readonly dataSource: DataSource,
         @Inject('RECOMMEND_SERVICE')
         private readonly recommendClient: ClientProxy,
@@ -68,6 +72,7 @@ export class AdminTourService {
         const {
             keyword,
             status,
+            supplier_id,
             page = 1,
             limit = 10,
             sortBy = 'created_at',
@@ -96,6 +101,10 @@ export class AdminTourService {
 
         if (status) {
             queryBuilder.andWhere('tour.status = :status', { status });
+        }
+
+        if (supplier_id) {
+            queryBuilder.andWhere('tour.supplier_id = :supplier_id', { supplier_id });
         }
 
         if (user?.supplier) {
@@ -653,6 +662,27 @@ export class AdminTourService {
 
     async removeTour(id: number, user?: UserEntity): Promise<void> {
         const tour = await this.getTourById(id, user);
+
+        // Check if there are any bookings for this tour
+        // A tour has bookings if any of its variants have booking items
+        const variants = await this.variantRepository.find({
+            where: { tour: { id: tour.id } },
+            select: ['id'],
+        });
+
+        if (variants.length > 0) {
+            const variantIds = variants.map((v) => v.id);
+            const bookingCount = await this.bookingItemRepository.count({
+                where: { variant: { id: In(variantIds) } },
+            });
+
+            if (bookingCount > 0) {
+                throw new BadRequestException(
+                    'Cannot delete tour because it has existing bookings. Please change the tour status to inactive instead.',
+                );
+            }
+        }
+
         await this.tourRepository.softDelete(tour.id);
     }
 
@@ -838,5 +868,198 @@ export class AdminTourService {
         if (!policy) throw new NotFoundException(`Policy ${id} not found`);
 
         await this.dataSource.getRepository(TourPolicyEntity).delete(id);
+    }
+
+    // --- CSV Import ---
+
+    generateCsvTemplate(): string {
+        const headers = [
+            'title',
+            'description',
+            'summary',
+            'address',
+            'map_url',
+            'tax',
+            'min_pax',
+            'max_pax',
+            'country_id',
+            'division_id',
+            'currency_id',
+            'supplier_id',
+            'status',
+            'duration_hours',
+            'duration_days',
+            'meeting_point',
+            'included',
+            'not_included',
+            'languages',
+            'images',
+            'variants',
+        ];
+
+        const exampleRow = [
+            'Ha Long Bay Tour',
+            'Experience the natural wonder of Ha Long Bay',
+            'Day trip to Ha Long Bay with lunch and guide',
+            'Ha Long, Quang Ninh, Vietnam',
+            'https://maps.app.goo.gl/abcdef',
+            '10',
+            '1',
+            '20',
+            '1',
+            '5',
+            '1',
+            '1',
+            'draft',
+            '8',
+            '1',
+            'Hotel pickup in Hanoi Old Quarter',
+            'Lunch;Guide;Transport;Entry fees',
+            'Tips;Personal expenses;Travel insurance',
+            'English;Vietnamese',
+            JSON.stringify([{ url: 'https://example.com/image1.jpg', is_cover: true }, { url: 'https://example.com/image2.jpg', is_cover: false }]),
+            JSON.stringify([{
+                name: 'Standard Package',
+                min_pax_per_booking: 1,
+                capacity_per_slot: 20,
+                tax_included: true,
+                cutoff_hours: 24,
+                policy_id: 1,
+                prices: [{ pax_type_id: 1, price: 100 }, { pax_type_id: 2, price: 80 }],
+                sessions: [{ date: '2025-02-01', time: '08:00' }, { date: '2025-02-02', time: '08:00' }],
+            }]),
+        ];
+
+        const escapeCsvField = (field: string): string => {
+            if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+                return `"${field.replace(/"/g, '""')}"`;
+            }
+            return field;
+        };
+
+        return [
+            headers.join(','),
+            exampleRow.map(escapeCsvField).join(','),
+        ].join('\n');
+    }
+
+    async importFromCsv(
+        rows: Record<string, string>[],
+        user?: UserEntity,
+    ): Promise<{ success: number; errors: { row: number; reason: string }[] }> {
+        const results: { success: number; errors: { row: number; reason: string }[] } = {
+            success: 0,
+            errors: [],
+        };
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowNum = i + 2; // +2 because row 1 is header
+
+            try {
+                // Parse required fields
+                if (!row.title?.trim()) throw new Error('Missing title');
+                if (!row.description?.trim()) throw new Error('Missing description');
+                if (!row.summary?.trim()) throw new Error('Missing summary');
+                if (!row.address?.trim()) throw new Error('Missing address');
+
+                const countryId = parseInt(row.country_id);
+                const divisionId = parseInt(row.division_id);
+                const currencyId = parseInt(row.currency_id) || 1;
+                let supplierId = parseInt(row.supplier_id) || 1;
+
+                if (isNaN(countryId)) throw new Error('Invalid country_id');
+                if (isNaN(divisionId)) throw new Error('Invalid division_id');
+
+                if (user?.supplier) {
+                    supplierId = user.supplier.id;
+                }
+
+                // Parse images JSON
+                let images: { url: string; is_cover?: boolean }[] = [];
+                if (row.images?.trim()) {
+                    try {
+                        images = JSON.parse(row.images);
+                        if (!Array.isArray(images)) throw new Error('images must be array');
+                    } catch {
+                        throw new Error('Invalid images JSON');
+                    }
+                }
+
+                // Parse variants JSON
+                let variants: any[] = [];
+                if (row.variants?.trim()) {
+                    try {
+                        variants = JSON.parse(row.variants);
+                        if (!Array.isArray(variants)) throw new Error('variants must be array');
+                    } catch {
+                        throw new Error('Invalid variants JSON');
+                    }
+                }
+
+                // Parse semicolon-separated lists
+                const parseList = (val: string | undefined): string[] => {
+                    if (!val?.trim()) return [];
+                    return val.split(';').map(s => s.trim()).filter(s => s.length > 0);
+                };
+
+                // Build TourDTO
+                const tourDto: TourDTO = {
+                    title: row.title.trim(),
+                    description: row.description.trim(),
+                    summary: row.summary.trim(),
+                    address: row.address.trim(),
+                    map_url: row.map_url?.trim() || '',
+                    tax: parseFloat(row.tax) || 0,
+                    min_pax: parseInt(row.min_pax) || 1,
+                    max_pax: row.max_pax ? parseInt(row.max_pax) : undefined,
+                    country_id: countryId,
+                    division_id: divisionId,
+                    currency_id: currencyId,
+                    supplier_id: supplierId,
+                    status: (row.status as any) || 'draft',
+                    duration_hours: row.duration_hours ? parseInt(row.duration_hours) : undefined,
+                    duration_days: row.duration_days ? parseInt(row.duration_days) : undefined,
+                    meeting_point: row.meeting_point?.trim(),
+                    included: parseList(row.included),
+                    not_included: parseList(row.not_included),
+                    languages: parseList(row.languages),
+                    images: images.map((img, idx) => ({
+                        image_url: img.url,
+                        sort_no: idx,
+                        is_cover: img.is_cover ?? idx === 0,
+                    })),
+                    variants: variants.map(v => ({
+                        name: v.name || 'Default',
+                        min_pax_per_booking: v.min_pax_per_booking || 1,
+                        capacity_per_slot: v.capacity_per_slot || 20,
+                        tax_included: v.tax_included ?? true,
+                        cutoff_hours: v.cutoff_hours || 24,
+                        status: TourVariantStatus.active,
+                        tour_policy_id: v.policy_id || 1,
+                        prices: (v.prices || []).map((p: any) => ({
+                            pax_type_id: p.pax_type_id,
+                            price: p.price || 0,
+                        })),
+                        sessions: (v.sessions || []).map((s: any) => ({
+                            session_date: s.date,
+                            start_time: s.time ? `${s.time}:00` : '08:00:00',
+                            end_time: null,
+                            status: 'open',
+                        })),
+                    })),
+                };
+
+                await this.createTour(tourDto, user);
+                results.success++;
+            } catch (error) {
+                results.errors.push({
+                    row: rowNum,
+                    reason: (error as Error).message,
+                });
+            }
+        }
+
+        return results;
     }
 }

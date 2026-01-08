@@ -929,6 +929,13 @@ export class AdminTourQueryDTO {
     @Type(() => Number)
     @IsInt()
     @Min(1)
+    @ApiProperty({ required: false, description: 'ID nhà cung cấp' })
+    supplier_id?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
     @ApiProperty({ required: false, default: 1 })
     page?: number = 1;
 
