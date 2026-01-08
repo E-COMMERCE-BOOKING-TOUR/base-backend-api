@@ -4,6 +4,7 @@ import {
     LoginDTO,
     MessageResponseDTO,
     RegisterDTO,
+    ResetPasswordDTO,
     TokenDTO,
 } from '../dtos';
 import { DataSource, DeepPartial, Repository } from 'typeorm';
@@ -36,7 +37,7 @@ export class AuthService {
         private readonly configService: ConfigService,
         @Inject('RECOMMEND_SERVICE')
         private readonly recommendClient: ClientProxy,
-    ) {}
+    ) { }
 
     async register(dto: RegisterDTO) {
         // Check if username or email already exists
@@ -117,6 +118,35 @@ export class AuthService {
         return new MessageResponseDTO({
             error: false,
             message: 'Yêu cầu đặt lại mật khẩu đã được gửi tới email của bạn!',
+        });
+    }
+
+    async resetPassword(dto: ResetPasswordDTO) {
+        const user = await this.userRepository.findOne({
+            where: { reset_password_token: dto.token },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('invalid_reset_token');
+        }
+
+        if (
+            !user.reset_password_token_expires ||
+            user.reset_password_token_expires < new Date()
+        ) {
+            throw new UnauthorizedException('expired_reset_token');
+        }
+
+        const hashedPassword = await hashPassword(dto.password);
+        user.password = hashedPassword;
+        user.reset_password_token = null as any;
+        user.reset_password_token_expires = null as any;
+
+        await this.userRepository.save(user);
+
+        return new MessageResponseDTO({
+            error: false,
+            message: 'reset_password_success',
         });
     }
 

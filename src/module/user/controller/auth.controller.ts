@@ -13,6 +13,7 @@ import {
     LoginDTO,
     MessageResponseDTO,
     RegisterDTO,
+    ResetPasswordDTO,
     TokenDTO,
     UnauthorizedResponseDto,
 } from '../dtos';
@@ -27,7 +28,7 @@ import { JWT } from '../decorator/jwt.decorator';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
     @Post('register')
     @UseFilters(AuthExceptionFilter)
@@ -96,6 +97,15 @@ export class AuthController {
     })
     async forgotPassword(@Body('email') email: string) {
         return await this.authService.forgotPassword(email);
+    }
+
+    @Post('reset-password')
+    @ApiResponse({
+        status: 201,
+        type: MessageResponseDTO,
+    })
+    async resetPassword(@Body() dto: ResetPasswordDTO) {
+        return await this.authService.resetPassword(dto);
     }
 
     @ApiBearerAuth()

@@ -13,6 +13,7 @@ import { AdminSettingController } from './controller/admin-setting.controller';
 import { UserSettingController } from './controller/user-setting.controller';
 import { AdminStaticPageController } from './controller/admin-static-page.controller';
 import { UserStaticPageController } from './controller/user-static-page.controller';
+import { UserCurrencyController } from './controller/user-currency.controller';
 
 import { DivisionService } from './service/division.service';
 import { AdminDivisionService } from './service/admin-division.service';
@@ -40,6 +41,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
         UserSettingController,
         AdminStaticPageController,
         UserStaticPageController,
+        UserCurrencyController,
     ],
     providers: [
         DivisionService,
@@ -56,4 +58,4 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
         AdminStaticPageService,
     ],
 })
-export class CommonModule {}
+export class CommonModule { }

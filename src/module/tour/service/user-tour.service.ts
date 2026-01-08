@@ -70,7 +70,10 @@ export class UserTourService {
             .andWhere('(tour.published_at IS NULL OR tour.published_at <= NOW())');
     }
 
-    private mapToPopularDTO(tour: TourEntity): UserTourPopularDTO {
+    private mapToPopularDTO(
+        tour: TourEntity,
+        priceFilter?: { minPrice?: number; maxPrice?: number }
+    ): UserTourPopularDTO {
         const coverImage =
             tour.images?.find((img) => img.is_cover) || tour.images?.[0];
         const imageUrl: string =
@@ -97,33 +100,63 @@ export class UserTourService {
         let currentPrice: number = 0;
         let originalPrice: number | undefined;
 
-        // Use cached price if available (for consistency with sorting)
-        if (tour.cached_min_price) {
-            currentPrice = Number(tour.cached_min_price);
-            originalPrice = Math.round(currentPrice * 1.3);
-        } else if (tour.variants && tour.variants.length > 0) {
-            // Fallback: calculate from variants if cache is not set
-            const allPrices: number[] = [];
+        // When price filter is applied, find minimum price within the filter range
+        if (priceFilter && (priceFilter.minPrice || priceFilter.maxPrice)) {
+            const filteredPrices: number[] = [];
 
             tour.variants
-                .filter(
+                ?.filter(
                     (v) =>
                         (v.status as unknown as TourStatus) ===
                         TourStatus.active,
                 )
-                .forEach((activeVariant) => {
-                    if (
-                        activeVariant.tour_variant_pax_type_prices?.length > 0
-                    ) {
-                        activeVariant.tour_variant_pax_type_prices
-                            .filter((p) => p.price > 0)
-                            .forEach((p) => allPrices.push(p.price));
-                    }
+                .forEach((variant) => {
+                    variant.tour_variant_pax_type_prices
+                        ?.filter((p) => p.price > 0)
+                        .forEach((p) => {
+                            const price = p.price;
+                            const meetsMin = !priceFilter.minPrice || price >= priceFilter.minPrice;
+                            const meetsMax = !priceFilter.maxPrice || price <= priceFilter.maxPrice;
+                            if (meetsMin && meetsMax) {
+                                filteredPrices.push(price);
+                            }
+                        });
                 });
 
-            if (allPrices.length > 0) {
-                currentPrice = Math.min(...allPrices);
+            if (filteredPrices.length > 0) {
+                currentPrice = Math.min(...filteredPrices);
                 originalPrice = Math.round(currentPrice * 1.3);
+            }
+        }
+
+        // Fallback to cached price or compute from all variants
+        if (currentPrice === 0) {
+            if (tour.cached_min_price) {
+                currentPrice = Number(tour.cached_min_price);
+                originalPrice = Math.round(currentPrice * 1.3);
+            } else if (tour.variants && tour.variants.length > 0) {
+                const allPrices: number[] = [];
+
+                tour.variants
+                    .filter(
+                        (v) =>
+                            (v.status as unknown as TourStatus) ===
+                            TourStatus.active,
+                    )
+                    .forEach((activeVariant) => {
+                        if (
+                            activeVariant.tour_variant_pax_type_prices?.length > 0
+                        ) {
+                            activeVariant.tour_variant_pax_type_prices
+                                .filter((p) => p.price > 0)
+                                .forEach((p) => allPrices.push(p.price));
+                        }
+                    });
+
+                if (allPrices.length > 0) {
+                    currentPrice = Math.min(...allPrices);
+                    originalPrice = Math.round(currentPrice * 1.3);
+                }
             }
         }
 
@@ -256,30 +289,34 @@ export class UserTourService {
             });
         }
 
-        const priceFilterSubQuery = (
-            operator: '>=' | '<=',
-            paramName: string,
-        ) => `
-            EXISTS (
+        if (typeof query.currency_id === 'number') {
+            qb.andWhere('tour.currency_id = :currencyId', {
+                currencyId: query.currency_id,
+            });
+        }
+
+        if (typeof query.minPrice === 'number' || typeof query.maxPrice === 'number') {
+            const conditions: string[] = ["tvp.price > 0"];
+            const params: any = {};
+
+            if (typeof query.minPrice === 'number') {
+                conditions.push("tvp.price >= :minPrice");
+                params.minPrice = query.minPrice;
+            }
+
+            if (typeof query.maxPrice === 'number') {
+                conditions.push("tvp.price <= :maxPrice");
+                params.maxPrice = query.maxPrice;
+            }
+
+            qb.andWhere(`EXISTS (
                 SELECT 1
                 FROM tour_variants tv
                 INNER JOIN tour_variant_pax_type_prices tvp ON tvp.tour_variant_id = tv.id
                 WHERE tv.tour_id = tour.id
                   AND tv.status = 'active'
-                  AND tvp.price ${operator} :${paramName}
-            )
-        `;
-
-        if (typeof query.minPrice === 'number') {
-            qb.andWhere(priceFilterSubQuery('>=', 'minPrice'), {
-                minPrice: query.minPrice,
-            });
-        }
-
-        if (typeof query.maxPrice === 'number') {
-            qb.andWhere(priceFilterSubQuery('<=', 'maxPrice'), {
-                maxPrice: query.maxPrice,
-            });
+                  AND ${conditions.join(' AND ')}
+            )`, params);
         }
 
         if (query.startDate || query.endDate || query.travelers) {
@@ -347,8 +384,13 @@ export class UserTourService {
 
         const tours = await qb.getMany();
 
+        // Pass price filter to mapToPopularDTO so displayed prices match filter criteria
+        const priceFilter = (typeof query.minPrice === 'number' || typeof query.maxPrice === 'number')
+            ? { minPrice: query.minPrice, maxPrice: query.maxPrice }
+            : undefined;
+
         return {
-            data: tours.map((tour) => this.mapToPopularDTO(tour)),
+            data: tours.map((tour) => this.mapToPopularDTO(tour, priceFilter)),
             total,
             limit,
             offset,

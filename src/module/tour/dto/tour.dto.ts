@@ -806,6 +806,17 @@ export class UserTourSearchQueryDTO {
     startDate?: string;
 
     @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @ApiProperty({
+        required: false,
+        description: 'ID tiền tệ cần lọc',
+        example: 1,
+    })
+    currency_id?: number;
+
+    @IsOptional()
     @IsDateString()
     @ApiProperty({
         required: false,

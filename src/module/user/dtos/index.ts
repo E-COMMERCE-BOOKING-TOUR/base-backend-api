@@ -4,6 +4,7 @@ export * from './register.dto';
 export * from './login.dto';
 export * from './notification.dto';
 export * from './user.dto';
+export * from './reset-password.dto';
 
 export class TokenDTO {
     @ApiProperty({ description: 'Access token', example: 'eaaa' })
