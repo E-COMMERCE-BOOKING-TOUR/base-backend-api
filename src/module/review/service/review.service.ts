@@ -118,7 +118,7 @@ export class ReviewService {
         currentUserId?: number,
     ): Promise<ReviewSummaryDTO[]> {
         const reviews = await this.reviewRepository.find({
-            where: { tour: { id: tourId } },
+            where: { tour: { id: tourId }, status: 'approved' },
             relations: ['user', 'tour', 'helpful_votes', 'helpful_votes.user'],
             order: { created_at: 'DESC' },
         });
