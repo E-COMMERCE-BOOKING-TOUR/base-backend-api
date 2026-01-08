@@ -3,6 +3,7 @@ export interface TokenPayload {
     full_name: string;
     phone?: string;
     email?: string;
+    role?: string;  // User role name (e.g., 'Admin', 'User')
 }
 
 export interface RefreshPayload {

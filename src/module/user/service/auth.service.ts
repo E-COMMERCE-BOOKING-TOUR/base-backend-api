@@ -163,7 +163,7 @@ export class AuthService {
         // Check exists user
         const user = await this.userRepository.findOne({
             where: { username: dto.username },
-            // relations: ['role'],
+            relations: ['role'],  // Include role for JWT payload
         });
         if (!user) {
             throw new UnauthorizedException(
@@ -177,12 +177,13 @@ export class AuthService {
                 'Tài khoản hoặc mật khẩu người dùng không đúng! 2',
             );
         }
-        // Create token
+        // Create token with role included
         const token = await this.getToken({
             uuid: user.uuid,
             full_name: user.full_name,
             phone: user.phone,
             email: user.email,
+            role: user.role?.name,  // Include role name in token
         });
 
         // Merge guest data if guest_id is provided

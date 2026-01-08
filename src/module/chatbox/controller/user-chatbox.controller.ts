@@ -15,7 +15,8 @@ import { AuthGuard } from '@nestjs/passport';
 
 interface AuthenticatedRequest {
     user: {
-        id: number;
+        id?: number;  // Optional - may not be in token
+        uuid: string;
         role: { name: string };
         full_name: string;
     };
@@ -57,9 +58,12 @@ export class UserChatboxController {
             });
         }
 
+        // Use uuid for userId - token only contains uuid
+        const userId = currentUser.uuid;
+
         const participants = [
             {
-                userId: currentUser.id.toString(),
+                userId,
                 role: currentUser.role.name.toUpperCase(),
                 name: currentUser.full_name,
             },
@@ -68,7 +72,7 @@ export class UserChatboxController {
 
         // Sync user info to update name in all existing conversations
         this.userChatboxService.syncUser({
-            userId: currentUser.id.toString(),
+            userId,
             name: currentUser.full_name,
         });
 
@@ -85,9 +89,12 @@ export class UserChatboxController {
         @Param('supplierId') supplierId: string,
     ) {
         const currentUser = req.user;
+        // Use uuid for userId - token only contains uuid
+        const userId = currentUser.uuid;
+
         const participants = [
             {
-                userId: currentUser.id.toString(),
+                userId,
                 role: currentUser.role.name.toUpperCase(),
                 name: currentUser.full_name,
             },
@@ -96,7 +103,7 @@ export class UserChatboxController {
 
         // Sync user info to update name in all existing conversations
         this.userChatboxService.syncUser({
-            userId: currentUser.id.toString(),
+            userId,
             name: currentUser.full_name,
         });
 
@@ -108,9 +115,7 @@ export class UserChatboxController {
     @UseGuards(AuthGuard('jwt'))
     @ApiBearerAuth()
     getMyConversations(@Request() req: AuthenticatedRequest) {
-        return this.userChatboxService.getUserConversations(
-            req.user.id.toString(),
-        );
+        return this.userChatboxService.getUserConversations(req.user.uuid);
     }
 
     @Get('messages/:conversationId')
@@ -124,7 +129,8 @@ export class UserChatboxController {
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Get recent bookings for chat context selection' })
     async getRecentBookings(@Request() req: AuthenticatedRequest) {
-        return this.chatRoutingService.getUserRecentBookings(req.user.id);
+        // Use id if available for DB queries, otherwise try uuid lookup
+        return this.chatRoutingService.getUserRecentBookings(req.user.id ?? 0);
     }
 
     // 5. Build chat context from tour/booking info
