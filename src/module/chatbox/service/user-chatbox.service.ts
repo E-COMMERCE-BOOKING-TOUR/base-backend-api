@@ -1,14 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { ChatContext } from './chat-routing.service';
 
 @Injectable()
 export class UserChatboxService {
-    constructor(@Inject('CHATBOX_SERVICE') private client: ClientProxy) {}
+    constructor(@Inject('CHATBOX_SERVICE') private client: ClientProxy) { }
 
     createConversation(
         participants: { userId: string; role: string; name?: string }[],
+        context?: ChatContext,
     ) {
-        return this.client.send({ cmd: 'create_conversation' }, participants);
+        return this.client.send({ cmd: 'create_conversation' }, { participants, context });
     }
 
     getUserConversations(userId: string) {
