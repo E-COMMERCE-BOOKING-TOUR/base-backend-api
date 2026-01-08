@@ -9,10 +9,11 @@ import { AdminChatboxService } from './service/admin-chatbox.service';
 import { ChatRoutingService } from './service/chat-routing.service';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
 import { BookingEntity } from '@/module/booking/entity/booking.entity';
+import { UserEntity } from '@/module/user/entity/user.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([TourEntity, BookingEntity]),
+        TypeOrmModule.forFeature([TourEntity, BookingEntity, UserEntity]),
         ClientsModule.registerAsync([
             {
                 name: 'CHATBOX_SERVICE',

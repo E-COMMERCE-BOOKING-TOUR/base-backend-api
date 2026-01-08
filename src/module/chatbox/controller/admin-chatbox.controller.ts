@@ -21,7 +21,7 @@ import { RolesGuard } from '@/module/user/guard/roles.guard';
 @Roles('admin')
 @Controller('admin/chatbox')
 export class AdminChatboxController {
-    constructor(private readonly adminChatboxService: AdminChatboxService) {}
+    constructor(private readonly adminChatboxService: AdminChatboxService) { }
 
     @Get('conversations')
     getAllConversations(
@@ -79,5 +79,10 @@ export class AdminChatboxController {
             id,
             body.isHumanTakeover,
         );
+    }
+
+    @Post('sync-user-names')
+    syncUserNames(@Body() body: { users: { userId: string; name: string }[] }) {
+        return this.adminChatboxService.syncUserNames(body.users);
     }
 }

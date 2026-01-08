@@ -66,6 +66,12 @@ export class UserChatboxController {
             { userId: 'ADMIN_SYSTEM', role: 'ADMIN', name: 'System Admin' },
         ];
 
+        // Sync user info to update name in all existing conversations
+        this.userChatboxService.syncUser({
+            userId: currentUser.id.toString(),
+            name: currentUser.full_name,
+        });
+
         // Pass context to conversation creation
         return this.userChatboxService.createConversation(participants, context);
     }
@@ -87,6 +93,13 @@ export class UserChatboxController {
             },
             { userId: supplierId, role: 'SUPPLIER' },
         ];
+
+        // Sync user info to update name in all existing conversations
+        this.userChatboxService.syncUser({
+            userId: currentUser.id.toString(),
+            name: currentUser.full_name,
+        });
+
         return this.userChatboxService.createConversation(participants);
     }
 
