@@ -92,4 +92,34 @@ export class AdminUserController {
         const success = await this.userService.removeUser(id);
         return { success };
     }
+
+    @Post('reset-password/:id')
+    @Permissions('user:update')
+    @ApiOperation({ summary: 'Reset mật khẩu người dùng' })
+    async resetPassword(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { newPassword?: string },
+    ) {
+        // Generate a random password if not provided
+        const newPassword = body.newPassword || this.generateRandomPassword();
+        const hashedPassword = await hashPassword(newPassword);
+
+        await this.userService.updateUser(id, { password: hashedPassword });
+
+        return {
+            success: true,
+            message: 'Đã đặt lại mật khẩu thành công',
+            // Only return password for admin to share with user
+            newPassword: newPassword,
+        };
+    }
+
+    private generateRandomPassword(): string {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let result = '';
+        for (let i = 0; i < 10; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
 }
