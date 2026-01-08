@@ -13,6 +13,7 @@ import { generateUUID } from '@/utils/uuid.util';
 import { comparePassword, hashPassword } from '@/utils/bcrypt.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserAuthSessionEntity } from '../entity/userAuthSession.entity';
+import { RoleEntity } from '../entity/role.entity';
 import { JwtService } from '@nestjs/jwt';
 import { JWTRefresh, RefreshPayload, TokenPayload } from '../types';
 import { jwtRefreshTokenConfig } from '@/config/jwt.config';
@@ -31,6 +32,8 @@ export class AuthService {
         private readonly userRepository: Repository<UserEntity>,
         @InjectRepository(UserAuthSessionEntity)
         private readonly userAuthSessionRepository: Repository<UserAuthSessionEntity>,
+        @InjectRepository(RoleEntity)
+        private readonly roleRepository: Repository<RoleEntity>,
         private readonly jwtService: JwtService,
         private readonly dataSource: DataSource,
         private readonly mailService: MailService,
@@ -53,6 +56,11 @@ export class AuthService {
             );
         }
 
+        // Find 'customer' role to assign as default
+        const customerRole = await this.roleRepository.findOne({
+            where: { name: 'customer' },
+        });
+
         // Hash password
         const hashedPassword = await hashPassword(dto.password);
         const data: DeepPartial<UserEntity> = {
@@ -61,6 +69,7 @@ export class AuthService {
             status: 1,
             login_type: 0,
             password: hashedPassword,
+            role: customerRole || undefined,
         };
 
         try {
