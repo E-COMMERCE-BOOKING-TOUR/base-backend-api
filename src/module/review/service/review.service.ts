@@ -34,7 +34,11 @@ export class ReviewService {
     async getAllReviews(
         query: AdminReviewQueryDTO,
         user?: UserEntity,
-    ): Promise<ReviewSummaryDTO[]> {
+    ): Promise<{ data: ReviewSummaryDTO[]; total: number; page: number; limit: number; totalPages: number }> {
+        const page = query.page || 1;
+        const limit = query.limit || 10;
+        const skip = (page - 1) * limit;
+
         const queryBuilder = this.reviewRepository
             .createQueryBuilder('review')
             .leftJoinAndSelect('review.user', 'user')
@@ -73,9 +77,11 @@ export class ReviewService {
             query.sortOrder || 'DESC',
         );
 
-        const reviews = await queryBuilder.getMany();
+        const total = await queryBuilder.getCount();
+        const reviews = await queryBuilder.skip(skip).take(limit).getMany();
+        const totalPages = Math.ceil(total / limit);
 
-        return reviews.map(
+        const data = reviews.map(
             (r) =>
                 new ReviewSummaryDTO({
                     id: r.id,
@@ -103,6 +109,8 @@ export class ReviewService {
                     deleted_at: r.deleted_at ?? undefined,
                 } as Partial<ReviewSummaryDTO>),
         );
+
+        return { data, total, page, limit, totalPages };
     }
 
     async getReviewsByTour(

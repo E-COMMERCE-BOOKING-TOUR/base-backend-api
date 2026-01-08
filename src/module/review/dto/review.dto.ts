@@ -257,4 +257,18 @@ export class AdminReviewQueryDTO {
     @IsIn(['ASC', 'DESC'])
     @ApiProperty({ required: false, enum: ['ASC', 'DESC'], default: 'DESC' })
     sortOrder?: 'ASC' | 'DESC';
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ required: false, default: 1 })
+    page?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @ApiProperty({ required: false, default: 10 })
+    limit?: number;
 }
