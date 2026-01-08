@@ -46,31 +46,53 @@ export class AdminChatboxService {
             ),
         );
 
-        // Collect all user IDs that need name lookup
-        const userIdsToLookup = new Set<number>();
+        // Roles that should have their names looked up from users table
+        const userRoles = ['USER', 'user', 'CUSTOMER', 'customer'];
+
+        // Collect all user IDs that need name lookup (both numeric ID and UUID)
+        const numericIdsToLookup = new Set<number>();
+        const uuidIdsToLookup = new Set<string>();
+
         for (const convo of result.data) {
             for (const p of convo.participants) {
-                // Only look up USER role participants without names
-                if (p.role === 'USER' && !p.name && !isNaN(parseInt(p.userId, 10))) {
-                    userIdsToLookup.add(parseInt(p.userId, 10));
+                // Only look up participants without names and with user-like roles
+                if (userRoles.includes(p.role) && !p.name) {
+                    // Check if it's a numeric ID
+                    const numericId = parseInt(p.userId, 10);
+                    if (!isNaN(numericId) && numericId.toString() === p.userId) {
+                        numericIdsToLookup.add(numericId);
+                    } else {
+                        // Treat as UUID
+                        uuidIdsToLookup.add(p.userId);
+                    }
                 }
             }
         }
 
         // Fetch user names from database
-        if (userIdsToLookup.size > 0) {
+        const userMap = new Map<string, string>();
+
+        if (numericIdsToLookup.size > 0) {
             const users = await this.userRepo.find({
-                where: { id: In([...userIdsToLookup]) },
+                where: { id: In([...numericIdsToLookup]) },
                 select: ['id', 'full_name'],
             });
-            const userMap = new Map(users.map((u) => [u.id.toString(), u.full_name]));
+            users.forEach((u) => userMap.set(u.id.toString(), u.full_name));
+        }
 
-            // Enrich conversation participants with names
-            for (const convo of result.data) {
-                for (const p of convo.participants) {
-                    if (p.role === 'USER' && !p.name && userMap.has(p.userId)) {
-                        p.name = userMap.get(p.userId);
-                    }
+        if (uuidIdsToLookup.size > 0) {
+            const users = await this.userRepo.find({
+                where: { uuid: In([...uuidIdsToLookup]) },
+                select: ['uuid', 'full_name'],
+            });
+            users.forEach((u) => userMap.set(u.uuid, u.full_name));
+        }
+
+        // Enrich conversation participants with names
+        for (const convo of result.data) {
+            for (const p of convo.participants) {
+                if (userRoles.includes(p.role) && !p.name && userMap.has(p.userId)) {
+                    p.name = userMap.get(p.userId);
                 }
             }
         }
