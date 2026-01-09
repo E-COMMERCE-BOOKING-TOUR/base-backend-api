@@ -4,7 +4,7 @@
 set -e
 
 echo "Running migrations..."
-npm run migration:run
+npm run migration:run:prod
 
 echo "Starting application..."
 npm run start:prod
