@@ -25,7 +25,7 @@ import { AuthGuard } from '@nestjs/passport';
 @ApiTags('User Article')
 @Controller('user/article')
 export class UserArticleController {
-    constructor(private readonly articleServiceProxy: ArticleServiceProxy) {}
+    constructor(private readonly articleServiceProxy: ArticleServiceProxy) { }
 
     @Get('popular')
     @ApiOperation({ summary: 'Get popular articles' })
@@ -137,7 +137,7 @@ export class UserArticleController {
         @Body() dto: ArticleDetailDTO,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.articleServiceProxy.createArticle(user.uuid, dto);
+        return this.articleServiceProxy.createArticle(user.uuid, user.full_name, user.avatar_url, dto);
     }
 
     @Post('update/:id')
@@ -193,6 +193,8 @@ export class UserArticleController {
         return this.articleServiceProxy.addComment(
             body.articleId,
             user.id,
+            user.full_name,
+            user.avatar_url,
             body.content,
         );
     }

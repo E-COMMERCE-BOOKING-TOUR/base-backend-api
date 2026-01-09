@@ -28,8 +28,12 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 -G nodejs && \
     chown -R nestjs:nodejs /usr/src/app
 
+# Copy startup script
+COPY startup.sh ./
+RUN chmod +x startup.sh
+
 USER nestjs
 
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["./startup.sh"]

@@ -50,6 +50,10 @@ export class UserEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Số điện thoại người dùng' })
     public phone: string;
 
+    @Column({ nullable: true })
+    @ApiProperty({ description: 'Ảnh đại diện người dùng' })
+    public avatar_url: string;
+
     @Exclude()
     @Column({
         type: 'smallint',
@@ -132,6 +136,7 @@ export class UserEntity extends BaseEntityTimestamp {
             full_name: this.full_name,
             email: this.email,
             phone: this.phone,
+            avatar_url: this.avatar_url,
             role: this.role ? (typeof this.role.toJSON === 'function' ? this.role.toJSON() : this.role) : null,
             supplier: this.supplier,
         };

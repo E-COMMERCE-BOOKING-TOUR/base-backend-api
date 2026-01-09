@@ -166,6 +166,11 @@ export class UpdateUserDTO {
     role_id?: number;
 
     @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Ảnh đại diện người dùng', required: false })
+    avatar_url?: string;
+
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày cập nhật', required: false })
@@ -183,10 +188,15 @@ export class UpdateProfileDTO {
     @ApiProperty({ description: 'Số điện thoại người dùng', required: false })
     phone?: string;
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    @ApiProperty({ description: 'Mật khẩu cũ để xác nhận' })
-    oldPassword: string;
+    @ApiProperty({ description: 'Ảnh đại diện người dùng', required: false })
+    avatar_url?: string;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Mật khẩu cũ để xác nhận', required: false })
+    oldPassword?: string;
 }
 
 export class ChangePasswordDTO {
@@ -220,6 +230,9 @@ export class UserSummaryDTO {
 
     @ApiProperty({ required: false })
     phone?: string;
+
+    @ApiProperty({ required: false })
+    avatar_url?: string;
 
     @ApiProperty({ enum: UserStatus })
     status: UserStatus;

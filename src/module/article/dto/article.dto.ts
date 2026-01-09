@@ -78,6 +78,11 @@ export class ArticleDTO {
     images?: ArticleImageDTO[];
 
     @IsOptional()
+    @IsString()
+    @ApiProperty({ description: 'Thời tiết khi đăng bài', required: false })
+    weather?: string;
+
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
     @ApiProperty({ description: 'Ngày tạo', required: false })

@@ -22,6 +22,7 @@ export interface ArticleResponse {
     user_id?: string | number;
     tour_id?: string | number;
     tags?: string[];
+    weather?: string;
     users_like?: string[];
     users_bookmark?: string[];
     is_visible?: boolean;
@@ -40,7 +41,7 @@ export class ArticleServiceProxy {
         private readonly userRepository: Repository<UserEntity>,
         @Inject(forwardRef(() => NotificationService))
         private readonly notificationService: NotificationService,
-    ) {}
+    ) { }
 
     async getArticleBySlug(slug: string): Promise<ArticleResponse> {
         return lastValueFrom(this.client.send('getArticleBySlug', slug));
@@ -50,28 +51,14 @@ export class ArticleServiceProxy {
         return lastValueFrom(this.client.send('get_article_by_id', id));
     }
 
-    async createArticle(userUuid: string, dto: ArticleDetailDTO): Promise<any> {
-        const article = {
-            title: dto.title,
-            content: dto.content,
-            user_id: userUuid,
-            count_likes: 0,
-            count_views: 0,
-            count_comments: 0,
-            tour_id: dto.tour_id ?? undefined,
-            comments: [],
-            users_like: [],
-            tags: dto.tags || [],
-            images: dto.images || [],
-            is_visible: true,
-        };
-        console.log(
-            'Creating article with user_id (UUID):',
-            userUuid,
-            'Article:',
-            JSON.stringify(article),
+    async createArticle(userUuid: string, userName: string, userAvatar: string | undefined, dto: ArticleDetailDTO): Promise<any> {
+        return lastValueFrom(
+            this.client.send('create_article', {
+                ...dto,
+                user_id: userUuid,
+                user: { name: userName, avatar: userAvatar },
+            }),
         );
-        return lastValueFrom(this.client.send('create_article', article));
     }
 
     async getAllArticles(): Promise<ArticleResponse[]> {
@@ -99,12 +86,15 @@ export class ArticleServiceProxy {
     async addComment(
         articleId: string,
         userId: number,
+        userName: string,
+        userAvatar: string | undefined,
         content: string,
-    ): Promise<void> {
-        await lastValueFrom(
+    ): Promise<any> {
+        const result = await lastValueFrom(
             this.client.send('add_comment', {
                 article_id: articleId,
-                user_id: userId,
+                user_id: userId.toString(),
+                user: { name: userName, avatar: userAvatar },
                 content,
             }),
         );
@@ -130,6 +120,35 @@ export class ArticleServiceProxy {
         } catch (error) {
             console.error('Failed to send comment notification:', error);
         }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return result;
+    }
+
+    /**
+     * Update user info across all articles and comments in social service
+     */
+    async syncUserInfo(userId: string, name?: string, avatar?: string): Promise<{ articlesUpdated: number; commentsUpdated: number }> {
+        console.log('[syncUserInfo] Syncing user info to social service:', { userId, name, avatar });
+        try {
+            const result = await lastValueFrom(
+                this.client.send('sync_user_info', { userId, name, avatar }),
+            );
+            console.log('[syncUserInfo] Sync completed:', result);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return result;
+        } catch (error) {
+            console.error('[syncUserInfo] Failed to sync user info:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update user name across all articles and comments in social service
+     * @deprecated Use syncUserInfo instead
+     */
+    async updateUserName(userId: string, name: string): Promise<{ articlesUpdated: number; commentsUpdated: number }> {
+        return this.syncUserInfo(userId, name);
     }
 
     async likeArticle(id: string, userId: string): Promise<void> {
@@ -281,9 +300,19 @@ export class ArticleServiceProxy {
         const tours =
             tourIds.length > 0
                 ? await this.tourRepository.find({
-                      where: { id: In(tourIds) },
-                      select: ['id', 'title', 'slug'],
-                  })
+                    where: { id: In(tourIds) },
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                        address: true,
+                        division: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                    relations: ['division'],
+                })
                 : [];
 
         const tourMap = new Map(tours.map((t) => [t.id, t]));
@@ -302,19 +331,23 @@ export class ArticleServiceProxy {
                     count_likes: article?.count_likes,
                     count_comments: article?.count_comments,
                     tour_id: article?.tour_id,
-
                     tour: tourMap.get(Number(article.tour_id)) as unknown,
                     user_id: article?.user_id,
+                    user: article?.user,
+                    weather: article?.weather,
                     users_like: article?.users_like || [],
                     users_bookmark: article?.users_bookmark || [],
                     is_visible: article?.is_visible,
                     comments:
                         article?.comments?.map(
                             (comment: ArticleCommentDetailDTO) => ({
-                                id: comment.id,
+                                // MongoDB returns _id, map to both id and _id for compatibility
+                                id: (comment as unknown as { _id?: string })._id || comment.id,
+                                _id: (comment as unknown as { _id?: string })._id,
                                 content: comment.content,
                                 parent_id: comment.parent_id,
                                 user_id: comment.user_id,
+                                user: (comment as unknown as { user?: { name: string; avatar: string } }).user,
                                 created_at: comment.created_at,
                                 updated_at: comment.updated_at,
                             }),
