@@ -41,6 +41,7 @@ jobs:
       - name: Run migration check
         run: npm run migration:check
         env:
+          DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_USERNAME: ${{ secrets.CI_DB_USERNAME }}
