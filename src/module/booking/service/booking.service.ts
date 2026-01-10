@@ -165,7 +165,7 @@ export class BookingService {
         try {
             const queryBuilder = this.bookingRepository
                 .createQueryBuilder('booking')
-                .leftJoinAndSelect('booking.user', 'user')
+                .leftJoinAndSelect('booking.user', 'booking_user')
                 .leftJoinAndSelect('booking.currency', 'currency')
                 .leftJoinAndSelect('booking.booking_payment', 'booking_payment')
                 .leftJoinAndSelect(
@@ -181,7 +181,12 @@ export class BookingService {
                 .leftJoinAndSelect('variant.tour', 'tour')
                 .orderBy('booking.created_at', 'DESC');
 
-            if (user?.supplier) {
+            // Robust check for admin or superadmin role
+            const roleName = user?.role?.name?.toLowerCase();
+            const isAdmin = roleName === 'admin' || roleName === 'superadmin';
+
+            // Non-admin users with a supplier ID only see bookings containing their own items
+            if (!isAdmin && user?.supplier?.id) {
                 queryBuilder.andWhere('tour.supplier_id = :supplierId', {
                     supplierId: user.supplier.id,
                 });
@@ -755,13 +760,9 @@ export class BookingService {
                 booking.status === BookingStatus.waiting_supplier) &&
             booking.payment_status === PaymentStatus.paid
         ) {
-            let refundAmount = 0;
-            if (booking.status === BookingStatus.waiting_supplier) {
-                refundAmount = Number(booking.total_amount);
-            } else {
-                const result = await this.calculateRefund(id);
-                refundAmount = result.refundAmount;
-            }
+            // Always calculate refund based on policy
+            const result = await this.calculateRefund(id);
+            const refundAmount = result.refundAmount;
 
             const stripeChargeId =
                 booking.payment_information?.stripe_charge_id;

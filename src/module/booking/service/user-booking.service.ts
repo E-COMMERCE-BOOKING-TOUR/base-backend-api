@@ -748,7 +748,7 @@ export class UserBookingService {
     ): Promise<{ success: boolean; message: string; refundAmount: number }> {
         const booking = await this.bookingRepository.findOne({
             where: { id, user: { uuid: user.uuid } },
-            relations: ['currency', 'tour_inventory_hold'],
+            relations: ['currency', 'tour_inventory_hold', 'payment_information'],
         });
 
         if (!booking) throw new NotFoundException('Booking not found');
@@ -762,13 +762,9 @@ export class UserBookingService {
             );
         }
 
-        let refundAmount = 0;
-        if (booking.status === BookingStatus.waiting_supplier) {
-            refundAmount = Number(booking.total_amount);
-        } else {
-            const result = await this.calculateRefund(id);
-            refundAmount = result.refundAmount;
-        }
+        // Always calculate refund based on policy, regardless of status
+        const result = await this.calculateRefund(id);
+        const refundAmount = result.refundAmount;
 
         const stripeChargeId = booking.payment_information?.stripe_charge_id;
 
