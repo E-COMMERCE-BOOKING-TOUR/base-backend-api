@@ -37,6 +37,7 @@ export default class RoleSeeder implements Seeder {
             (p) =>
                 p.permission_name.startsWith('tour:') ||
                 p.permission_name.startsWith('booking:') ||
+                p.permission_name.startsWith('chatbox:') ||
                 p.permission_name === 'review:read' ||
                 p.permission_name === 'report:read',
         );

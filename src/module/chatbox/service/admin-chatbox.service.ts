@@ -3,6 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { UserEntity } from '@/module/user/entity/user.entity';
+import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 import { firstValueFrom } from 'rxjs';
 
 export interface Participant {
@@ -36,6 +37,7 @@ export class AdminChatboxService {
     constructor(
         @Inject('CHATBOX_SERVICE') private client: ClientProxy,
         @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
+        @InjectRepository(SupplierEntity) private supplierRepo: Repository<SupplierEntity>,
     ) { }
 
     async getAllConversations(page: number, limit: number) {
@@ -48,22 +50,29 @@ export class AdminChatboxService {
 
         // Roles that should have their names looked up from users table
         const userRoles = ['USER', 'user', 'CUSTOMER', 'customer'];
+        const supplierRoles = ['SUPPLIER', 'supplier'];
 
-        // Collect all user IDs that need name lookup (both numeric ID and UUID)
+        // Collect all IDs that need name lookup
         const numericIdsToLookup = new Set<number>();
         const uuidIdsToLookup = new Set<string>();
+        const supplierIdsToLookup = new Set<number>();
 
         for (const convo of result.data) {
             for (const p of convo.participants) {
-                // Only look up participants without names and with user-like roles
-                if (userRoles.includes(p.role) && !p.name) {
-                    // Check if it's a numeric ID
-                    const numericId = parseInt(p.userId, 10);
-                    if (!isNaN(numericId) && numericId.toString() === p.userId) {
-                        numericIdsToLookup.add(numericId);
-                    } else {
-                        // Treat as UUID
-                        uuidIdsToLookup.add(p.userId);
+                if (!p.name) {
+                    if (supplierRoles.includes(p.role)) {
+                        // Supplier participants use supplier entity ID
+                        const supplierId = parseInt(p.userId, 10);
+                        if (!isNaN(supplierId)) {
+                            supplierIdsToLookup.add(supplierId);
+                        }
+                    } else if (userRoles.includes(p.role)) {
+                        const numericId = parseInt(p.userId, 10);
+                        if (!isNaN(numericId) && numericId.toString() === p.userId) {
+                            numericIdsToLookup.add(numericId);
+                        } else {
+                            uuidIdsToLookup.add(p.userId);
+                        }
                     }
                 }
             }
@@ -88,11 +97,25 @@ export class AdminChatboxService {
             users.forEach((u) => userMap.set(u.uuid, u.full_name));
         }
 
+        // Fetch supplier names
+        const supplierMap = new Map<string, string>();
+        if (supplierIdsToLookup.size > 0) {
+            const suppliers = await this.supplierRepo.find({
+                where: { id: In([...supplierIdsToLookup]) },
+                select: ['id', 'name'],
+            });
+            suppliers.forEach((s) => supplierMap.set(s.id.toString(), s.name));
+        }
+
         // Enrich conversation participants with names
         for (const convo of result.data) {
             for (const p of convo.participants) {
-                if (userRoles.includes(p.role) && !p.name && userMap.has(p.userId)) {
-                    p.name = userMap.get(p.userId);
+                if (!p.name) {
+                    if (supplierRoles.includes(p.role) && supplierMap.has(p.userId)) {
+                        p.name = supplierMap.get(p.userId);
+                    } else if (userRoles.includes(p.role) && userMap.has(p.userId)) {
+                        p.name = userMap.get(p.userId);
+                    }
                 }
             }
         }

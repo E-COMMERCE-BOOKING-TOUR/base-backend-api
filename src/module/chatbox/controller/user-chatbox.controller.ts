@@ -12,6 +12,10 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery, ApiBody } from '@nestjs
 import { UserChatboxService } from '../service/user-chatbox.service';
 import { ChatRoutingService, ChatContext } from '../service/chat-routing.service';
 import { AuthGuard } from '@nestjs/passport';
+import { lastValueFrom } from 'rxjs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserEntity } from '@/module/user/entity/user.entity';
 
 interface AuthenticatedRequest {
     user: {
@@ -34,7 +38,20 @@ export class UserChatboxController {
     constructor(
         private readonly userChatboxService: UserChatboxService,
         private readonly chatRoutingService: ChatRoutingService,
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>,
     ) { }
+
+    /**
+     * Normalize role name to match chat schema: 'USER' | 'ADMIN' | 'SUPPLIER'
+     * Maps customer, content_manager, moderator, etc. to 'USER'
+     */
+    private normalizeChatRole(roleName: string): 'USER' | 'ADMIN' | 'SUPPLIER' {
+        const upperRole = roleName.toUpperCase();
+        if (upperRole === 'ADMIN') return 'ADMIN';
+        if (upperRole === 'SUPPLIER') return 'SUPPLIER';
+        return 'USER'; // Default: customer, content_manager, moderator, etc. → USER
+    }
 
     // 1. User/Supplier starts chat with Admin (with optional context)
     @Post('start/admin')
@@ -64,17 +81,24 @@ export class UserChatboxController {
         const participants = [
             {
                 userId,
-                role: currentUser.role.name.toUpperCase(),
+                role: this.normalizeChatRole(currentUser.role.name),
                 name: currentUser.full_name,
             },
             { userId: 'ADMIN_SYSTEM', role: 'ADMIN', name: 'System Admin' },
         ];
 
-        // Sync user info to update name in all existing conversations
-        this.userChatboxService.syncUser({
-            userId,
-            name: currentUser.full_name,
-        });
+        // Sync user info to update name in all existing conversations (only if name is valid)
+        if (currentUser.full_name) {
+            try {
+                await lastValueFrom(this.userChatboxService.syncUser({
+                    userId,
+                    name: currentUser.full_name,
+                }));
+            } catch (error) {
+                console.error('Failed to sync user info:', error);
+                // Continue with conversation creation even if sync fails
+            }
+        }
 
         // Pass context to conversation creation
         return this.userChatboxService.createConversation(participants, context);
@@ -84,7 +108,7 @@ export class UserChatboxController {
     @Post('start/supplier/:supplierId')
     @UseGuards(AuthGuard('jwt'))
     @ApiBearerAuth()
-    startChatWithSupplier(
+    async startChatWithSupplier(
         @Request() req: AuthenticatedRequest,
         @Param('supplierId') supplierId: string,
     ) {
@@ -92,22 +116,49 @@ export class UserChatboxController {
         // Use uuid for userId - token only contains uuid
         const userId = currentUser.uuid;
 
+        // The supplierId from frontend is the supplier entity ID (from suppliers table)
+        // We store this directly in the conversation so supplier users can query by their supplier_id
+        const supplierIdNum = parseInt(supplierId, 10);
+        let supplierUserIdInConvo = supplierId; // Store supplier entity ID
+        let supplierName: string | undefined;
+
+        if (!isNaN(supplierIdNum)) {
+            // Lookup supplier name from supplier entity
+            const supplierUser = await this.userRepository.findOne({
+                where: { supplier: { id: supplierIdNum } },
+                relations: ['supplier'],
+                select: ['id', 'full_name', 'supplier'],
+            });
+            if (supplierUser?.supplier) {
+                supplierName = supplierUser.supplier.name || supplierUser.full_name;
+            }
+        }
+
         const participants = [
             {
                 userId,
-                role: currentUser.role.name.toUpperCase(),
+                role: this.normalizeChatRole(currentUser.role.name),
                 name: currentUser.full_name,
             },
-            { userId: supplierId, role: 'SUPPLIER' },
+            // Store supplier entity ID (numeric) as string - matches what supplier users have in their token
+            { userId: supplierIdNum.toString(), role: 'SUPPLIER', name: supplierName },
         ];
 
-        // Sync user info to update name in all existing conversations
-        this.userChatboxService.syncUser({
-            userId,
-            name: currentUser.full_name,
-        });
+        // Sync user info to update name in all existing conversations (only if name is valid)
+        if (currentUser.full_name) {
+            try {
+                await lastValueFrom(this.userChatboxService.syncUser({
+                    userId,
+                    name: currentUser.full_name,
+                }));
+            } catch (error) {
+                console.error('Failed to sync user info:', error);
+                // Continue with conversation creation even if sync fails
+            }
+        }
 
-        return this.userChatboxService.createConversation(participants);
+        // Supplier conversations don't need AI support
+        return this.userChatboxService.createConversation(participants, undefined, { isAiEnabled: false });
     }
 
     // 3. Get my conversations

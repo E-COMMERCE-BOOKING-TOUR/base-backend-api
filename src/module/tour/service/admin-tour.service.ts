@@ -739,11 +739,13 @@ export class AdminTourService {
             );
 
             if (response && response.vector) {
-                tour.vector = response.vector;
-                tour.insight_data = response.insights
-                    ? JSON.stringify(response.insights)
-                    : `Generated insight.`;
-                await this.tourRepository.save(tour);
+                // Use update instead of save to avoid cascading issues with images
+                await this.tourRepository.update(tourId, {
+                    vector: response.vector,
+                    insight_data: response.insights
+                        ? JSON.stringify(response.insights)
+                        : `Generated insight.`,
+                });
             }
         } catch (error) {
             console.error(

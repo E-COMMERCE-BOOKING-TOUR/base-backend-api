@@ -137,6 +137,10 @@ export default class PermissionSeeder implements Seeder {
             { permission_name: 'currency:create', description: 'Tạo tiền tệ' },
             { permission_name: 'currency:update', description: 'Cập nhật tiền tệ' },
             { permission_name: 'currency:delete', description: 'Xóa tiền tệ' },
+
+            // Chatbox permissions
+            { permission_name: 'chatbox:read', description: 'Xem tin nhắn' },
+            { permission_name: 'chatbox:reply', description: 'Trả lời tin nhắn' },
         ];
 
         for (const permission of permissions) {

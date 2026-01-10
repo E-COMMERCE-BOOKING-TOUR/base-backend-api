@@ -6,14 +6,17 @@ import { UserChatboxService } from './service/user-chatbox.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AdminChatboxController } from './controller/admin-chatbox.controller';
 import { AdminChatboxService } from './service/admin-chatbox.service';
+import { SupplierChatboxController } from './controller/supplier-chatbox.controller';
+import { SupplierChatboxService } from './service/supplier-chatbox.service';
 import { ChatRoutingService } from './service/chat-routing.service';
 import { TourEntity } from '@/module/tour/entity/tour.entity';
 import { BookingEntity } from '@/module/booking/entity/booking.entity';
 import { UserEntity } from '@/module/user/entity/user.entity';
+import { SupplierEntity } from '@/module/user/entity/supplier.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([TourEntity, BookingEntity, UserEntity]),
+        TypeOrmModule.forFeature([TourEntity, BookingEntity, UserEntity, SupplierEntity]),
         ClientsModule.registerAsync([
             {
                 name: 'CHATBOX_SERVICE',
@@ -35,8 +38,8 @@ import { UserEntity } from '@/module/user/entity/user.entity';
             },
         ]),
     ],
-    controllers: [UserChatboxController, AdminChatboxController],
-    providers: [UserChatboxService, AdminChatboxService, ChatRoutingService],
-    exports: [UserChatboxService, AdminChatboxService, ChatRoutingService],
+    controllers: [UserChatboxController, AdminChatboxController, SupplierChatboxController],
+    providers: [UserChatboxService, AdminChatboxService, SupplierChatboxService, ChatRoutingService],
+    exports: [UserChatboxService, AdminChatboxService, SupplierChatboxService, ChatRoutingService],
 })
 export class ChatboxModule { }

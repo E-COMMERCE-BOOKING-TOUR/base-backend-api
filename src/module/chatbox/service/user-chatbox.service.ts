@@ -9,8 +9,9 @@ export class UserChatboxService {
     createConversation(
         participants: { userId: string; role: string; name?: string }[],
         context?: ChatContext,
+        options?: { isAiEnabled?: boolean },
     ) {
-        return this.client.send({ cmd: 'create_conversation' }, { participants, context });
+        return this.client.send({ cmd: 'create_conversation' }, { participants, context, ...options });
     }
 
     getUserConversations(userId: string) {
@@ -22,7 +23,8 @@ export class UserChatboxService {
     }
 
     syncUser(data: { userId: string; name: string }) {
-        return this.client.emit({ cmd: 'update_user_info' }, data);
+        // Use send() instead of emit() for reliability - waits for acknowledgment
+        return this.client.send({ cmd: 'update_user_info' }, data);
     }
 
     toggleAi(conversationId: string, isAiEnabled: boolean) {
