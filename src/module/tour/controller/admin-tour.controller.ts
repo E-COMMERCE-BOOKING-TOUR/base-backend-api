@@ -196,6 +196,13 @@ export class AdminTourController {
         return this.adminTourService.getCurrencies();
     }
 
+    @Get('metadata/pax-types')
+    @Permissions('tour:read')
+    @ApiOperation({ summary: 'Get all pax types' })
+    async getPaxTypes() {
+        return this.adminTourService.getPaxTypes();
+    }
+
     @Get('policies/:supplierId')
     @Permissions('tour:read')
     @ApiParam({ name: 'supplierId', type: Number })

@@ -6,6 +6,7 @@ import { TourImageEntity } from '../entity/tourImage.entity';
 import { TourVariantEntity } from '../entity/tourVariant.entity';
 import { TourSessionEntity } from '../entity/tourSession.entity';
 import { TourVariantPaxTypePriceEntity } from '../entity/tourVariantPaxTypePrice.entity';
+import { TourPaxTypeEntity } from '../entity/tourPaxType.entity';
 import { CurrencyEntity } from '@/common/entity/currency.entity';
 import { CountryEntity } from '@/common/entity/country.entity';
 import { DivisionEntity } from '@/common/entity/division.entity';
@@ -60,10 +61,17 @@ export class AdminTourService {
         private readonly categoryRepository: Repository<TourCategoryEntity>,
         @InjectRepository(BookingItemEntity)
         private readonly bookingItemRepository: Repository<BookingItemEntity>,
+        @InjectRepository(TourPaxTypeEntity)
+        private readonly paxTypeRepository: Repository<TourPaxTypeEntity>,
         private readonly dataSource: DataSource,
         @Inject('RECOMMEND_SERVICE')
         private readonly recommendClient: ClientProxy,
     ) { }
+
+    private isAdminUser(user?: UserEntity): boolean {
+        const roleName = user?.role?.name?.toLowerCase();
+        return roleName === 'admin' || roleName === 'superadmin';
+    }
 
     async getAllTours(
         query: AdminTourQueryDTO,
@@ -107,7 +115,8 @@ export class AdminTourService {
             queryBuilder.andWhere('tour.supplier_id = :supplier_id', { supplier_id });
         }
 
-        if (user?.supplier) {
+        // Only filter by supplier if user is NOT admin and has a supplier
+        if (!this.isAdminUser(user) && user?.supplier) {
             queryBuilder.andWhere('tour.supplier_id = :supplierId', {
                 supplierId: user.supplier.id,
             });
@@ -137,6 +146,10 @@ export class AdminTourService {
 
     async getCurrencies(): Promise<CurrencyEntity[]> {
         return this.currencyRepository.find({ order: { name: 'ASC' } });
+    }
+
+    async getPaxTypes(): Promise<TourPaxTypeEntity[]> {
+        return this.paxTypeRepository.find({ order: { name: 'ASC' } });
     }
 
     async getPoliciesBySupplier(
@@ -171,7 +184,7 @@ export class AdminTourService {
 
     async getTourById(id: number, user?: UserEntity): Promise<TourEntity> {
         const where: any = { id };
-        if (user?.supplier) {
+        if (!this.isAdminUser(user) && user?.supplier) {
             where.supplier = { id: user.supplier.id };
         }
 
@@ -198,7 +211,7 @@ export class AdminTourService {
 
     async getVisibilityReport(id: number, user?: UserEntity) {
         const where: any = { id };
-        if (user?.supplier) {
+        if (!this.isAdminUser(user) && user?.supplier) {
             where.supplier = { id: user.supplier.id };
         }
 
@@ -288,7 +301,7 @@ export class AdminTourService {
             ...rest
         } = dto;
 
-        if (user?.supplier) {
+        if (!this.isAdminUser(user) && user?.supplier) {
             supplier_id = user.supplier.id;
         }
 
@@ -410,7 +423,7 @@ export class AdminTourService {
     ): Promise<TourEntity> {
         return await this.dataSource.transaction(async (manager) => {
             const where: any = { id };
-            if (user?.supplier) {
+            if (!this.isAdminUser(user) && user?.supplier) {
                 where.supplier = { id: user.supplier.id };
             }
 
@@ -782,7 +795,7 @@ export class AdminTourService {
         user?: UserEntity,
     ): Promise<TourPolicyEntity> {
         let { supplier_id } = dto;
-        if (user?.supplier) {
+        if (!this.isAdminUser(user) && user?.supplier) {
             supplier_id = user.supplier.id;
         }
 
@@ -820,7 +833,7 @@ export class AdminTourService {
     ): Promise<TourPolicyEntity> {
         return await this.dataSource.transaction(async (manager) => {
             const where: any = { id };
-            if (user?.supplier) {
+            if (!this.isAdminUser(user) && user?.supplier) {
                 where.supplier = { id: user.supplier.id };
             }
 
@@ -859,7 +872,7 @@ export class AdminTourService {
 
     async removePolicy(id: number, user?: UserEntity): Promise<void> {
         const where: any = { id };
-        if (user?.supplier) {
+        if (!this.isAdminUser(user) && user?.supplier) {
             where.supplier = { id: user.supplier.id };
         }
         const policy = await this.dataSource
@@ -971,7 +984,7 @@ export class AdminTourService {
                 if (isNaN(countryId)) throw new Error('Invalid country_id');
                 if (isNaN(divisionId)) throw new Error('Invalid division_id');
 
-                if (user?.supplier) {
+                if (!this.isAdminUser(user) && user?.supplier) {
                     supplierId = user.supplier.id;
                 }
 
