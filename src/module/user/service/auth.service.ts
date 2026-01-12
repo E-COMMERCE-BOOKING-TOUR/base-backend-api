@@ -6,6 +6,7 @@ import {
     RegisterDTO,
     ResetPasswordDTO,
     TokenDTO,
+    VerifyEmailDTO,
 } from '../dtos';
 import { DataSource, DeepPartial, Repository } from 'typeorm';
 import { UserEntity } from '../entity/user.entity';
@@ -24,6 +25,9 @@ import { MailService } from '../../mail/mail.service';
 import * as crypto from 'crypto';
 import { ClientProxy } from '@nestjs/microservices';
 import { Inject } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { EMAIL_QUEUE, SendVerificationEmailJobData } from '../processor/email.processor';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +44,8 @@ export class AuthService {
         private readonly configService: ConfigService,
         @Inject('RECOMMEND_SERVICE')
         private readonly recommendClient: ClientProxy,
+        @InjectQueue(EMAIL_QUEUE)
+        private readonly emailQueue: Queue<SendVerificationEmailJobData>,
     ) { }
 
     async register(dto: RegisterDTO) {
@@ -61,15 +67,21 @@ export class AuthService {
             where: { name: 'customer' },
         });
 
+        // Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const tokenExpires = new Date(Date.now() + 24 * 3600000); // 24 hours
+
         // Hash password
         const hashedPassword = await hashPassword(dto.password);
         const data: DeepPartial<UserEntity> = {
             ...dto,
             uuid: generateUUID(),
-            status: 1,
+            status: 0, // Unverified - cannot login until email verified
             login_type: 0,
             password: hashedPassword,
             role: customerRole || undefined,
+            reset_password_token: verificationToken,
+            reset_password_token_expires: tokenExpires,
         };
 
         try {
@@ -77,18 +89,19 @@ export class AuthService {
                 this.userRepository.create(data),
             );
 
-            // create token with payload
-            const token = await this.getToken({
-                uuid: userInstance.uuid,
-                full_name: userInstance.full_name,
-                phone: userInstance.phone,
+            // Queue verification email
+            const frontendUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL');
+            const verificationLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+            await this.emailQueue.add('send-verification', {
                 email: userInstance.email,
+                fullName: userInstance.full_name,
+                verificationLink,
             });
 
-            return new AuthResponseDTO({
+            return new MessageResponseDTO({
                 error: false,
-                message: 'Đăng ký thành công!',
-                token: new TokenDTO(token),
+                message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.',
             });
         } catch (error) {
             throw new UnauthorizedException(
@@ -159,6 +172,83 @@ export class AuthService {
         });
     }
 
+    async verifyEmail(dto: VerifyEmailDTO) {
+        const user = await this.userRepository.findOne({
+            where: { reset_password_token: dto.token },
+            relations: ['role'],
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('Token xác nhận không hợp lệ!');
+        }
+
+        if (
+            !user.reset_password_token_expires ||
+            user.reset_password_token_expires < new Date()
+        ) {
+            throw new UnauthorizedException('Token xác nhận đã hết hạn!');
+        }
+
+        // Activate user and clear token
+        user.status = 1;
+        user.reset_password_token = null as any;
+        user.reset_password_token_expires = null as any;
+        await this.userRepository.save(user);
+
+        // Generate tokens and auto-login
+        const token = await this.getToken({
+            uuid: user.uuid,
+            full_name: user.full_name,
+            phone: user.phone,
+            email: user.email,
+            role: user.role?.name,
+        });
+
+        return new AuthResponseDTO({
+            error: false,
+            message: 'Xác nhận email thành công!',
+            token: new TokenDTO(token),
+        });
+    }
+
+    async resendVerification(email: string) {
+        const user = await this.userRepository.findOne({
+            where: { email },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('Email không tồn tại trong hệ thống!');
+        }
+
+        // Check if already verified
+        if (user.status === 1) {
+            throw new UnauthorizedException('Tài khoản đã được xác nhận!');
+        }
+
+        // Generate new verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const tokenExpires = new Date(Date.now() + 24 * 3600000); // 24 hours
+
+        user.reset_password_token = verificationToken;
+        user.reset_password_token_expires = tokenExpires;
+        await this.userRepository.save(user);
+
+        // Queue verification email
+        const frontendUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL');
+        const verificationLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+        await this.emailQueue.add('send-verification', {
+            email: user.email,
+            fullName: user.full_name,
+            verificationLink,
+        });
+
+        return new MessageResponseDTO({
+            error: false,
+            message: 'Email xác nhận đã được gửi lại! Vui lòng kiểm tra hộp thư.',
+        });
+    }
+
     async login(dto: LoginDTO) {
         // Check exists user
         const user = await this.userRepository.findOne({
@@ -170,11 +260,17 @@ export class AuthService {
                 'Tài khoản hoặc mật khẩu người dùng không đúng!',
             );
         }
-        // Check valid passowrd
+        // Check if email is verified
+        if (user.status === 0) {
+            throw new UnauthorizedException(
+                'Vui lòng xác nhận email trước khi đăng nhập!',
+            );
+        }
+        // Check valid password
         const isValid = await comparePassword(dto.password, user.password);
         if (!isValid) {
             throw new UnauthorizedException(
-                'Tài khoản hoặc mật khẩu người dùng không đúng! 2',
+                'Tài khoản hoặc mật khẩu người dùng không đúng!',
             );
         }
         // Create token with role included

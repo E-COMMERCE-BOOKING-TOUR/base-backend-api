@@ -373,4 +373,41 @@ export class ArticleServiceProxy {
         );
         return this.mapArticlesWithTourInfo(response);
     }
+
+    /**
+     * Get explore articles with personalized discovery algorithm
+     */
+    async getExploreArticles(
+        limit: number,
+        page: number = 1,
+        userId?: string,
+        followingUserIds?: string[],
+        likedArticleIds?: string[],
+        divisionId?: number,
+    ): Promise<ArticleResponse[]> {
+        // If divisionId is provided, find tour IDs belonging to that division
+        let tourIds: string[] | undefined;
+        if (divisionId) {
+            const tours = await this.tourRepository.find({
+                where: { division: { id: divisionId } },
+                select: { id: true },
+            });
+            tourIds = tours.map(t => t.id.toString());
+            if (tourIds.length === 0) {
+                return []; // No tours in this division, return empty
+            }
+        }
+
+        const response: ArticleResponse[] = await lastValueFrom(
+            this.client.send('get_explore_articles', {
+                limit,
+                page,
+                userId,
+                followingUserIds,
+                likedArticleIds,
+                tourIds, // Pass tour IDs instead of divisionId
+            }),
+        );
+        return this.mapArticlesWithTourInfo(response);
+    }
 }

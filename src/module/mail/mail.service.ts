@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { forgotPasswordTemplate } from './templates/forgot-password.template';
+import { emailVerificationTemplate } from './templates/email-verification.template';
 
 @Injectable()
 export class MailService {
@@ -24,6 +25,15 @@ export class MailService {
     ) {
         const html = forgotPasswordTemplate(fullName, resetLink);
         await this.sendMail(to, 'Hướng dẫn đặt lại mật khẩu', html);
+    }
+
+    async sendVerificationEmail(
+        to: string,
+        fullName: string,
+        verificationLink: string,
+    ) {
+        const html = emailVerificationTemplate(fullName, verificationLink);
+        await this.sendMail(to, 'Xác nhận địa chỉ email', html);
     }
 
     async sendMail(to: string, subject: string, html: string) {

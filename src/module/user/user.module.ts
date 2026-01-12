@@ -35,6 +35,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ChatboxModule } from '../chatbox/chatbox.module';
 import { RecommendModule } from '../recommend/recommend.module';
 import { UserSyncProcessor } from './processor/user-sync.processor';
+import { EmailProcessor, EMAIL_QUEUE } from './processor/email.processor';
 
 @Module({
     imports: [
@@ -50,9 +51,10 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
         ]),
         PassportModule,
         JwtModule.register(jwtConfig()),
-        BullModule.registerQueue({
-            name: 'user-sync',
-        }),
+        BullModule.registerQueue(
+            { name: 'user-sync' },
+            { name: EMAIL_QUEUE },
+        ),
         ChatboxModule,
         RecommendModule,
         forwardRef(() => ArticleModule),
@@ -79,6 +81,7 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
         AdminRoleService,
         AdminPermissionService,
         UserSyncProcessor,
+        EmailProcessor,
     ],
     exports: [
         TypeOrmModule, // Export TypeOrmModule to share User repositories
@@ -91,4 +94,4 @@ import { UserSyncProcessor } from './processor/user-sync.processor';
         NotificationService,
     ],
 })
-export class UserModule {}
+export class UserModule { }

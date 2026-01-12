@@ -5,6 +5,7 @@ export * from './login.dto';
 export * from './notification.dto';
 export * from './user.dto';
 export * from './reset-password.dto';
+export * from './verify-email.dto';
 
 export class TokenDTO {
     @ApiProperty({ description: 'Access token', example: 'eaaa' })

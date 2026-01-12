@@ -48,6 +48,41 @@ export class UserArticleController {
         );
     }
 
+    @Get('explore')
+    @ApiOperation({ summary: 'Get explore articles with personalized discovery algorithm' })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'page', required: false, type: Number })
+    @ApiQuery({ name: 'divisionId', required: false, type: Number, description: 'Filter by tour division/destination ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'List of personalized explore articles',
+    })
+    async getExploreArticles(
+        @Query('limit') limit?: string,
+        @Query('page') page?: string,
+        @Query('userId') userId?: string,
+        @Query('followingUserIds') followingUserIds?: string,
+        @Query('likedArticleIds') likedArticleIds?: string,
+        @Query('divisionId') divisionId?: string,
+    ) {
+        const limitNum = limit ? parseInt(limit, 10) : 10;
+        const pageNum = page ? parseInt(page, 10) : 1;
+        const divisionIdNum = divisionId ? parseInt(divisionId, 10) : undefined;
+
+        // Parse comma-separated IDs if provided
+        const followingIds = followingUserIds ? followingUserIds.split(',').filter(Boolean) : undefined;
+        const likedIds = likedArticleIds ? likedArticleIds.split(',').filter(Boolean) : undefined;
+
+        return await this.articleServiceProxy.getExploreArticles(
+            limitNum,
+            pageNum,
+            userId,
+            followingIds,
+            likedIds,
+            divisionIdNum,
+        );
+    }
+
     @Get('tag/:tag')
     @ApiOperation({ summary: 'Get articles by tag' })
     @ApiQuery({ name: 'limit', required: false, type: Number })

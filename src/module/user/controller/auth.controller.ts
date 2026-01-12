@@ -16,6 +16,7 @@ import {
     ResetPasswordDTO,
     TokenDTO,
     UnauthorizedResponseDto,
+    VerifyEmailDTO,
 } from '../dtos';
 import { AuthService } from '../service/auth.service';
 import { JwtExceptionFilter } from '@/common/exceptions/jwt.exception';
@@ -34,7 +35,7 @@ export class AuthController {
     @UseFilters(AuthExceptionFilter)
     @ApiResponse({
         status: 201,
-        type: AuthResponseDTO,
+        type: MessageResponseDTO,
     })
     @ApiResponse({
         status: 401,
@@ -42,6 +43,36 @@ export class AuthController {
     })
     async register(@Body() dto: RegisterDTO) {
         return await this.authService.register(dto);
+    }
+
+    @Post('verify-email')
+    @UseFilters(AuthExceptionFilter)
+    @ApiResponse({
+        status: 201,
+        type: AuthResponseDTO,
+        description: 'Xác nhận email thành công và tự động đăng nhập',
+    })
+    @ApiResponse({
+        status: 401,
+        type: UnauthorizedResponseDto,
+    })
+    async verifyEmail(@Body() dto: VerifyEmailDTO) {
+        return await this.authService.verifyEmail(dto);
+    }
+
+    @Post('resend-verification')
+    @UseFilters(AuthExceptionFilter)
+    @ApiResponse({
+        status: 201,
+        type: MessageResponseDTO,
+        description: 'Gửi lại email xác nhận',
+    })
+    @ApiResponse({
+        status: 401,
+        type: UnauthorizedResponseDto,
+    })
+    async resendVerification(@Body('email') email: string) {
+        return await this.authService.resendVerification(email);
     }
 
     @Post('login')
