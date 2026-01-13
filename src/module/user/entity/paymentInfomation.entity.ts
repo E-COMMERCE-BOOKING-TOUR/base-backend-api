@@ -101,6 +101,31 @@ export class PaymentInfomationEntity extends BaseEntityTimestamp {
     @ApiProperty({ description: 'Stripe Charge ID' })
     stripe_charge_id: string | null;
 
+    // VNPay fields (reusing same entity for different payment providers)
+    @Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'VNPay Transaction Number' })
+    vnpay_transaction_no: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'VNPay Bank Code' })
+    vnpay_bank_code: string | null;
+
+    @Column({
+        type: 'varchar',
+        length: 20,
+        nullable: true,
+    })
+    @ApiProperty({ description: 'VNPay Payment Date' })
+    vnpay_pay_date: string | null;
+
     @ManyToOne(() => UserEntity, (user) => user.payment_informations, {
         nullable: false,
     })

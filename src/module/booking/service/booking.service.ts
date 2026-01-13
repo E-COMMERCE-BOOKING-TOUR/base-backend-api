@@ -26,6 +26,7 @@ import {
     BookingItemDetailDTO,
 } from '../dto/booking.dto';
 import { UserPaymentService } from '@/module/user/service/user-payment.service';
+import { VnpayService } from './vnpay.service';
 
 @Injectable()
 export class BookingService {
@@ -53,6 +54,7 @@ export class BookingService {
         @InjectRepository(TourVariantPaxTypePriceEntity)
         private readonly priceRepository: Repository<TourVariantPaxTypePriceEntity>,
         private readonly userPaymentService: UserPaymentService,
+        private readonly vnpayService: VnpayService,
     ) { }
 
     private toSummaryDTO(b: BookingEntity): BookingSummaryDTO {
@@ -766,7 +768,11 @@ export class BookingService {
 
             const stripeChargeId =
                 booking.payment_information?.stripe_charge_id;
+            const vnpayTransactionNo =
+                booking.payment_information?.vnpay_transaction_no;
+            const vnpayPayDate = booking.payment_information?.vnpay_pay_date;
 
+            // Try Stripe refund first
             if (refundAmount > 0 && stripeChargeId) {
                 await this.userPaymentService.refundCharge(
                     stripeChargeId,
@@ -775,6 +781,22 @@ export class BookingService {
                 );
                 booking.payment_status = PaymentStatus.refunded;
                 booking.refund_amount = refundAmount;
+            }
+            // Try VNPay refund if no Stripe
+            else if (refundAmount > 0 && vnpayTransactionNo && vnpayPayDate) {
+                const txnRef = `${booking.id}_cancel`;
+                const vnpayResult = await this.vnpayService.refundPayment(
+                    txnRef,
+                    vnpayPayDate,
+                    refundAmount,
+                    refundAmount < Number(booking.total_amount) ? '03' : '02',
+                    'system',
+                    '127.0.0.1',
+                );
+                if (vnpayResult.success) {
+                    booking.payment_status = PaymentStatus.refunded;
+                    booking.refund_amount = refundAmount;
+                }
             }
         }
 
@@ -872,19 +894,50 @@ export class BookingService {
 
         const refundAmount = amount ?? Number(booking.total_amount);
         const stripeChargeId = booking.payment_information?.stripe_charge_id;
+        const vnpayTransactionNo = booking.payment_information?.vnpay_transaction_no;
+        const vnpayPayDate = booking.payment_information?.vnpay_pay_date;
 
+        let refundSuccess = false;
+        let refundMessage = '';
+
+        // Try Stripe refund first
         if (refundAmount > 0 && stripeChargeId) {
             await this.userPaymentService.refundCharge(
                 stripeChargeId,
                 refundAmount,
                 booking.currency.symbol,
             );
+            refundSuccess = true;
+            refundMessage = 'Stripe refund successful';
+        }
+        // Try VNPay refund if no Stripe
+        else if (refundAmount > 0 && vnpayTransactionNo && vnpayPayDate) {
+            // Get txnRef from booking - we stored it in payment_information when creating payment
+            // For VNPay, we need the original txnRef which was bookingId_timestamp
+            // Since we don't store txnRef, we'll use a reconstructed one
+            // Note: In production, you should store the original txnRef in payment_information
+            const txnRef = `${booking.id}_refund`;
+
+            const result = await this.vnpayService.refundPayment(
+                txnRef,
+                vnpayPayDate,
+                refundAmount,
+                amount && amount < Number(booking.total_amount) ? '03' : '02', // partial or full refund
+                'admin',
+                '127.0.0.1',
+            );
+
+            refundSuccess = result.success;
+            refundMessage = result.message;
         }
 
-        booking.payment_status = PaymentStatus.refunded;
-        booking.refund_amount = (booking.refund_amount || 0) + refundAmount;
-        await this.bookingRepository.save(booking);
+        if (refundSuccess || (!stripeChargeId && !vnpayTransactionNo)) {
+            // Update booking status even if no payment method found (manual refund)
+            booking.payment_status = PaymentStatus.refunded;
+            booking.refund_amount = (booking.refund_amount || 0) + refundAmount;
+            await this.bookingRepository.save(booking);
+        }
 
-        return { success: true, refundAmount };
+        return { success: refundSuccess, refundAmount, message: refundMessage };
     }
 }

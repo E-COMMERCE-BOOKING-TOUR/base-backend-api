@@ -22,6 +22,8 @@ import { TourModule } from '@/module/tour/tour.module';
 import { UserModule } from '@/module/user/user.module';
 import { PurchaseModule } from './purchase/purchase.module';
 import { BookingCleanupScheduler } from './scheduler/booking-cleanup.scheduler';
+import { VnpayService } from './service/vnpay.service';
+import { VnpayController } from './controller/vnpay.controller';
 
 @Module({
     imports: [
@@ -47,12 +49,14 @@ import { BookingCleanupScheduler } from './scheduler/booking-cleanup.scheduler';
         AdminBookingController,
         UserBookingController,
         SupplierBookingController,
+        VnpayController,
     ],
     providers: [
         BookingService,
         UserBookingService,
         SupplierBookingService,
         BookingCleanupScheduler,
+        VnpayService,
     ],
 })
-export class BookingModule {}
+export class BookingModule { }

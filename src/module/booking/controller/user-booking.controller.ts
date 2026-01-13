@@ -8,6 +8,7 @@ import {
     UseGuards,
     Res,
     Query,
+    Req,
 } from '@nestjs/common';
 import * as express from 'express';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -22,11 +23,15 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { UserEntity } from '@/module/user/entity/user.entity';
 import { User } from '@/module/user/decorator/user.decorator';
 import { BookingEntity } from '../entity/booking.entity';
+import { VnpayService } from '../service/vnpay.service';
 
 @ApiTags('User Booking')
 @Controller('user/booking')
 export class UserBookingController {
-    constructor(private readonly userBookingService: UserBookingService) {}
+    constructor(
+        private readonly userBookingService: UserBookingService,
+        private readonly vnpayService: VnpayService,
+    ) { }
 
     @ApiBearerAuth()
     @UseFilters(JwtExceptionFilter)
@@ -97,6 +102,50 @@ export class UserBookingController {
         @User() user: UserEntity,
     ): Promise<{ success: boolean; bookingId: number }> {
         return await this.userBookingService.confirmCurrentBooking(user.uuid);
+    }
+
+    @ApiBearerAuth()
+    @UseFilters(JwtExceptionFilter)
+    @UseGuards(AuthGuard('jwt'))
+    @Post('current/vnpay-create')
+    @ApiResponse({
+        status: 200,
+        description: 'Create VNPay payment URL for current booking',
+    })
+    async createVnpayPayment(
+        @User() user: UserEntity,
+        @Req() req: express.Request,
+    ): Promise<{ vnpayUrl: string; bookingId: number }> {
+        // Get current booking
+        const booking = await this.userBookingService.getCurrentBooking(
+            user.uuid,
+        );
+
+        // Get client IP address and clean IPv6-mapped format
+        let ipAddr =
+            (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+            req.socket?.remoteAddress ||
+            '127.0.0.1';
+
+        // Remove IPv6 prefix (::ffff:) if present - VNPay requires plain IPv4
+        if (ipAddr.startsWith('::ffff:')) {
+            ipAddr = ipAddr.substring(7);
+        }
+
+        // Get locale from header or default to 'vn'
+        const locale =
+            (req.headers['accept-language'] as string)?.includes('en')
+                ? 'en'
+                : 'vn';
+
+        // Create VNPay payment URL
+        const vnpayUrl = await this.vnpayService.createPaymentUrl(
+            booking.id,
+            ipAddr,
+            locale,
+        );
+
+        return { vnpayUrl, bookingId: booking.id };
     }
 
     @ApiBearerAuth()
