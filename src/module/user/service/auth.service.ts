@@ -307,11 +307,20 @@ export class AuthService {
         if (session && session.refresh_token === jwt.tokenRefresh) {
             const user = await this.userRepository.findOne({
                 where: { uuid: jwt.payload.uuid },
+                relations: ['role'],  // Include role relation
             });
-            // Create token
+
+            if (!user) {
+                throw new UnauthorizedException('User not found!');
+            }
+
+            // Create token with full payload (same as login)
             const token = await this.getToken({
-                uuid: jwt.payload.uuid,
-                full_name: user?.username || '',
+                uuid: user.uuid,
+                full_name: user.full_name,
+                phone: user.phone,
+                email: user.email,
+                role: user.role?.name,
             });
 
             return new TokenDTO(token);
