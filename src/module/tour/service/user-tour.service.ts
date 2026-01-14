@@ -586,6 +586,8 @@ export class UserTourService {
             currencyCode: tour.currency?.name,
             rating: avgRating > 0 ? Math.round(avgRating) : 0,
             durationDays: tour.duration_days || 1,
+            min_pax: tour.min_pax || 1,
+            max_pax: tour.max_pax,
             reviewCount: reviewsCount,
             score: avgRating,
             scoreLabel,
@@ -934,58 +936,92 @@ export class UserTourService {
             .filter((p): p is number => p !== null && p > 0);
         const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
 
-        return sessions.map((session) => {
-            // Capacity logic
-            const totalCapacity =
-                session.capacity ?? variant.capacity_per_slot ?? 0;
-            const booked = (session.booking_items ?? []).reduce(
-                (sum, item) =>
-                    item.booking && item.booking.status !== 'cancelled'
-                        ? sum + (item.quantity || 0)
-                        : sum,
-                0,
-            );
-            const held = (session.tour_inventory_holds ?? []).reduce(
-                (sum, hold) =>
-                    hold.expires_at && new Date(hold.expires_at) > new Date()
-                        ? sum + (hold.quantity || 0)
-                        : sum,
-                0,
-            );
-            const available = Math.max(0, totalCapacity - booked - held);
+        // Map existing sessions to a Map for quick lookup (grouped by date)
+        const sessionMap = new Map<string, any[]>();
+        sessions.forEach((s) => {
+            const dateStr = s.session_date instanceof Date
+                ? s.session_date.toISOString().split('T')[0]
+                : s.session_date;
+            if (!sessionMap.has(dateStr as string)) {
+                sessionMap.set(dateStr as string, []);
+            }
+            sessionMap.get(dateStr as string)!.push(s);
+        });
 
-            let status = session.status;
-            if (status === 'open' && available <= 0) {
-                status = 'full';
+        const results: UserTourSessionDTO[] = [];
+        const iter = new Date(start);
+        iter.setHours(0, 0, 0, 0);
+        const endDay = new Date(end);
+        endDay.setHours(0, 0, 0, 0);
+
+        while (iter <= endDay) {
+            const dateStr = iter.toISOString().split('T')[0];
+            const daySessions = sessionMap.get(dateStr);
+
+            if (daySessions && daySessions.length > 0) {
+                // Return all actual sessions from DB
+                for (const session of daySessions) {
+                    const totalCapacity =
+                        session.capacity ?? variant.capacity_per_slot ?? tour.max_pax ?? 999;
+                    const booked = (session.booking_items ?? []).reduce(
+                        (sum: number, item: any) =>
+                            item.booking && item.booking.status !== 'cancelled'
+                                ? sum + (item.quantity || 0)
+                                : sum,
+                        0,
+                    );
+                    const held = (session.tour_inventory_holds ?? []).reduce(
+                        (sum: number, hold: any) =>
+                            hold.expires_at && new Date(hold.expires_at) > new Date()
+                                ? sum + (hold.quantity || 0)
+                                : sum,
+                        0,
+                    );
+                    const available = Math.max(0, totalCapacity - booked - held);
+
+                    let status = session.status ?? 'open';
+                    if (status === 'open' && available <= 0) {
+                        status = 'full';
+                    }
+
+                    results.push(new UserTourSessionDTO({
+                        id: session.id,
+                        date: dateStr,
+                        start_time:
+                            session.start_time instanceof Date
+                                ? session.start_time.toLocaleTimeString('en-GB', {
+                                    hour12: false,
+                                })
+                                : typeof session.start_time === 'string'
+                                    ? session.start_time
+                                    : undefined,
+                        end_time:
+                            session.end_time instanceof Date
+                                ? session.end_time.toLocaleTimeString('en-GB', {
+                                    hour12: false,
+                                })
+                                : typeof session.end_time === 'string'
+                                    ? session.end_time
+                                    : undefined,
+                        status,
+                        capacity_available: available,
+                        price: minPrice,
+                    }));
+                }
+            } else {
+                // No session in DB, return a virtual "all day" session
+                results.push(new UserTourSessionDTO({
+                    date: dateStr,
+                    status: 'open',
+                    capacity_available: variant.capacity_per_slot ?? tour.max_pax ?? 999,
+                    price: minPrice,
+                }));
             }
 
-            return new UserTourSessionDTO({
-                id: session.id,
-                date:
-                    session.session_date instanceof Date
-                        ? session.session_date.toISOString().split('T')[0]
-                        : session.session_date, // TypeORM might return string for date type
-                start_time:
-                    session.start_time instanceof Date
-                        ? session.start_time.toLocaleTimeString('en-GB', {
-                            hour12: false,
-                        })
-                        : typeof session.start_time === 'string'
-                            ? session.start_time
-                            : undefined,
-                end_time:
-                    session.end_time instanceof Date
-                        ? session.end_time.toLocaleTimeString('en-GB', {
-                            hour12: false,
-                        })
-                        : typeof session.end_time === 'string'
-                            ? session.end_time
-                            : undefined,
-                status,
-                capacity_available: available,
-                price: minPrice, // In future, apply date-specific pricing rules here
-            });
-        });
+            iter.setDate(iter.getDate() + 1);
+        }
+
+        return results;
     }
 
     async getRecommendations(

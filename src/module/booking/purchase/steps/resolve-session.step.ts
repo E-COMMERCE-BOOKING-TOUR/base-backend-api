@@ -70,7 +70,7 @@ export class ResolveSessionStep implements PurchaseStep {
             session = this.sessionRepository.create({
                 session_date: new Date(ctx.startDate),
                 tour_variant: ctx.variant,
-                capacity: ctx.variant.capacity_per_slot || 100,
+                capacity: ctx.variant.capacity_per_slot ?? ctx.tour?.max_pax ?? 999,
                 status: 'open',
             });
             await this.sessionRepository.save(session);

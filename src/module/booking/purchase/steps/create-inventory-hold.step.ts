@@ -36,7 +36,7 @@ export class CreateInventoryHoldStep implements PurchaseStep {
         const totalQuantity = ctx.pax.reduce((sum, p) => sum + p.quantity, 0);
 
         // Capacity calculation logic
-        const totalCapacity = session.capacity ?? session.tour_variant?.capacity_per_slot ?? 0;
+        const totalCapacity = session.capacity ?? session.tour_variant?.capacity_per_slot ?? ctx.tour?.max_pax ?? 999;
         const booked = (session.booking_items ?? []).reduce(
             (sum, item) =>
                 item.booking && item.booking.status !== 'cancelled'

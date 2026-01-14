@@ -1184,6 +1184,12 @@ export class UserTourDetailDTO {
     @ApiProperty({ example: 3 })
     durationDays: number;
 
+    @ApiProperty({ example: 1 })
+    min_pax: number;
+
+    @ApiProperty({ example: 10, required: false })
+    max_pax?: number;
+
     @ApiProperty({ example: 1113 })
     reviewCount: number;
 
