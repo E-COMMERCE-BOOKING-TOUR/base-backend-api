@@ -11,7 +11,7 @@ export class ResolveSessionStep implements PurchaseStep {
     constructor(
         @InjectRepository(TourSessionEntity)
         private readonly sessionRepository: Repository<TourSessionEntity>,
-    ) {}
+    ) { }
 
     async execute(ctx: PurchaseContext): Promise<PurchaseContext> {
         if (!ctx.variant) {
@@ -70,7 +70,7 @@ export class ResolveSessionStep implements PurchaseStep {
             session = this.sessionRepository.create({
                 session_date: new Date(ctx.startDate),
                 tour_variant: ctx.variant,
-                capacity: 100, // Default capacity
+                capacity: ctx.variant.capacity_per_slot || 100,
                 status: 'open',
             });
             await this.sessionRepository.save(session);

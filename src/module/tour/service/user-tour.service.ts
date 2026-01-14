@@ -919,6 +919,7 @@ export class UserTourService {
             .createQueryBuilder('session')
             .leftJoinAndSelect('session.tour_variant', 'variant')
             .leftJoinAndSelect('session.booking_items', 'booking_items')
+            .leftJoinAndSelect('booking_items.booking', 'booking')
             .leftJoinAndSelect('session.tour_inventory_holds', 'holds')
             .where('session.tour_variant_id = :variantId', { variantId })
             .andWhere('session.session_date >= :start', { start })
@@ -938,7 +939,10 @@ export class UserTourService {
             const totalCapacity =
                 session.capacity ?? variant.capacity_per_slot ?? 0;
             const booked = (session.booking_items ?? []).reduce(
-                (sum, item) => sum + (item.quantity || 0),
+                (sum, item) =>
+                    item.booking && item.booking.status !== 'cancelled'
+                        ? sum + (item.quantity || 0)
+                        : sum,
                 0,
             );
             const held = (session.tour_inventory_holds ?? []).reduce(
