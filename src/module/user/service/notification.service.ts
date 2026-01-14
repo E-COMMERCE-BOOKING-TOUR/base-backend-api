@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, Brackets } from 'typeorm';
 import { NotificationEntity } from '../entity/notification.entity';
 import {
     NotificationDTO,
@@ -16,7 +16,7 @@ export class NotificationService {
         private readonly notificationRepository: Repository<NotificationEntity>,
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
-    ) {}
+    ) { }
 
     async getNotificationsByUser(
         user: UserEntity,
@@ -34,28 +34,32 @@ export class NotificationService {
 
         const query = this.notificationRepository
             .createQueryBuilder('notification')
-            .leftJoinAndSelect('notification.users', 'user')
-            .where('notification.target_group = :all', {
-                all: TargetGroup.all,
-            });
+            .leftJoin('notification.users', 'user')
+            .where(
+                new Brackets((qb) => {
+                    qb.where('notification.target_group = :all', {
+                        all: TargetGroup.all,
+                    });
 
-        if (roleName === 'admin') {
-            query.orWhere('notification.target_group = :admin', {
-                admin: TargetGroup.admin,
-            });
-        } else if (roleName === 'supplier') {
-            query.orWhere('notification.target_group = :supplier', {
-                supplier: TargetGroup.supplier,
-            });
-        }
+                    if (roleName === 'admin') {
+                        qb.orWhere('notification.target_group = :admin', {
+                            admin: TargetGroup.admin,
+                        });
+                    } else if (roleName === 'supplier') {
+                        qb.orWhere('notification.target_group = :supplier', {
+                            supplier: TargetGroup.supplier,
+                        });
+                    }
 
-        query.orWhere(
-            '(notification.target_group = :specific AND user.id = :userId)',
-            {
-                specific: TargetGroup.specific,
-                userId: user.id,
-            },
-        );
+                    qb.orWhere(
+                        '(notification.target_group = :specific AND user.id = :userId)',
+                        {
+                            specific: TargetGroup.specific,
+                            userId: user.id,
+                        },
+                    );
+                }),
+            );
 
         const [list, total] = await query
             .orderBy('notification.created_at', 'DESC')
@@ -181,7 +185,7 @@ export class NotificationService {
             type: dto.type,
             is_error: dto.is_error ?? false,
             is_user: dto.is_user ?? false,
-            target_group: dto.target_group ?? TargetGroup.all,
+            target_group: dto.target_group ?? (dto.user_ids?.length ? TargetGroup.specific : TargetGroup.all),
         });
 
         if (dto.user_ids && dto.user_ids.length > 0) {

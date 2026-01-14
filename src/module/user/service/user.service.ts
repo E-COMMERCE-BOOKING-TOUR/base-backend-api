@@ -3,7 +3,7 @@ import { ArticleServiceProxy } from '../../article/service/article.service-proxy
 import { randomUUID } from 'crypto';
 import { hashPassword } from '@/utils/bcrypt.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Like, Repository } from 'typeorm';
+import { DeepPartial, Like, Repository, In } from 'typeorm';
 import {
     UserDTO,
     UpdateUserDTO,
@@ -307,12 +307,24 @@ export class UserService {
         return { success: true };
     }
 
-    async follow(followerId: number, followingId: number) {
-        if (followerId === followingId)
+    private async resolveNumericId(idOrUuid: number | string): Promise<number> {
+        if (typeof idOrUuid === 'number') return idOrUuid;
+        const num = Number(idOrUuid);
+        if (!isNaN(num)) return num;
+
+        const user = await this.userRepository.findOne({ where: { uuid: idOrUuid as string } });
+        if (!user) throw new BadRequestException('User not found');
+        return user.id;
+    }
+
+    async follow(followerId: number, followingId: number | string) {
+        const numericFollowingId = await this.resolveNumericId(followingId);
+
+        if (followerId === numericFollowingId)
             throw new BadRequestException('Cannot follow yourself');
         const savedFollow = (await this.articleServiceProxy.follow(
             followerId,
-            followingId,
+            numericFollowingId,
         )) as unknown;
 
         if (savedFollow) {
@@ -324,7 +336,7 @@ export class UserService {
                     title: follower?.full_name || 'Someone',
                     description: `started following you`,
                     type: NotificationType.follow,
-                    user_ids: [followingId],
+                    user_ids: [numericFollowingId],
                     is_user: true,
                 });
             } catch (error) {
@@ -335,16 +347,28 @@ export class UserService {
         return savedFollow;
     }
 
-    async unfollow(followerId: number, followingId: number) {
+    async unfollow(followerId: number | string, followingId: number | string) {
+        const numericFollowerId = await this.resolveNumericId(followerId);
+        const numericFollowingId = await this.resolveNumericId(followingId);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return await this.articleServiceProxy.unfollow(followerId, followingId);
+        return await this.articleServiceProxy.unfollow(numericFollowerId, numericFollowingId);
     }
 
-    async getFollowedIds(followerId: number): Promise<number[]> {
-        return await this.articleServiceProxy.getFollowedIds(followerId);
+    async getFollowedIds(followerId: number | string): Promise<number[]> {
+        const numericFollowerId = await this.resolveNumericId(followerId);
+        return await this.articleServiceProxy.getFollowedIds(numericFollowerId);
     }
 
-    async getFollowerIds(followingId: number): Promise<number[]> {
-        return await this.articleServiceProxy.getFollowerIds(followingId);
+    async getFollowedUuids(followerId: number | string): Promise<string[]> {
+        const ids = await this.getFollowedIds(followerId);
+        if (ids.length === 0) return [];
+
+        const users = await this.userRepository.findBy({ id: In(ids) });
+        return users.map((u) => u.uuid);
+    }
+
+    async getFollowerIds(followingId: number | string): Promise<number[]> {
+        const numericFollowingId = await this.resolveNumericId(followingId);
+        return await this.articleServiceProxy.getFollowerIds(numericFollowingId);
     }
 }

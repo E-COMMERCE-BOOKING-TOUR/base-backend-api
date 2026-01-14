@@ -223,7 +223,7 @@ export class UserArticleController {
     @ApiResponse({ status: 201, description: 'Comment added successfully' })
     async addComment(
         @User() user: UserEntity,
-        @Body() body: { articleId: string; content: string },
+        @Body() body: { articleId: string; content: string; parentId?: string | number },
     ) {
         return this.articleServiceProxy.addComment(
             body.articleId,
@@ -231,6 +231,7 @@ export class UserArticleController {
             user.full_name,
             user.avatar_url,
             body.content,
+            body.parentId,
         );
     }
 

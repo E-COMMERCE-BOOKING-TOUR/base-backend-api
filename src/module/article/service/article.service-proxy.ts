@@ -61,6 +61,16 @@ export class ArticleServiceProxy {
         );
     }
 
+    private async resolveNumericId(idOrUuid: number | string): Promise<number> {
+        if (typeof idOrUuid === 'number') return idOrUuid;
+        const num = Number(idOrUuid);
+        if (!isNaN(num)) return num;
+
+        const user = await this.userRepository.findOne({ where: { uuid: idOrUuid as string } });
+        if (!user) throw new Error('User not found');
+        return user.id;
+    }
+
     async getAllArticles(): Promise<ArticleResponse[]> {
         return lastValueFrom(this.client.send('get_all_articles', {}));
     }
@@ -89,6 +99,7 @@ export class ArticleServiceProxy {
         userName: string,
         userAvatar: string | undefined,
         content: string,
+        parentId?: string | number,
     ): Promise<any> {
         const result = await lastValueFrom(
             this.client.send('add_comment', {
@@ -96,6 +107,7 @@ export class ArticleServiceProxy {
                 user_id: userId.toString(),
                 user: { name: userName, avatar: userAvatar },
                 content,
+                parent_id: parentId,
             }),
         );
 
@@ -107,13 +119,14 @@ export class ArticleServiceProxy {
             });
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (article && article.user_id && article.user_id !== userId) {
+                const authorId = await this.resolveNumericId(article.user_id as string);
                 await this.notificationService.create({
                     title: user?.full_name || 'Someone',
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     description: `commented on your article: ${article.title}`,
                     type: NotificationType.comment,
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    user_ids: [article.user_id as number],
+                    user_ids: [authorId],
                     is_user: true,
                 });
             }
@@ -169,13 +182,14 @@ export class ArticleServiceProxy {
             });
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (article && article.user_id && article.user_id !== userId) {
+                const authorId = await this.resolveNumericId(article.user_id as string);
                 await this.notificationService.create({
                     title: user?.full_name || 'Someone',
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     description: `liked your article: ${article.title}`,
                     type: NotificationType.like,
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    user_ids: [article.user_id as number],
+                    user_ids: [authorId],
                     is_user: true,
                 });
             }
@@ -235,7 +249,10 @@ export class ArticleServiceProxy {
     }
 
     async getArticlesByUser(userId: string): Promise<ArticleResponse[]> {
-        return lastValueFrom(this.client.send('get_articles_by_user', userId));
+        const response: ArticleResponse[] = await lastValueFrom(
+            this.client.send('get_articles_by_user', userId),
+        );
+        return this.mapArticlesWithTourInfo(response);
     }
 
     async getArticlesLikedByUser(userId: string): Promise<ArticleResponse[]> {
@@ -280,9 +297,15 @@ export class ArticleServiceProxy {
         const followingIds = await this.getFollowedIds(userId);
         if (followingIds.length === 0) return [];
 
+        // Fetch UUIDs for these IDs because articles are stored with user_id as UUID string
+        const users = await this.userRepository.findBy({ id: In(followingIds) });
+        const followingUuids = users.map((u) => u.uuid);
+
+        if (followingUuids.length === 0) return [];
+
         const response: ArticleResponse[] = await lastValueFrom(
             this.client.send('get_following_articles', {
-                userIds: followingIds,
+                userIds: followingUuids as unknown as number[], // Microservice expects number[] but will handle string UUIDs
                 limit,
                 page,
             }),
