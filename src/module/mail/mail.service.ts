@@ -22,7 +22,8 @@ export class MailService {
         if (dsn) {
             this.transporter = nodemailer.createTransport(dsn);
         } else {
-            this.logger.warn('MAILER_DSN not found. Emails will not be sent.');
+            // this.logger.warn('MAILER_DSN not found. Emails will not be sent.');
+            throw new Error('MAILER_DSN not found. Emails cannot be sent.');
         }
     }
 
@@ -63,7 +64,7 @@ export class MailService {
     async sendMail(to: string, subject: string, html: string) {
         if (!this.transporter) {
             this.logger.error('Transporter not initialized. Cannot send mail.');
-            return;
+            throw new Error('Email service not configured');
         }
 
         try {

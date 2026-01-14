@@ -234,14 +234,20 @@ export class AuthService {
         await this.userRepository.save(user);
 
         // Queue verification email
+        // Send verification email directly (synchronous)
         const frontendUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL');
         const verificationLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
-        await this.emailQueue.add('send-verification', {
-            email: user.email,
-            fullName: user.full_name,
-            verificationLink,
-        });
+        try {
+            await this.mailService.sendVerificationEmail(
+                user.email,
+                user.full_name,
+                verificationLink,
+            );
+        } catch (error) {
+            console.error('Error sending verification email:', error);
+            throw new UnauthorizedException('Không thể gửi email xác nhận. Vui lòng thử lại sau!');
+        }
 
         return new MessageResponseDTO({
             error: false,
