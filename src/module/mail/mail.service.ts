@@ -3,6 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { forgotPasswordTemplate } from './templates/forgot-password.template';
 import { emailVerificationTemplate } from './templates/email-verification.template';
+import {
+    bookingConfirmationTemplate,
+    BookingConfirmationData,
+} from './templates/booking-confirmation.template';
+import {
+    bookingStatusUpdateTemplate,
+    BookingStatusUpdateData,
+} from './templates/booking-status-update.template';
 
 @Injectable()
 export class MailService {
@@ -24,7 +32,7 @@ export class MailService {
         resetLink: string,
     ) {
         const html = forgotPasswordTemplate(fullName, resetLink);
-        await this.sendMail(to, 'Hướng dẫn đặt lại mật khẩu', html);
+        await this.sendMail(to, 'Password Reset Instructions', html);
     }
 
     async sendVerificationEmail(
@@ -33,7 +41,23 @@ export class MailService {
         verificationLink: string,
     ) {
         const html = emailVerificationTemplate(fullName, verificationLink);
-        await this.sendMail(to, 'Xác nhận địa chỉ email', html);
+        await this.sendMail(to, 'Verify Your Email Address', html);
+    }
+
+    async sendBookingConfirmationEmail(
+        to: string,
+        data: BookingConfirmationData,
+    ) {
+        const html = bookingConfirmationTemplate(data);
+        await this.sendMail(to, `Booking Confirmation #${data.bookingId}`, html);
+    }
+
+    async sendBookingStatusUpdateEmail(
+        to: string,
+        data: BookingStatusUpdateData,
+    ) {
+        const html = bookingStatusUpdateTemplate(data);
+        await this.sendMail(to, `Booking Update #${data.bookingId}`, html);
     }
 
     async sendMail(to: string, subject: string, html: string) {

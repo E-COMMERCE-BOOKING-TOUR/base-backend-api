@@ -2,6 +2,7 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -27,9 +28,16 @@ import {
 } from '../dto/booking.dto';
 import { UserPaymentService } from '@/module/user/service/user-payment.service';
 import { VnpayService } from './vnpay.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { EMAIL_QUEUE } from '@/module/user/processor/email.processor';
+import { NotificationService } from '@/module/user/service/notification.service';
+import { NotificationType, TargetGroup } from '@/module/user/dtos/notification.dto';
 
 @Injectable()
 export class BookingService {
+    private readonly logger = new Logger(BookingService.name);
+
     constructor(
         @InjectRepository(BookingEntity)
         private readonly bookingRepository: Repository<BookingEntity>,
@@ -55,6 +63,9 @@ export class BookingService {
         private readonly priceRepository: Repository<TourVariantPaxTypePriceEntity>,
         private readonly userPaymentService: UserPaymentService,
         private readonly vnpayService: VnpayService,
+        @InjectQueue(EMAIL_QUEUE)
+        private readonly emailQueue: Queue,
+        private readonly notificationService: NotificationService,
     ) { }
 
     private toSummaryDTO(b: BookingEntity): BookingSummaryDTO {
@@ -549,6 +560,11 @@ export class BookingService {
         id: number,
         status: BookingStatus,
     ): Promise<BookingDetailDTO | null> {
+        const oldBooking = await this.bookingRepository.findOne({
+            where: { id },
+        });
+        const oldStatus = oldBooking?.status;
+
         const booking = await this.bookingRepository.findOne({
             where: { id },
             relations: [
@@ -558,11 +574,66 @@ export class BookingService {
                 'tour_inventory_hold',
                 'booking_payment',
                 'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour',
+                'booking_items.tour_session',
             ],
         });
         if (!booking) return null;
         booking.status = status;
         await this.bookingRepository.save(booking);
+
+        // Send notification to user about status change
+        const firstItem = booking.booking_items?.[0];
+        const tour = firstItem?.variant?.tour;
+        const user = booking.user;
+
+        if (user && oldStatus !== status) {
+            // Get status message based on new status
+            const statusMessages: Record<string, string> = {
+                confirmed: 'Your booking has been confirmed.',
+                cancelled: 'Your booking has been cancelled.',
+                completed: 'Your trip has been completed. Thank you for choosing us!',
+                refunded: 'You have been refunded for this booking.',
+                waiting_supplier: 'Your booking is waiting for supplier confirmation.',
+            };
+            const statusMessage = statusMessages[status] || '';
+
+            // Queue email
+            try {
+                await this.emailQueue.add('send-booking-status-update', {
+                    email: booking.contact_email || user.email,
+                    data: {
+                        fullName: booking.contact_name || user.full_name || 'Valued Guest',
+                        bookingId: booking.id,
+                        tourName: tour?.title || 'Tour',
+                        oldStatus: oldStatus || '',
+                        newStatus: status,
+                        statusMessage,
+                        viewBookingLink: `${process.env.NEXT_PUBLIC_APP_URL}/mypage/bookings/${booking.id}`,
+                    },
+                });
+                this.logger.log(`Queued status update email for booking #${booking.id}`);
+            } catch (error) {
+                this.logger.error(`Failed to queue status update email for booking #${booking.id}`, error);
+            }
+
+            // Create notification for user
+            try {
+                await this.notificationService.create({
+                    title: `Booking Update #${booking.id}`,
+                    description: `Booking status for tour "${tour?.title || 'Tour'}" has been updated. ${statusMessage}`,
+                    type: NotificationType.booking,
+                    is_user: true,
+                    target_group: TargetGroup.specific,
+                    user_ids: [user.id],
+                });
+                this.logger.log(`Created notification for user #${user.id} for booking #${booking.id}`);
+            } catch (error) {
+                this.logger.error(`Failed to create notification for user #${user.id}`, error);
+            }
+        }
+
         return this.getBookingById(id);
     }
 

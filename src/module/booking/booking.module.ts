@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { BookingEntity } from './entity/booking.entity';
 import { AdminBookingController } from './controller/admin-booking.controller';
 import { BookingService } from './service/booking.service';
@@ -24,6 +25,7 @@ import { PurchaseModule } from './purchase/purchase.module';
 import { BookingCleanupScheduler } from './scheduler/booking-cleanup.scheduler';
 import { VnpayService } from './service/vnpay.service';
 import { VnpayController } from './controller/vnpay.controller';
+import { EMAIL_QUEUE } from '@/module/user/processor/email.processor';
 
 @Module({
     imports: [
@@ -41,6 +43,7 @@ import { VnpayController } from './controller/vnpay.controller';
             TourSessionEntity,
             TourVariantPaxTypePriceEntity,
         ]),
+        BullModule.registerQueue({ name: EMAIL_QUEUE }),
         UserModule, // Provides JwtStrategy, PassportModule, and JwtModule
         TourModule,
         PurchaseModule.forRoot([]),

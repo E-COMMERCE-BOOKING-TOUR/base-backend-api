@@ -19,6 +19,7 @@ import {
     NotFoundException,
     BadRequestException,
     ForbiddenException,
+    Logger,
 } from '@nestjs/common';
 import * as express from 'express';
 import * as path from 'path';
@@ -27,9 +28,16 @@ import { UserPaymentService } from '@/module/user/service/user-payment.service';
 import { PaymentInfomationEntity } from '@/module/user/entity/paymentInfomation.entity';
 import { PaymentCardID } from '../entity/bookingPayment.entity';
 import PDFDocument from 'pdfkit';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { EMAIL_QUEUE } from '@/module/user/processor/email.processor';
+import { NotificationService } from '@/module/user/service/notification.service';
+import { NotificationType, TargetGroup } from '@/module/user/dtos/notification.dto';
 
 @Injectable()
 export class UserBookingService {
+    private readonly logger = new Logger(UserBookingService.name);
+
     constructor(
         @InjectRepository(BookingEntity)
         private readonly bookingRepository: Repository<BookingEntity>,
@@ -41,8 +49,13 @@ export class UserBookingService {
         private readonly inventoryHoldRepository: Repository<TourInventoryHoldEntity>,
         @InjectRepository(PaymentInfomationEntity)
         private readonly paymentInfoRepository: Repository<PaymentInfomationEntity>,
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>,
         private readonly purchaseService: PurchaseService,
         private readonly userPaymentService: UserPaymentService,
+        @InjectQueue(EMAIL_QUEUE)
+        private readonly emailQueue: Queue,
+        private readonly notificationService: NotificationService,
     ) { }
 
     async createBooking(
@@ -474,6 +487,12 @@ export class UserBookingService {
                 'booking_payment',
                 'payment_information',
                 'currency',
+                'user',
+                'booking_items',
+                'booking_items.variant',
+                'booking_items.variant.tour',
+                'booking_items.variant.tour.supplier',
+                'booking_items.tour_session',
             ],
             order: { id: 'DESC' },
         });
@@ -531,6 +550,65 @@ export class UserBookingService {
         }
 
         await this.bookingRepository.save(booking);
+
+        // Send confirmation email to user
+        const firstItem = booking.booking_items?.[0];
+        const tour = firstItem?.variant?.tour;
+        const session = firstItem?.tour_session;
+        const supplier = tour?.supplier;
+
+        try {
+            await this.emailQueue.add('send-booking-confirmation', {
+                email: booking.contact_email,
+                data: {
+                    fullName: booking.contact_name || booking.user?.full_name || 'Valued Guest',
+                    bookingId: booking.id,
+                    tourName: tour?.title || 'Tour',
+                    startDate: session?.session_date
+                        ? new Date(session.session_date).toLocaleDateString('en-US')
+                        : '',
+                    totalAmount: Number(booking.total_amount).toLocaleString('en-US'),
+                    currency: booking.currency?.symbol || 'VND',
+                    contactEmail: booking.contact_email || '',
+                    contactPhone: booking.contact_phone || '',
+                    viewBookingLink: `${process.env.NEXT_PUBLIC_APP_URL}/mypage/bookings/${booking.id}`,
+                },
+            });
+            this.logger.log(`Queued booking confirmation email for booking #${booking.id}`);
+        } catch (error) {
+            this.logger.error(`Failed to queue confirmation email for booking #${booking.id}`, error);
+        }
+
+        // Create notification for supplier
+        if (supplier?.id) {
+            try {
+                // Find all users belonging to this supplier
+                const supplierUsers = await this.userRepository.find({
+                    where: { supplier: { id: supplier.id } },
+                    select: ['id'],
+                });
+                const supplierUserIds = supplierUsers.map((u) => u.id);
+
+                if (supplierUserIds.length > 0) {
+                    await this.notificationService.create({
+                        title: `New Booking #${booking.id}`,
+                        description: `You have a new booking for tour "${tour?.title || 'Tour'}". Customer: ${booking.contact_name}. Date: ${session?.session_date ? new Date(session.session_date).toLocaleDateString('en-US') : 'N/A'}.`,
+                        type: NotificationType.booking,
+                        is_user: true,
+                        target_group: TargetGroup.specific,
+                        user_ids: supplierUserIds,
+                    });
+                    this.logger.log(
+                        `Created notification for supplier #${supplier.id} (Users: ${supplierUserIds.join(', ')}) for booking #${booking.id}`,
+                    );
+                }
+            } catch (error) {
+                this.logger.error(
+                    `Failed to create notification for supplier #${supplier.id}`,
+                    error,
+                );
+            }
+        }
 
         return { success: true, bookingId: booking.id };
     }
