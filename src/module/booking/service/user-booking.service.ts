@@ -897,7 +897,7 @@ export class UserBookingService {
             throw new ForbiddenException(
                 'You do not have permission to access this receipt',
             );
-        if (booking.status !== BookingStatus.confirmed)
+        if (booking.status !== BookingStatus.waiting_supplier)
             throw new BadRequestException(
                 'Receipt is only available for confirmed bookings',
             );
@@ -1003,7 +1003,7 @@ export class UserBookingService {
             throw new ForbiddenException(
                 'You do not have permission to access this invoice',
             );
-        if (booking.status !== BookingStatus.confirmed)
+        if (booking.status !== BookingStatus.waiting_supplier)
             throw new BadRequestException(
                 'Invoice is only available for confirmed bookings',
             );
